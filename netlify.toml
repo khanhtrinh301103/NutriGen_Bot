@@ -1,7 +1,7 @@
 [build]
   command = "npm run build"
-  publish = "frontend/.next"
+  publish = ".next"  # Không cần frontend/
 
 [build.environment]
-  NODE_VERSION = "18.16.0"
+  NODE_VERSION = "20"
   NPM_VERSION = "9.6.5"
