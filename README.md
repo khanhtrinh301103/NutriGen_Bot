@@ -3,10 +3,11 @@ cd NutriGen_Bot
 environment:
 cd backend
 npm install
-cd ../frontend
-npm install
 firebase login
 firebase use --add
+cd ../frontend
+npm install
+
 
 
 
