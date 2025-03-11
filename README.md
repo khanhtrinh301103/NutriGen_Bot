@@ -20,15 +20,76 @@ Frontend:
 cd D:\SEPM\NutriGen_Bot\frontend
 npm run dev
 
+Project structure:
 
-project structure and working scope of developer:
+NutriGen_Bot/
+│
+├── backend/
+│   ├── dataconnect/
+│   │   ├── connector/
+│   │   │   ├── connector.yaml
+│   │   │   ├── mutations.gql
+│   │   │   ├── queries.gql
+│   │   ├── schema/
+│   │   │   ├── schema.gql
+│   │   │   ├── dataconnect.yaml
+│   ├── functions/
+│   │   ├── node_modules/
+│   │   ├── .gitignore
+│   │   ├── index.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   ├── src/
+│   │   ├── cacheResults.js
+│   │   ├── calculateTDEE.js
+│   │   ├── searchRecipe.js
+│   ├── .firebaserc
+│   ├── .gitignore
+│   ├── firebase.json
+│   ├── package-lock.json
+│   ├── package.json
+│
+├── frontend/
+│   ├── .next/
+│   ├── node_modules/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   ├── window.svg
+│   ├── src/
+│   │   ├── api/
+│   │   │   ├── getRecipe.js
+│   │   ├── pages/
+│   │   │   ├── _app.tsx
+│   │   │   ├── _document.tsx
+│   │   │   ├── index.tsx
+│   │   ├── styles/
+│   │   │   ├── globals.css
+│   ├── .gitignore
+│   ├── eslint.config.mjs
+│   ├── next-env.d.ts
+│   ├── next.config.mjs
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── postcss.config.mjs
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── netlify.toml
+│   ├── README.md
+
+
+Working scope of developer:
 
 backend/
 │── functions/                # Folder containing all auxiliary code
 │   │── index.js              # Main declaration file of Firebase Functions <-- Write API Endpoints
 │   │── package.json          # List of dependencies
 │   │── .gitignore            # Gitignore file
-│   ├── src/                  # Contains supporting logic files
+│── src/                  # Contains supporting logic files
 │   │   ├── auth.js           # Authentication handling (Login, Register)
 │   │   ├── recipes.js        # API handling to get recipes
 │   │   ├── firestore.js      # Functions that work with Firestore Database
