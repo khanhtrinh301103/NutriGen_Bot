@@ -61,10 +61,23 @@ NutriGen_Bot/
 │   │   ├── window.svg
 │   ├── src/
 │   │   ├── api/
+│   │   │   ├── authService.js
+│   │   │   ├── blogService.js
 │   │   │   ├── getRecipe.js
 │   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   │   ├──login.tsx
+│   │   │   │   ├──signup.tsx
+│   │   │   ├── components/
+│   │   │   │   ├── common/
+│   │   │   │   │   ├── footer.tsx
+│   │   │   │   │   ├── header.tsx
+│   │   │   │   │   ├── layout.tsx
+│   │   │   ├── recipe/
+│   │   │   │   ├──[id].tsx
 │   │   │   ├── _app.tsx
 │   │   │   ├── _document.tsx
+│   │   │   ├── about.tsx
 │   │   │   ├── index.tsx
 │   │   ├── styles/
 │   │   │   ├── globals.css
