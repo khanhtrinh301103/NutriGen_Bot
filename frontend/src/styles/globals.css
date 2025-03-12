@@ -1,3 +1,70 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ✅ 기본 스타일 */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f8f3e7;
+  color: #333; /* 기본 글자색 */
+}
+
+/* ✅ 버튼 스타일 */
+.btn-primary {
+  background-color: #4b7e53;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.btn-primary:hover {
+  background-color: #3a6442;
+}
+
+/* ✅ 헤더 & 푸터 스타일 */
+.header, .footer {
+  background-color: #4b7e53;
+  color: white;
+}
+
+.footer a {
+  color: #f8f3e7;
+  transition: color 0.2s ease-in-out;
+}
+
+.footer a:hover {
+  color: white;
+}
+
+/* ✅ 레이아웃 균형 조정 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+  text-align: center; /* 모든 섹션을 중앙 정렬 */
+}
+
+/* ✅ Hero Section (메인 콘텐츠 위치 조정) */
+.hero {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: left;
+}
+
+.hero .text {
+  flex: 1;
+}
+
+.hero .image {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+/* ✅ 공백 줄이기 */
+.section {
+  padding: 60px 0;
+}
