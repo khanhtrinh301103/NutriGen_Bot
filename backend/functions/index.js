@@ -4,7 +4,7 @@ const express = require("express");
 const cors = require("cors"); // Thư viện CORS
 const axios = require("axios");
 
-const serviceAccount = require("./enter name of the file here.json");
+const serviceAccount = require("./Enter json file here.json");
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
