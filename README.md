@@ -14,7 +14,12 @@ npm install
 
 backend:
 cd D:\SEPM\NutriGen_Bot\backend
+
+download json file from firebase firestore first in project setting -> service account -> generate new private key, then move that file into backend/functions changing the name of serviceAccount in index.js following that file
+
 firebase emulators:start
+
+
 
 Frontend:
 cd D:\SEPM\NutriGen_Bot\frontend
