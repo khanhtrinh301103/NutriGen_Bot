@@ -61,11 +61,29 @@ NutriGen_Bot/
 │   │   ├── window.svg
 │   ├── src/
 │   │   ├── api/
+│   │   │   ├── authService.js
+│   │   │   ├── firebaseConfig.js
+│   │   │   ├── login.js
+│   │   │   ├── profile.js
+│   │   │   ├── signup.js
 │   │   │   ├── getRecipe.js
 │   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   │   ├── login.tsx
+│   │   │   │   ├── signup.tsx
+│   │   │   │   ├── onboarding.tsx
+│   │   │   ├── components/
+│   │   │   │   ├── common/
+│   │   │   │   │   ├── footer.tsx
+│   │   │   │   │   ├── header.tsx
+│   │   │   │   │   ├── layout.tsx
+│   │   │   ├── recipes/
+│   │   │   │   ├── [id].tsx
 │   │   │   ├── _app.tsx
 │   │   │   ├── _document.tsx
 │   │   │   ├── index.tsx
+│   │   │   ├── about.tsx
+│   │   │   ├── profile.tsx
 │   │   ├── styles/
 │   │   │   ├── globals.css
 │   ├── .gitignore
