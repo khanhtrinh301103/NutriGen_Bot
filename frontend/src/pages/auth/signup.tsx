@@ -1,69 +1,57 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { registerUser } from '../../api/authService';
-import Layout from "../components/common/layout";
+import { registerUser, signUpWithGoogle } from '../../api/signup';
+import Layout from '../components/common/layout';
 
 const Signup = () => {
   const router = useRouter();
   const [formData, setFormData] = useState({
+    displayName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    displayName: ''
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [e.target.name]: e.target.value,
     });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Form validation
-    if (!formData.email || !formData.password || !formData.displayName) {
-      setError('Please fill in all required fields');
-      return;
-    }
-    
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError("Passwords do not match.");
       return;
     }
-    
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-    
+
     try {
       setError('');
       setLoading(true);
-      
-      // Call registration API
-      await registerUser({
-        email: formData.email,
-        password: formData.password,
-        displayName: formData.displayName
-      });
-      
-      // Redirect to login page after successful registration
-      router.push('/auth/login');
+      await registerUser(formData);
+      router.push('/');
     } catch (err) {
-      console.error('Registration error:', err);
-      
-      // Handle different error types
-      if (err.message.includes('email-already-in-use')) {
-        setError('Email is already in use');
-      } else {
-        setError('Registration failed. Please try again.');
-      }
+      console.error('Signup error:', err);
+      setError(err.message || 'Failed to create account. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await signUpWithGoogle();
+      router.push('/');
+    } catch (err) {
+      console.error('Google Signup error:', err);
+      setError(err.message || 'Google signup failed.');
     } finally {
       setLoading(false);
     }
@@ -86,7 +74,6 @@ const Signup = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            {/* Display error if any */}
             {error && (
               <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
                 <div className="flex">
@@ -101,7 +88,7 @@ const Signup = () => {
                 </div>
               </div>
             )}
-            
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="displayName" className="block text-sm font-medium text-gray-700">
@@ -198,15 +185,10 @@ const Signup = () => {
 
               <div className="mt-6">
                 <button
+                  onClick={handleGoogleSignup}
                   type="button"
                   className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M12.24 10.285V14.4h6.806c-.275 1.765-2.056 5.174-6.806 5.174-4.095 0-7.439-3.389-7.439-7.574s3.345-7.574 7.439-7.574c2.33 0 3.891.989 4.785 1.849l3.254-3.138C18.189 1.186 15.479 0 12.24 0c-6.635 0-12 5.365-12 12s5.365 12 12 12c6.926 0 11.52-4.869 11.52-11.726 0-.788-.085-1.39-.189-1.989H12.24z"
-                    />
-                  </svg>
                   Google
                 </button>
               </div>
