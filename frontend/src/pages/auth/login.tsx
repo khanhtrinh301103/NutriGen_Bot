@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
-import { signIn } from '../../api/authService';
+import { signInUser, signInWithGoogle } from '../../api/login';
 import Layout from "../components/common/layout";
 
 const Login = () => {
@@ -13,28 +13,34 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Form validation
+
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
     }
-    
+
     try {
       setError('');
       setLoading(true);
-      
-      // Call login API and store the result
-      const userData = await signIn({ email, password });
-      
-      // Log successful login
-      console.log('Login successful:', userData);
-      
-      // Redirect to home page after successful login
+      await signInUser({ email, password });
       router.push('/');
     } catch (err) {
       console.error('Login error:', err);
-      setError('Failed to sign in. Please check your credentials.');
+      setError(err.message || 'Failed to sign in. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setError('');
+      setLoading(true);
+      await signInWithGoogle();
+      router.push('/');
+    } catch (err) {
+      console.error('Google Login error:', err);
+      setError(err.message || 'Google login failed.');
     } finally {
       setLoading(false);
     }
@@ -57,7 +63,6 @@ const Login = () => {
 
         <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
           <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-            {/* Display error if any */}
             {error && (
               <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
                 <div className="flex">
@@ -72,7 +77,7 @@ const Login = () => {
                 </div>
               </div>
             )}
-            
+
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -153,6 +158,7 @@ const Login = () => {
 
               <div className="mt-6">
                 <button
+                  onClick={handleGoogleLogin}
                   type="button"
                   className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                 >
