@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from './components/common/layout';
 import { auth } from '../api/firebaseConfig';
-import { getUserProfile, updateUserProfile } from '../api/profile';
+import { getUserProfile, updateUserProfile, uploadProfileImage } from '../api/profile';
 import { signOutUser } from '../api/authService';
 
 const ProfilePage: React.FC = () => {
@@ -13,6 +13,9 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [profileData, setProfileData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [editData, setEditData] = useState({
     height: '',
     weight: '',
@@ -126,26 +129,76 @@ const ProfilePage: React.FC = () => {
       });
     }
   };
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    console.log("File selected:", file.name, file.type, file.size);
+    
+    // 이미지 파일인지 확인
+    if (!file.type.startsWith('image/')) {
+      console.error("Not an image file");
+      return;
+    }
+    
+    // 파일 크기 제한 (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      console.error("File too large");
+      return;
+    }
+    
+    setSelectedImage(file);
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImagePreview(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+  
 
   const handleSaveProfile = async () => {
     if (!user) return;
     
     try {
       setLoading(true);
+      
+      // 이미지 업로드 처리
+      if (selectedImage) {
+        try {
+          setUploadingImage(true);
+          console.log("Starting image upload process...");
+          await uploadProfileImage(selectedImage);
+          console.log("Image upload successful");
+        } catch (imgError) {
+          console.error("Image upload failed:", imgError);
+          // 이미지 업로드 실패 시에도 프로필 정보는 업데이트
+        } finally {
+          setUploadingImage(false);
+        }
+      }
+      
+      // 프로필 정보 업데이트
       await updateUserProfile(user.uid, editData);
       
-      // Reload profile data
+      // 프로필 데이터 다시 로드
       const userData = await getUserProfile(user.uid);
       setProfileData(userData);
       
+      const freshData = await getUserProfile(user.uid);
+      setProfileData(freshData);
+      
+      // 편집 모드 종료
       setIsEditing(false);
+      setSelectedImage(null);
+      setImagePreview(null);
     } catch (error) {
-      console.error("Error saving profile:", error);
+      console.error("Profile save error:", error);
     } finally {
       setLoading(false);
     }
   };
-
+    
   if (loading) {
     return (
       <Layout>
@@ -243,6 +296,82 @@ const ProfilePage: React.FC = () => {
                   
                   {isEditing ? (
                     <div>
+                      {/* Profile Picture Upload Section */}
+                      <div className="md:col-span-2 mb-6">
+                        <h3 className="text-md font-medium text-gray-700 mb-4">Profile Picture</h3>
+                        <div className="flex items-center space-x-6">
+                          <div className="flex-shrink-0">
+                            {imagePreview ? (
+                              <img 
+                                src={imagePreview} 
+                                alt="Preview" 
+                                className="h-24 w-24 rounded-full object-cover border-2 border-emerald-500"
+                              />
+                            ) : user?.photoURL ? (
+                              <img 
+                                src={user.photoURL} 
+                                alt="Current profile" 
+                                className="h-24 w-24 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="flex-1">
+                            <label htmlFor="profile-image" className="block text-sm font-medium text-gray-700 mb-2">
+                              Change profile picture
+                            </label>
+                            <div className="flex items-center">
+                              <label className="block">
+                                <span className="sr-only">Choose profile photo</span>
+                                <input 
+                                  type="file" 
+                                  id="profile-image"
+                                  accept="image/*"
+                                  onChange={handleImageChange}
+                                  className="block w-full text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-md file:border-0
+                                    file:text-sm file:font-medium
+                                    file:bg-emerald-50 file:text-emerald-700
+                                    hover:file:bg-emerald-100"
+                                />
+                              </label>
+                              {selectedImage && (
+                                <button 
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedImage(null);
+                                    setImagePreview(null);
+                                  }}
+                                  className="ml-2 text-sm text-red-500 hover:text-red-700"
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <p className="mt-1 text-xs text-gray-500">
+                              JPG, PNG or GIF up to 5MB
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {uploadingImage && (
+                          <div className="mt-2 flex items-center text-sm text-emerald-600">
+                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Uploading image...
+                          </div>
+                        )}
+                      </div>
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Basic Information Section */}
                         <div>
@@ -504,135 +633,136 @@ const ProfilePage: React.FC = () => {
                     </h3>
                   </div>
                   <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
-                        <>
-                          <div className="bg-emerald-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
-                            <div className="text-2xl font-bold text-emerald-600 mt-2">
-                              {calculateBMR(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">Calories you burn at rest</p>
-                          </div>
-                          
-                          <div className="bg-blue-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Total Daily Energy</h4>
-                            <div className="text-2xl font-bold text-blue-600 mt-2">
-                              {calculateTDEE(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">Calories you burn daily with activity</p>
-                          </div>
-                          
-                          <div className="bg-purple-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Target Daily Calories</h4>
-                            <div className="text-2xl font-bold text-purple-600 mt-2">
-                              {calculateTarget(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {profileData.healthProfile.goal === 'Weight Loss' ? 'For weight loss' : 
-                               profileData.healthProfile.goal === 'Weight Gain' ? 'For weight gain' : 
-                               'For maintenance'}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="col-span-3 text-center py-8">
-                          <p className="text-gray-500">
-                            Please complete your health profile to see nutrition insights.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                     {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
+                       <>
+                         <div className="bg-emerald-50 p-4 rounded-lg text-center">
+                           <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
+                           <div className="text-2xl font-bold text-emerald-600 mt-2">
+                             {calculateBMR(profileData.healthProfile)} calories
+                           </div>
+                           <p className="text-xs text-gray-500 mt-1">Calories you burn at rest</p>
+                         </div>
+                         
+                         <div className="bg-blue-50 p-4 rounded-lg text-center">
+                           <h4 className="text-sm font-medium text-gray-500">Total Daily Energy</h4>
+                           <div className="text-2xl font-bold text-blue-600 mt-2">
+                             {calculateTDEE(profileData.healthProfile)} calories
+                           </div>
+                           <p className="text-xs text-gray-500 mt-1">Calories you burn daily with activity</p>
+                         </div>
+                         
+                         <div className="bg-purple-50 p-4 rounded-lg text-center">
+                           <h4 className="text-sm font-medium text-gray-500">Target Daily Calories</h4>
+                           <div className="text-2xl font-bold text-purple-600 mt-2">
+                             {calculateTarget(profileData.healthProfile)} calories
+                           </div>
+                           <p className="text-xs text-gray-500 mt-1">
+                             {profileData.healthProfile.goal === 'Weight Loss' ? 'For weight loss' : 
+                              profileData.healthProfile.goal === 'Weight Gain' ? 'For weight gain' : 
+                              'For maintenance'}
+                           </p>
+                         </div>
+                       </>
+                     ) : (
+                       <div className="col-span-3 text-center py-8">
+                         <p className="text-gray-500">
+                           Please complete your health profile to see nutrition insights.
+                         </p>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+             </div>
+           )}
 
-            {activeTab === 'saved' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900">No saved recipes</h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    You have not saved any recipes yet. Start exploring recipes and save your favorites!
-                  </p>
-                  <div className="mt-6">
-                    <button 
-                      onClick={() => router.push('/recipes')}
-                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
-                    >
-                      Find Recipes
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
+           {activeTab === 'saved' && (
+             <div className="max-w-4xl mx-auto">
+               <div className="text-center py-12 bg-gray-50 rounded-lg">
+                 <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                 </svg>
+                 <h3 className="text-lg font-medium text-gray-900">No saved recipes</h3>
+                 <p className="mt-2 text-sm text-gray-500">
+                   You have not saved any recipes yet. Start exploring recipes and save your favorites!
+                 </p>
+                 <div className="mt-6">
+                   <button 
+                     onClick={() => router.push('/recipes')}
+                     className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                   >
+                     Find Recipes
+                   </button>
+                 </div>
+               </div>
+             </div>
+           )}
+         </div>
+       </div>
+     </div>
+   </Layout>
+ );
 };
 
 // Function to calculate BMR (Basal Metabolic Rate) using the Mifflin-St Jeor Equation
 function calculateBMR(healthProfile) {
-  const weight = Number(healthProfile.weight);
-  const height = Number(healthProfile.height);
-  const age = Number(healthProfile.age);
-  const gender = healthProfile.gender;
-  
-  if (!weight || !height || !age) return 0;
-  
-  if (gender === 'Male') {
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) + 5);
-  } else {
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) - 161);
-  }
+ const weight = Number(healthProfile.weight);
+ const height = Number(healthProfile.height);
+ const age = Number(healthProfile.age);
+ const gender = healthProfile.gender;
+ 
+ if (!weight || !height || !age) return 0;
+ 
+ if (gender === 'Male') {
+   return Math.round((10 * weight) + (6.25 * height) - (5 * age) + 5);
+ } else {
+   return Math.round((10 * weight) + (6.25 * height) - (5 * age) - 161);
+ }
 }
 
 // Function to calculate TDEE (Total Daily Energy Expenditure)
 function calculateTDEE(healthProfile) {
-  const bmr = calculateBMR(healthProfile);
-  const activityLevel = healthProfile.activityLevel;
-  
-  let activityMultiplier = 1.2; // Sedentary
-  
-  switch (activityLevel) {
-    case 'Lightly Active':
-      activityMultiplier = 1.375;
-      break;
-    case 'Moderately Active':
-      activityMultiplier = 1.55;
-      break;
-    case 'Very Active':
-      activityMultiplier = 1.725;
-      break;
-    case 'Extremely Active':
-      activityMultiplier = 1.9;
-      break;
-    default:
-      activityMultiplier = 1.2;
-  }
-  
-  return Math.round(bmr * activityMultiplier);
+ const bmr = calculateBMR(healthProfile);
+ const activityLevel = healthProfile.activityLevel;
+ 
+ let activityMultiplier = 1.2; // Sedentary
+ 
+ switch (activityLevel) {
+   case 'Lightly Active':
+     activityMultiplier = 1.375;
+     break;
+   case 'Moderately Active':
+     activityMultiplier = 1.55;
+     break;
+   case 'Very Active':
+     activityMultiplier = 1.725;
+     break;
+   case 'Extremely Active':
+     activityMultiplier = 1.9;
+     break;
+   default:
+     activityMultiplier = 1.2;
+ }
+ 
+ return Math.round(bmr * activityMultiplier);
 }
 
 // Function to calculate target calories based on goal
 function calculateTarget(healthProfile) {
-  const tdee = calculateTDEE(healthProfile);
-  const goal = healthProfile.goal;
-  
-  switch (goal) {
-    case 'Weight Loss':
-      return Math.round(tdee * 0.8); // 20% deficit
-    case 'Weight Gain':
-    case 'Muscle Gain':
-      return Math.round(tdee * 1.15); // 15% surplus
-    default:
-      return tdee; // Maintenance
-  }
+ const tdee = calculateTDEE(healthProfile);
+ const goal = healthProfile.goal;
+ 
+ switch (goal) {
+   case 'Weight Loss':
+     return Math.round(tdee * 0.8); // 20% deficit
+   case 'Weight Gain':
+   case 'Muscle Gain':
+     return Math.round(tdee * 1.15); // 15% surplus
+   default:
+     return tdee; // Maintenance
+ }
 }
+
 
 export default ProfilePage;

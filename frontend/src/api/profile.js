@@ -1,6 +1,9 @@
 // frontend/src/api/profile.js
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "./firebaseConfig";
+import { updateProfile } from "firebase/auth";
 
 // Get user profile data
 export const getUserProfile = async (userId) => {
@@ -93,6 +96,69 @@ export const getSavedRecipes = async () => {
   }
 };
 
+export const uploadProfileImage = async (imageFile) => {
+  try {
+    // 사용자가 로그인되어 있는지 확인
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    
+    // 파일 확장자 추출
+    const fileExtension = imageFile.name.split('.').pop();
+    
+    // 고유한 파일 이름 생성
+    const fileName = `profile_${Date.now()}.${fileExtension}`;
+    
+    // 스토리지 경로 설정 - 각 사용자별 폴더 구조
+    // profileImages 폴더 내에 사용자 ID별 폴더, 그 안에 이미지 저장
+    const filePath = `profileImages/${userId}/${fileName}`;
+    
+    console.log("Preparing to upload to:", filePath);
+    
+    // Storage 레퍼런스 생성
+    const storageRef = ref(storage, filePath);
+    
+    console.log("Starting upload...");
+    
+    // 파일 업로드
+    await uploadBytes(storageRef, imageFile);
+    
+    console.log("Upload complete, getting download URL");
+    
+    // 다운로드 URL 가져오기
+    const downloadURL = await getDownloadURL(storageRef);
+    
+    console.log("Download URL:", downloadURL);
+    
+    // 사용자 프로필 업데이트
+    await updateProfile(currentUser, {
+      photoURL: downloadURL
+    });
+    
+    console.log("Auth profile updated");
+    
+    // Firestore에 프로필 이미지 URL 저장
+    const userRef = doc(db, "user", userId);
+    await updateDoc(userRef, {
+      photoURL: downloadURL,
+      updatedAt: new Date().toISOString()
+    });
+    
+    console.log("Firestore profile updated");
+    
+    return downloadURL;
+  } catch (error) {
+    console.error("Error in uploadProfileImage:", error);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
+    throw error;
+  }
+};
+
 // Save a recipe
 export const saveRecipe = async (recipe) => {
   try {
@@ -157,4 +223,6 @@ export const removeRecipe = async (recipeId) => {
     console.error("Error removing recipe:", error);
     throw error;
   }
+
+  
 };
