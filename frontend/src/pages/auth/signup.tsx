@@ -34,7 +34,7 @@ const Signup = () => {
       setError('');
       setLoading(true);
       await registerUser(formData);
-      router.push('/auth/onboarding');
+      router.push('/auth/login');
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.message || 'Failed to create account. Please try again.');

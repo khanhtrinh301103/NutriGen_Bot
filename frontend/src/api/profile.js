@@ -1,4 +1,4 @@
-// frontend/src/api/profile.js - 업데이트 버전
+// frontend/src/api/profile.js
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, auth, storage } from "./firebaseConfig";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
@@ -7,7 +7,7 @@ import { updateProfile } from "firebase/auth";
 // Get user profile data
 export const getUserProfile = async (userId) => {
   try {
-    const userRef = doc(db, "users", userId);
+    const userRef = doc(db, "user", userId);
     const docSnap = await getDoc(userRef);
     
     if (docSnap.exists()) {
@@ -39,35 +39,71 @@ export const getUserProfile = async (userId) => {
 };
 
 // Upload profile image and get URL
-const uploadProfileImage = async (userId, imageFile) => {
+export const uploadProfileImage = async (imageFile) => {
   try {
-    // 고유한 파일 이름 생성 (덮어쓰기 방지)
+    // Make sure user is logged in
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    
+    // Create unique filename to prevent overwriting
     const fileName = `profile-${userId}-${Date.now()}`;
+    
+    // Storage reference should match your Firebase Storage bucket
     const storageRef = ref(storage, `profile-images/${fileName}`);
-    await uploadBytes(storageRef, imageFile);
-    const downloadURL = await getDownloadURL(storageRef);
+    
+    console.log("Uploading file to storage...");
+    
+    // Upload the file with metadata
+    const metadata = {
+      contentType: imageFile.type,
+    };
+    
+    // Upload the file
+    const uploadTask = await uploadBytes(storageRef, imageFile, metadata);
+    console.log("File uploaded successfully!");
+    
+    // Get download URL
+    const downloadURL = await getDownloadURL(uploadTask.ref);
+    console.log("Download URL obtained:", downloadURL);
+    
+    // Update user profile photo URL in auth
+    await updateProfile(currentUser, { photoURL: downloadURL });
+    console.log("Auth profile updated!");
+    
+    // Also update in Firestore
+    const userRef = doc(db, "user", userId);
+    await updateDoc(userRef, { photoURL: downloadURL });
+    console.log("Firestore profile updated!");
+    
     return downloadURL;
   } catch (error) {
     console.error("Error uploading profile image:", error);
+    if (error.code) {
+      console.error("Error code:", error.code);
+    }
     throw error;
   }
 };
 
 // Update user profile data
-export const updateUserProfile = async (userId, profileData, profileImage = null) => {
+export const updateUserProfile = async (profileData, profileImage = null) => {
   try {
-    const userRef = doc(db, "users", userId);
+    // Make sure user is logged in
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    const userRef = doc(db, "user", userId);
     
     // Upload profile image if provided
-    let photoURL = null;
     if (profileImage) {
-      photoURL = await uploadProfileImage(userId, profileImage);
-      
-      // Update user auth profile
-      const currentUser = auth.currentUser;
-      if (currentUser) {
-        await updateProfile(currentUser, { photoURL });
-      }
+      await uploadProfileImage(profileImage);
     }
     
     // Update profile data in Firestore
@@ -82,7 +118,6 @@ export const updateUserProfile = async (userId, profileData, profileImage = null
         allergies: profileData.allergies,
         dietaryRestrictions: profileData.dietaryRestrictions
       },
-      ...(photoURL && { photoURL }),
       updatedAt: new Date().toISOString()
     });
     
@@ -94,9 +129,16 @@ export const updateUserProfile = async (userId, profileData, profileImage = null
 };
 
 // Get saved recipes
-export const getSavedRecipes = async (userId) => {
+export const getSavedRecipes = async () => {
   try {
-    const userRef = doc(db, "users", userId);
+    // Make sure user is logged in
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    const userRef = doc(db, "user", userId);
     const docSnap = await getDoc(userRef);
     
     if (docSnap.exists()) {
@@ -111,9 +153,16 @@ export const getSavedRecipes = async (userId) => {
 };
 
 // Save a recipe
-export const saveRecipe = async (userId, recipe) => {
+export const saveRecipe = async (recipe) => {
   try {
-    const userRef = doc(db, "users", userId);
+    // Make sure user is logged in
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    const userRef = doc(db, "user", userId);
     const docSnap = await getDoc(userRef);
     
     if (docSnap.exists()) {
@@ -140,9 +189,16 @@ export const saveRecipe = async (userId, recipe) => {
 };
 
 // Remove a saved recipe
-export const removeRecipe = async (userId, recipeId) => {
+export const removeRecipe = async (recipeId) => {
   try {
-    const userRef = doc(db, "users", userId);
+    // Make sure user is logged in
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      throw new Error("User not authenticated");
+    }
+    
+    const userId = currentUser.uid;
+    const userRef = doc(db, "user", userId);
     const docSnap = await getDoc(userRef);
     
     if (docSnap.exists()) {

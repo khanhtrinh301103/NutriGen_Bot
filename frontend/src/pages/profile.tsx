@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from './components/common/layout';
 import { auth } from '../api/firebaseConfig';
-import { getUserProfile, updateUserProfile } from '../api/profile';
+import { getUserProfile } from '../api/profile';
 import { signOutUser } from '../api/authService';
 
 const ProfilePage: React.FC = () => {
@@ -11,39 +11,34 @@ const ProfilePage: React.FC = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
-  const [formData, setFormData] = useState({
-    height: '',
-    weight: '',
-    age: '',
-    gender: 'Male',
-    activityLevel: 'Sedentary',
-    goal: 'Weight Maintenance',
-    allergies: []
-  });
-  const [profileImage, setProfileImage] = useState(null);
-const [imagePreview, setImagePreview] = useState<string>('');
-
+  const [profileData, setProfileData] = useState(null);
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
-        setImagePreview(currentUser.photoURL || '');
+        
         try {
-          const profileData = await getUserProfile(currentUser.uid);
-          if (profileData && profileData.healthProfile) {
-            setFormData({
-              height: profileData.healthProfile.height || '',
-              weight: profileData.healthProfile.weight || '',
-              age: profileData.healthProfile.age || '',
-              gender: profileData.healthProfile.gender || 'Male',
-              activityLevel: profileData.healthProfile.activityLevel || 'Sedentary',
-              goal: profileData.healthProfile.goal || 'Weight Maintenance',
-              allergies: profileData.healthProfile.allergies || []
-            });
+          // Get user profile data
+          const userData = await getUserProfile(currentUser.uid);
+          setProfileData(userData);
+          
+          // Check if required health profile fields are empty
+          if (!userData || 
+              !userData.healthProfile || 
+              !userData.healthProfile.height || 
+              !userData.healthProfile.weight || 
+              !userData.healthProfile.age) {
+            
+            console.log("Health profile incomplete, redirecting to onboarding...");
+            router.push('/auth/onboarding');
+            return;
           }
+          
         } catch (error) {
           console.error("Error loading profile:", error);
         }
+        
         setLoading(false);
       } else {
         // Redirect to login if not authenticated
@@ -56,41 +51,6 @@ const [imagePreview, setImagePreview] = useState<string>('');
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setProfileImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setImagePreview(reader.result);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!user) return;
-
-    try {
-      await updateUserProfile(user.uid, formData, profileImage);
-      alert('Profile updated successfully!');
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      alert('Failed to update profile. Please try again.');
-    }
   };
 
   const handleSignOut = async () => {
@@ -120,8 +80,8 @@ const [imagePreview, setImagePreview] = useState<string>('');
         <div className="bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-6 flex justify-between items-center rounded-xl overflow-hidden">
           <div className="flex items-center">
             <div className="mr-4">
-              {imagePreview ? (
-                <img src={imagePreview} alt="Profile" className="h-16 w-16 rounded-full object-cover border-2 border-white" />
+              {user?.photoURL ? (
+                <img src={user.photoURL} alt="Profile" className="h-16 w-16 rounded-full object-cover border-2 border-white" />
               ) : (
                 <div className="bg-white p-2 rounded-full">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -133,7 +93,7 @@ const [imagePreview, setImagePreview] = useState<string>('');
             <div>
               <h1 className="text-2xl font-bold text-white">My Profile</h1>
               <p className="text-white">
-                {user.displayName || user.email}
+                {user?.displayName || user?.email}
               </p>
             </div>
           </div>
@@ -184,191 +144,73 @@ const [imagePreview, setImagePreview] = useState<string>('');
           <div className="mt-6">
             {activeTab === 'profile' && (
               <div className="max-w-4xl mx-auto">
-                <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 mb-6">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <svg className="h-5 w-5 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                      </svg>
-                    </div>
-                    <div className="ml-3">
-                      <p className="text-sm text-emerald-700">
-                        Complete your health profile to get personalized recipes and nutrition recommendations.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Profile Picture Section */}
-                <div className="mb-8">
-                  <h2 className="text-xl font-semibold mb-4">Profile Picture</h2>
-                  <div className="flex items-center">
-                    <div className="mr-6">
-                      {imagePreview ? (
-                        <img src={imagePreview} alt="Profile Preview" className="h-24 w-24 rounded-full object-cover" />
-                      ) : (
-                        <div className="h-24 w-24 rounded-full bg-gray-200 flex items-center justify-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <label className="block">
-                        <span className="sr-only">Choose profile photo</span>
-                        <input 
-                          type="file" 
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="block w-full text-sm text-gray-500
-                            file:mr-4 file:py-2 file:px-4
-                            file:rounded-md file:border-0
-                            file:text-sm file:font-semibold
-                            file:bg-emerald-50 file:text-emerald-700
-                            hover:file:bg-emerald-100
-                          "
-                        />
-                      </label>
-                      <p className="mt-1 text-xs text-gray-500">PNG, JPG up to 2MB</p>
-                    </div>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSubmit}>
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label htmlFor="height" className="block mb-2">Height (cm)</label>
-                        <input
-                          type="number"
-                          id="height"
-                          name="height"
-                          value={formData.height}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="weight" className="block mb-2">Weight (kg)</label>
-                        <input
-                          type="number"
-                          id="weight"
-                          name="weight"
-                          value={formData.weight}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="age" className="block mb-2">Age</label>
-                        <input
-                          type="number"
-                          id="age"
-                          name="age"
-                          value={formData.age}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor="gender" className="block mb-2">Gender</label>
-                        <select
-                          id="gender"
-                          name="gender"
-                          value={formData.gender}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        >
-                          <option value="Male">Male</option>
-                          <option value="Female">Female</option>
-                          <option value="Other">Other</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Activity & Goals</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label htmlFor="activityLevel" className="block mb-2">Activity Level</label>
-                        <select
-                          id="activityLevel"
-                          name="activityLevel"
-                          value={formData.activityLevel}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        >
-                          <option value="Sedentary">Sedentary (little or no exercise)</option>
-                          <option value="Lightly Active">Lightly active (light exercise 1-3 days/week)</option>
-                          <option value="Moderately Active">Moderately active (moderate exercise 3-5 days/week)</option>
-                          <option value="Very Active">Very active (hard exercise 6-7 days/week)</option>
-                          <option value="Extremely Active">Extremely active (very hard exercise & physical job)</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label htmlFor="goal" className="block mb-2">Goal</label>
-                        <select
-                          id="goal"
-                          name="goal"
-                          value={formData.goal}
-                          onChange={handleChange}
-                          className="w-full p-2 border border-gray-300 rounded"
-                        >
-                          <option value="Weight Loss">Weight Loss</option>
-                          <option value="Weight Maintenance">Weight Maintenance</option>
-                          <option value="Weight Gain">Weight Gain</option>
-                          <option value="Muscle Gain">Muscle Gain</option>
-                          <option value="Improve Health">Improve Health</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Allergies & Dietary Restrictions</h2>
-                    <p className="mb-4">Select any allergies to exclude them from your recipe recommendations.</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {['Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood', 'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'].map((allergy) => (
-                        <div key={allergy} className="flex items-center">
-                          <input
-                            type="checkbox"
-                            id={`allergy-${allergy}`}
-                            name="allergies"
-                            value={allergy}
-                            checked={formData.allergies.includes(allergy)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFormData({
-                                  ...formData,
-                                  allergies: [...formData.allergies, allergy]
-                                });
-                              } else {
-                                setFormData({
-                                  ...formData,
-                                  allergies: formData.allergies.filter(a => a !== allergy)
-                                });
-                              }
-                            }}
-                            className="mr-2"
-                          />
-                          <label htmlFor={`allergy-${allergy}`}>{allergy}</label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="text-center">
-                    <button
-                      type="submit"
-                      className="btn-primary hover:bg-emerald-700"
+                <div className="bg-white p-6 rounded-lg shadow-md">
+                  <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Your Health Profile</h2>
+                    <button 
+                      onClick={() => router.push('/auth/onboarding')}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
                     >
-                      Save Profile
+                      Edit Profile
                     </button>
                   </div>
-                </form>
+                  
+                  {profileData && profileData.healthProfile && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <h3 className="text-md font-medium text-gray-700 mb-2">Basic Information</h3>
+                        <div className="bg-gray-50 p-4 rounded-md">
+                          <p className="mb-2"><span className="font-medium">Height:</span> {profileData.healthProfile.height} cm</p>
+                          <p className="mb-2"><span className="font-medium">Weight:</span> {profileData.healthProfile.weight} kg</p>
+                          <p className="mb-2"><span className="font-medium">Age:</span> {profileData.healthProfile.age}</p>
+                          <p><span className="font-medium">Gender:</span> {profileData.healthProfile.gender}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-md font-medium text-gray-700 mb-2">Activity & Goals</h3>
+                        <div className="bg-gray-50 p-4 rounded-md">
+                          <p className="mb-2"><span className="font-medium">Activity Level:</span> {profileData.healthProfile.activityLevel}</p>
+                          <p><span className="font-medium">Goal:</span> {profileData.healthProfile.goal}</p>
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-md font-medium text-gray-700 mb-2">Allergies</h3>
+                        <div className="bg-gray-50 p-4 rounded-md">
+                          {profileData.healthProfile.allergies && profileData.healthProfile.allergies.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {profileData.healthProfile.allergies.map((allergy, index) => (
+                                <span key={index} className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                                  {allergy}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">No allergies specified</p>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-md font-medium text-gray-700 mb-2">Dietary Restrictions</h3>
+                        <div className="bg-gray-50 p-4 rounded-md">
+                          {profileData.healthProfile.dietaryRestrictions && profileData.healthProfile.dietaryRestrictions.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {profileData.healthProfile.dietaryRestrictions.map((diet, index) => (
+                                <span key={index} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                  {diet}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">No dietary restrictions specified</p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -382,12 +224,12 @@ const [imagePreview, setImagePreview] = useState<string>('');
                   </div>
                   <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {formData.weight && formData.height && formData.age ? (
+                      {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
                         <>
                           <div className="bg-emerald-50 p-4 rounded-lg text-center">
                             <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
                             <div className="text-2xl font-bold text-emerald-600 mt-2">
-                              {calculateBMR(formData)} calories
+                              {calculateBMR(profileData.healthProfile)} calories
                             </div>
                             <p className="text-xs text-gray-500 mt-1">Calories you burn at rest</p>
                           </div>
@@ -395,7 +237,7 @@ const [imagePreview, setImagePreview] = useState<string>('');
                           <div className="bg-blue-50 p-4 rounded-lg text-center">
                             <h4 className="text-sm font-medium text-gray-500">Total Daily Energy</h4>
                             <div className="text-2xl font-bold text-blue-600 mt-2">
-                              {calculateTDEE(formData)} calories
+                              {calculateTDEE(profileData.healthProfile)} calories
                             </div>
                             <p className="text-xs text-gray-500 mt-1">Calories you burn daily with activity</p>
                           </div>
@@ -403,11 +245,11 @@ const [imagePreview, setImagePreview] = useState<string>('');
                           <div className="bg-purple-50 p-4 rounded-lg text-center">
                             <h4 className="text-sm font-medium text-gray-500">Target Daily Calories</h4>
                             <div className="text-2xl font-bold text-purple-600 mt-2">
-                              {calculateTarget(formData)} calories
+                              {calculateTarget(profileData.healthProfile)} calories
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                              {formData.goal === 'Weight Loss' ? 'For weight loss' : 
-                               formData.goal === 'Weight Gain' ? 'For weight gain' : 
+                              {profileData.healthProfile.goal === 'Weight Loss' ? 'For weight loss' : 
+                               profileData.healthProfile.goal === 'Weight Gain' ? 'For weight gain' : 
                                'For maintenance'}
                             </p>
                           </div>
@@ -433,10 +275,13 @@ const [imagePreview, setImagePreview] = useState<string>('');
                   </svg>
                   <h3 className="text-lg font-medium text-gray-900">No saved recipes</h3>
                   <p className="mt-2 text-sm text-gray-500">
-                    You havent saved any recipes yet. Start exploring recipes and save your favorites!
+                    You have not saved any recipes yet. Start exploring recipes and save your favorites!
                   </p>
                   <div className="mt-6">
-                    <button className="btn-primary hover:bg-emerald-700">
+                    <button 
+                      onClick={() => router.push('/recipes')}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
+                    >
                       Find Recipes
                     </button>
                   </div>
@@ -451,11 +296,11 @@ const [imagePreview, setImagePreview] = useState<string>('');
 };
 
 // Function to calculate BMR (Basal Metabolic Rate) using the Mifflin-St Jeor Equation
-function calculateBMR(formData) {
-  const weight = Number(formData.weight);
-  const height = Number(formData.height);
-  const age = Number(formData.age);
-  const gender = formData.gender;
+function calculateBMR(healthProfile) {
+  const weight = Number(healthProfile.weight);
+  const height = Number(healthProfile.height);
+  const age = Number(healthProfile.age);
+  const gender = healthProfile.gender;
   
   if (!weight || !height || !age) return 0;
   
@@ -467,9 +312,9 @@ function calculateBMR(formData) {
 }
 
 // Function to calculate TDEE (Total Daily Energy Expenditure)
-function calculateTDEE(formData) {
-  const bmr = calculateBMR(formData);
-  const activityLevel = formData.activityLevel;
+function calculateTDEE(healthProfile) {
+  const bmr = calculateBMR(healthProfile);
+  const activityLevel = healthProfile.activityLevel;
   
   let activityMultiplier = 1.2; // Sedentary
   
@@ -494,9 +339,9 @@ function calculateTDEE(formData) {
 }
 
 // Function to calculate target calories based on goal
-function calculateTarget(formData) {
-  const tdee = calculateTDEE(formData);
-  const goal = formData.goal;
+function calculateTarget(healthProfile) {
+  const tdee = calculateTDEE(healthProfile);
+  const goal = healthProfile.goal;
   
   switch (goal) {
     case 'Weight Loss':
