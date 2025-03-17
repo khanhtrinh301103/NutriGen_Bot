@@ -1,8 +1,6 @@
 // frontend/src/api/profile.js
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth, storage } from "./firebaseConfig";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { updateProfile } from "firebase/auth";
+import { db, auth } from "./firebaseConfig";
 
 // Get user profile data
 export const getUserProfile = async (userId) => {
@@ -38,59 +36,8 @@ export const getUserProfile = async (userId) => {
   }
 };
 
-// Upload profile image and get URL
-export const uploadProfileImage = async (imageFile) => {
-  try {
-    // Make sure user is logged in
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      throw new Error("User not authenticated");
-    }
-    
-    const userId = currentUser.uid;
-    
-    // Create unique filename to prevent overwriting
-    const fileName = `profile-${userId}-${Date.now()}`;
-    
-    // Storage reference should match your Firebase Storage bucket
-    const storageRef = ref(storage, `profile-images/${fileName}`);
-    
-    console.log("Uploading file to storage...");
-    
-    // Upload the file with metadata
-    const metadata = {
-      contentType: imageFile.type,
-    };
-    
-    // Upload the file
-    const uploadTask = await uploadBytes(storageRef, imageFile, metadata);
-    console.log("File uploaded successfully!");
-    
-    // Get download URL
-    const downloadURL = await getDownloadURL(uploadTask.ref);
-    console.log("Download URL obtained:", downloadURL);
-    
-    // Update user profile photo URL in auth
-    await updateProfile(currentUser, { photoURL: downloadURL });
-    console.log("Auth profile updated!");
-    
-    // Also update in Firestore
-    const userRef = doc(db, "user", userId);
-    await updateDoc(userRef, { photoURL: downloadURL });
-    console.log("Firestore profile updated!");
-    
-    return downloadURL;
-  } catch (error) {
-    console.error("Error uploading profile image:", error);
-    if (error.code) {
-      console.error("Error code:", error.code);
-    }
-    throw error;
-  }
-};
-
 // Update user profile data
-export const updateUserProfile = async (profileData, profileImage = null) => {
+export const updateUserProfile = async (userId, profileData) => {
   try {
     // Make sure user is logged in
     const currentUser = auth.currentUser;
@@ -98,13 +45,7 @@ export const updateUserProfile = async (profileData, profileImage = null) => {
       throw new Error("User not authenticated");
     }
     
-    const userId = currentUser.uid;
     const userRef = doc(db, "user", userId);
-    
-    // Upload profile image if provided
-    if (profileImage) {
-      await uploadProfileImage(profileImage);
-    }
     
     // Update profile data in Firestore
     await updateDoc(userRef, {
@@ -115,8 +56,8 @@ export const updateUserProfile = async (profileData, profileImage = null) => {
         gender: profileData.gender,
         activityLevel: profileData.activityLevel,
         goal: profileData.goal,
-        allergies: profileData.allergies,
-        dietaryRestrictions: profileData.dietaryRestrictions
+        allergies: profileData.allergies || [],
+        dietaryRestrictions: profileData.dietaryRestrictions || []
       },
       updatedAt: new Date().toISOString()
     });
