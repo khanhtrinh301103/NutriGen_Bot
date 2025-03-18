@@ -29,12 +29,12 @@ const Signup = () => {
       setError("Passwords do not match.");
       return;
     }
-
+  
     try {
       setError('');
       setLoading(true);
       await registerUser(formData);
-      router.push('/');
+      router.push('/auth/login');
     } catch (err) {
       console.error('Signup error:', err);
       setError(err.message || 'Failed to create account. Please try again.');
