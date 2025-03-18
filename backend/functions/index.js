@@ -1,26 +1,13 @@
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const axios = require("axios");
+const express = require('express');
+const cors = require('cors');
+const uploadPhotoRoute = require('./uploadPhoto'); // Import API upload ảnh
 
-admin.initializeApp();
+const app = express();
+app.use(cors());
+app.use(express.json());
+app.use('/api', uploadPhotoRoute); // Gọi API upload ảnh
 
-const SPOONACULAR_API_KEY = "026008f475974904a5fff1f27ac6a23c"; // Thay bằng API key thật
-
-exports.getRecipe = functions.https.onRequest(async (req, res) => {
-  try {
-    const { query } = req.query; // Lấy từ khóa tìm kiếm từ query params
-    if (!query) {
-      return res.status(400).json({ error: "Missing 'query' parameter" });
-    }
-
-    // Gọi API từ Spoonacular
-    const response = await axios.get(
-      `https://api.spoonacular.com/recipes/complexSearch?apiKey=${SPOONACULAR_API_KEY}&query=${query}&number=3`
-    );
-
-    return res.status(200).json(response.data);
-  } catch (error) {
-    console.error("Error fetching recipe:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
-  }
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

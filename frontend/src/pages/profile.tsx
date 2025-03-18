@@ -5,6 +5,7 @@ import Layout from './components/common/layout';
 import { auth } from '../api/firebaseConfig';
 import { getUserProfile, updateUserProfile } from '../api/profile';
 import { signOutUser } from '../api/authService';
+import { updateProfile } from "firebase/auth";
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -59,6 +60,54 @@ const ProfilePage: React.FC = () => {
 
     return () => unsubscribe();
   }, [router]);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        try {
+          const userData = await getUserProfile(currentUser.uid);
+          setProfileData(userData);
+        } catch (error) {
+          console.error("Error loading profile:", error);
+        }
+        setLoading(false);
+      } else {
+        router.push('/auth/login');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
+  // Xử lý Upload Ảnh
+  const handleUploadPhoto = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !user) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("uid", user.uid); // Gửi UID lên backend
+
+    try {
+      const response = await fetch("http://localhost:5000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const data = await response.json();
+      console.log("Uploaded photo URL:", data.photoUrl);
+
+      // Cập nhật ảnh lên Firebase Auth
+      await updateProfile(auth.currentUser, { photoURL: data.photoUrl });
+
+      // Cập nhật UI
+      setUser({ ...user, photoURL: data.photoUrl });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+    }
+  };
 
   // Initialize edit data when profile data is loaded
   useEffect(() => {
@@ -161,26 +210,42 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-6 flex justify-between items-center rounded-xl overflow-hidden">
-          <div className="flex items-center">
-            <div className="mr-4">
-              {user?.photoURL ? (
-                <img src={user.photoURL} alt="Profile" className="h-16 w-16 rounded-full object-cover border-2 border-white" />
-              ) : (
-                <div className="bg-white p-2 rounded-full">
+        <div className="bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-6 flex justify-between items-center rounded-xl">
+        <div className="flex items-center">
+          <div className="mr-4 relative">
+            {/* Input file ẩn, chỉ mở khi user click vào avatar */}
+            <input 
+              type="file" 
+              onChange={handleUploadPhoto} 
+              className="hidden" 
+              id="profile-image-input"
+            />
+            
+            {/* Khi user click vào ảnh, sẽ kích hoạt input file */}
+            {user?.photoURL ? (
+              <label htmlFor="profile-image-input" className="cursor-pointer">
+                <img 
+                  src={user.photoURL} 
+                  alt="Profile" 
+                  className="h-16 w-16 rounded-full object-cover border-2 border-white cursor-pointer"
+                />
+              </label>
+            ) : (
+              <label htmlFor="profile-image-input" className="cursor-pointer">
+                <div className="bg-white p-2 rounded-full flex items-center justify-center w-16 h-16 border-2 border-white">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 </div>
-              )}
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-white">My Profile</h1>
-              <p className="text-white">
-                {user?.displayName || user?.email}
-              </p>
-            </div>
+              </label>
+            )}
           </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">My Profile</h1>
+            <p className="text-white">{user?.displayName || user?.email}</p>
+          </div>
+        </div>
+
           
           {/* Sign Out Button */}
           <button 

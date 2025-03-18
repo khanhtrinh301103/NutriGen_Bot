@@ -14,7 +14,8 @@ npm install
 
 backend:
 cd D:\SEPM\NutriGen_Bot\backend
-firebase emulators:start
+node index.js
+
 
 Frontend:
 cd D:\SEPM\NutriGen_Bot\frontend
@@ -37,6 +38,8 @@ NutriGen_Bot/
 │   │   ├── node_modules/
 │   │   ├── .gitignore
 │   │   ├── index.js
+│   │   ├── uploadPhoto.js
+│   │   ├── firestore-debug.log
 │   │   ├── package-lock.json
 │   │   ├── package.json
 │   ├── src/
@@ -46,6 +49,7 @@ NutriGen_Bot/
 │   ├── .firebaserc
 │   ├── .gitignore
 │   ├── firebase.json
+│   ├── firebase-debug.log
 │   ├── package-lock.json
 │   ├── package.json
 │
