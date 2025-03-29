@@ -34,7 +34,7 @@ NutriGen_Bot/
 │   │   ├── schema/
 │   │   │   ├── schema.gql
 │   │   │   ├── dataconnect.yaml
-│   ├── functions/
+│   ├── functions/ (backend workspace here)
 │   │   ├── node_modules/
 │   │   ├── .gitignore
 │   │   ├── index.js
@@ -63,7 +63,7 @@ NutriGen_Bot/
 │   │   ├── next.svg
 │   │   ├── vercel.svg
 │   │   ├── window.svg
-│   ├── src/
+│   ├── src/ (frontend workspace here)
 │   │   ├── api/
 │   │   │   ├── authService.js
 │   │   │   ├── firebaseConfig.js
