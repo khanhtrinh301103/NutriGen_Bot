@@ -66,11 +66,12 @@ NutriGen_Bot/
 │   ├── src/ (frontend workspace here)
 │   │   ├── api/
 │   │   │   ├── authService.js
+│   │   │   ├── blogService.js
 │   │   │   ├── firebaseConfig.js
+│   │   │   ├── getRecipe.js
 │   │   │   ├── login.js
 │   │   │   ├── profile.js
 │   │   │   ├── signup.js
-│   │   │   ├── getRecipe.js
 │   │   ├── pages/
 │   │   │   ├── auth/
 │   │   │   │   ├── login.tsx
