@@ -71,14 +71,17 @@ NutriGen_Bot/
 │   │   │   ├── getRecipe.js
 │   │   │   ├── login.js
 │   │   │   ├── profile.js
+│   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
 │   │   ├── pages/
 │   │   │   ├── auth/
+│   │   │   │   ├── forgotPassword.tsx
 │   │   │   │   ├── login.tsx
 │   │   │   │   ├── signup.tsx
 │   │   │   │   ├── onboarding.tsx
 │   │   │   ├── components/
 │   │   │   │   ├── common/
+│   │   │   │   │   ├── BottomNav.tsx
 │   │   │   │   │   ├── footer.tsx
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx
