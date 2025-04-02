@@ -39,6 +39,7 @@ NutriGen_Bot/
 │   │   ├── .gitignore
 │   │   ├── index.js
 │   │   ├── uploadPhoto.js
+│   │   ├── searchRecipe.js
 │   │   ├── firestore-debug.log
 │   │   ├── package-lock.json
 │   │   ├── package.json
@@ -85,13 +86,16 @@ NutriGen_Bot/
 │   │   │   │   │   ├── footer.tsx
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx
-│   │   │   ├── recipes/
+│   │   │   ├── recipe/
+│   │   │   │   ├── Filter.tsx
 │   │   │   │   ├── [id].tsx
+│   │   │   │   ├── RecipeCard.tsx
 │   │   │   ├── _app.tsx
 │   │   │   ├── _document.tsx
 │   │   │   ├── index.tsx
 │   │   │   ├── about.tsx
 │   │   │   ├── profile.tsx
+│   │   │   ├── recipes.tsx
 │   │   ├── styles/
 │   │   │   ├── globals.css
 │   ├── .gitignore
