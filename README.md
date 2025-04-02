@@ -66,18 +66,22 @@ NutriGen_Bot/
 │   ├── src/ (frontend workspace here)
 │   │   ├── api/
 │   │   │   ├── authService.js
+│   │   │   ├── blogService.js
 │   │   │   ├── firebaseConfig.js
+│   │   │   ├── getRecipe.js
 │   │   │   ├── login.js
 │   │   │   ├── profile.js
+│   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
-│   │   │   ├── getRecipe.js
 │   │   ├── pages/
 │   │   │   ├── auth/
+│   │   │   │   ├── forgotPassword.tsx
 │   │   │   │   ├── login.tsx
 │   │   │   │   ├── signup.tsx
 │   │   │   │   ├── onboarding.tsx
 │   │   │   ├── components/
 │   │   │   │   ├── common/
+│   │   │   │   │   ├── BottomNav.tsx
 │   │   │   │   │   ├── footer.tsx
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx

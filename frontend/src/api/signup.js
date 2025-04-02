@@ -13,6 +13,7 @@ export const registerUser = async ({ email, password, displayName }) => {
     await setDoc(doc(db, "user", user.uid), { 
       email, 
       fullName: displayName,
+      provider: "password",
       healthProfile: {
         height: '',
         weight: '',
@@ -45,6 +46,7 @@ export const signUpWithGoogle = async () => {
     await setDoc(doc(db, "user", user.uid), { 
       email: user.email, 
       fullName: user.displayName,
+      provider: "google",
       healthProfile: {
         height: '',
         weight: '',
