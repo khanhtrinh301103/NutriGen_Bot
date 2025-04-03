@@ -9,6 +9,8 @@ const Filter: React.FC<FilterProps> = ({ onChange }) => {
     cuisine: "",
   });
 
+  const [showFilters, setShowFilters] = useState(false);
+
   const cuisineOptions = [
     { value: "", label: "All" },
     { value: "african", label: "African" },
@@ -50,71 +52,84 @@ const Filter: React.FC<FilterProps> = ({ onChange }) => {
   };
 
   return (
-    <div className="p-4 bg-gray-50 rounded-lg shadow-sm">
-      <h3 className="font-medium text-[#4b7e53] mb-3">Cuisine</h3>
+    <div className="bg-white border border-gray-200 rounded-lg md:rounded-l-none md:border-r md:border-t md:border-b h-full">
+      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
+        <h3 className="text-[#4b7e53] font-medium">Cuisine</h3>
+        {/* Toggle button only visible on small screens */}
+        <button 
+          className="md:hidden text-gray-500 p-1"
+          onClick={() => setShowFilters(!showFilters)}
+          aria-label={showFilters ? "Hide filters" : "Show filters"}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {showFilters ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            )}
+          </svg>
+        </button>
+      </div>
       
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 lg:grid-cols-2">
-        {/* "All" option gets its own line and is wider */}
-        <div className="col-span-2 md:col-span-3 lg:col-span-2 mb-1">
+      <div className={`p-2 space-y-1 overflow-visible ${showFilters ? 'block' : 'hidden md:block'}`}>
+        {/* "All" option gets full width and different styling */}
+        <div 
+          className={`
+            p-1.5 rounded-md cursor-pointer flex items-center space-x-2
+            transition-all duration-200 
+            ${filters.cuisine === "" 
+              ? "bg-[#edf5ef] border-[#4b7e53] text-[#4b7e53] border" 
+              : "bg-white border-gray-200 hover:bg-gray-50 border"
+            }
+          `}
+          onClick={() => handleCuisineChange("")}
+        >
           <div 
             className={`
-              p-2 rounded-md cursor-pointer flex items-center space-x-2
-              transition-all duration-200 
+              w-4 h-4 rounded-full border flex items-center justify-center
               ${filters.cuisine === "" 
+                ? "border-[#4b7e53]" 
+                : "border-gray-400"
+              }
+            `}
+          >
+            {filters.cuisine === "" && (
+              <div className="w-2 h-2 rounded-full bg-[#4b7e53]"></div>
+            )}
+          </div>
+          
+          <span className="text-sm font-medium">All</span>
+        </div>
+
+        {/* Other cuisine options */}
+        {cuisineOptions.slice(1).map((option) => (
+          <div 
+            key={option.value}
+            className={`
+              p-1.5 rounded-md cursor-pointer flex items-center space-x-2
+              transition-all duration-200 
+              ${filters.cuisine === option.value 
                 ? "bg-[#edf5ef] border-[#4b7e53] text-[#4b7e53] border" 
                 : "bg-white border-gray-200 hover:bg-gray-50 border"
               }
             `}
-            onClick={() => handleCuisineChange("")}
+            onClick={() => handleCuisineChange(option.value)}
           >
             <div 
               className={`
                 w-4 h-4 rounded-full border flex items-center justify-center
-                ${filters.cuisine === "" 
+                ${filters.cuisine === option.value 
                   ? "border-[#4b7e53]" 
                   : "border-gray-400"
                 }
               `}
             >
-              {filters.cuisine === "" && (
+              {filters.cuisine === option.value && (
                 <div className="w-2 h-2 rounded-full bg-[#4b7e53]"></div>
               )}
             </div>
             
-            <span className="text-sm font-medium">All</span>
-          </div>
-        </div>
-
-        {/* Rest of cuisine options in grid layout */}
-        {cuisineOptions.slice(1).map((option) => (
-          <div key={option.value}>
-            <div 
-              className={`
-                p-2 rounded-md cursor-pointer flex items-center space-x-2
-                transition-all duration-200 h-full
-                ${filters.cuisine === option.value 
-                  ? "bg-[#edf5ef] border-[#4b7e53] text-[#4b7e53] border" 
-                  : "bg-white border-gray-200 hover:bg-gray-50 border"
-                }
-              `}
-              onClick={() => handleCuisineChange(option.value)}
-            >
-              <div 
-                className={`
-                  min-w-4 h-4 rounded-full border flex items-center justify-center
-                  ${filters.cuisine === option.value 
-                    ? "border-[#4b7e53]" 
-                    : "border-gray-400"
-                  }
-                `}
-              >
-                {filters.cuisine === option.value && (
-                  <div className="w-2 h-2 rounded-full bg-[#4b7e53]"></div>
-                )}
-              </div>
-              
-              <span className="text-sm truncate">{option.label}</span>
-            </div>
+            <span className="text-sm">{option.label}</span>
           </div>
         ))}
       </div>

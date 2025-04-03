@@ -91,11 +91,11 @@ const RecipesPage = () => {
   return (
     <>
       <Header />
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-6 text-[#4b7e53]">Find Your Recipe</h1>
+      <main className="w-full mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6 text-center text-[#4b7e53]">Find Your Recipe</h1>
 
-        {/* Search bar */}
-        <div className="mb-6">
+        {/* Centered search bar at the top - responsive padding */}
+        <div className="mb-6 md:mb-8 px-2 sm:px-4 md:max-w-xl md:mx-auto">
           <div className="relative">
             <input
               type="text"
@@ -114,22 +114,26 @@ const RecipesPage = () => {
           </div>
         </div>
 
-        {/* Responsive layout with filter and result */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filter: full width on mobile, left side on desktop */}
-          <div className="w-full lg:w-1/4">
+        {/* Responsive layout that adapts to all screen sizes */}
+        <div className="flex flex-col md:flex-row">
+          {/* Filter sidebar - full width on mobile, fixed width on larger screens */}
+          <div className="w-full md:w-64 shrink-0 mb-6 md:mb-0">
             <Filter onChange={handleFilterChange} />
           </div>
 
-          {/* Results */}
-          <div className="w-full lg:w-3/4 min-h-[400px] results-container">
+          {/* Results area taking all available space */}
+          <div className="w-full min-h-[400px] results-container px-2 sm:px-4 md:px-6">
             {isLoading ? (
               <div className="flex justify-center items-center h-40">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-[#4b7e53]"></div>
               </div>
             ) : results.length > 0 ? (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                <div className="text-sm text-gray-500 mb-4">
+                  {results.length} {results.length === 1 ? 'recipe' : 'recipes'} found
+                </div>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
                   {currentRecipes.map((recipe, idx) => (
                     <RecipeCard 
                       key={`${indexOfFirstRecipe + idx}-${recipe.title}`} 
