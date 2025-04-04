@@ -48,13 +48,21 @@ const OnboardingPage = () => {
     // Validate current step
     if (activeStep === 1) {
       if (!formData.height || !formData.weight || !formData.age) {
-        setError('Please fill out all fields to continue.');
+        setError('Please fill out all required fields.');
+        return;
+      }
+    } else if (activeStep === 2) {
+      if (!formData.activityLevel || !formData.goal) {
+        setError('Please select your activity level and goal.');
         return;
       }
     }
     
+    // Add small delay for smooth transition
     setError('');
-    setActiveStep(activeStep + 1);
+    setTimeout(() => {
+      setActiveStep(activeStep + 1);
+    }, 100);
   };
 
   const handleBack = () => {
@@ -72,8 +80,8 @@ const OnboardingPage = () => {
       
       await updateUserProfile(user.uid, formData);
       
-      // Redirect to home page or profile page
-      router.push('/');
+      // Redirect to profile page instead of home page
+      router.push('/profile');
     } catch (err) {
       console.error('Error saving health profile:', err);
       setError('Failed to save your health profile. Please try again.');
@@ -188,7 +196,6 @@ const OnboardingPage = () => {
                     >
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
-                      <option value="Other">Other</option>
                     </select>
                   </div>
                 </div>
@@ -321,48 +328,64 @@ const OnboardingPage = () => {
             )}
             
             {/* Navigation Buttons */}
-            <div className="mt-8 flex justify-between">
+            <div className="mt-12 pb-8 px-6 flex justify-between items-center border-t border-gray-100 pt-6">
               {activeStep > 1 ? (
                 <button
                   type="button"
                   onClick={handleBack}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="inline-flex items-center px-6 py-3 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200"
                 >
+                  <svg 
+                    className="mr-2 h-4 w-4" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
                   Back
                 </button>
               ) : (
-                <div></div> // Empty div to maintain flex spacing
+                <div></div>
               )}
               
               {activeStep < 3 ? (
                 <button
                   type="button"
                   onClick={handleNext}
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700"
+                  className="inline-flex items-center px-6 py-3 border border-transparent rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200"
                 >
                   Next
+                  <svg 
+                    className="ml-2 h-4 w-4" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               ) : (
                 <button
                   type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700"
+                  className="inline-flex items-center px-6 py-3 border border-transparent rounded-md text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200"
                 >
                   Complete Setup
+                  <svg 
+                    className="ml-2 h-4 w-4" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </button>
               )}
             </div>
           </form>
-          
-          {/* Skip Button */}
-          <div className="px-6 pb-6 text-center">
-            <button 
-              type="button" 
-              onClick={() => router.push('/')}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              Skip for now
-            </button>
-          </div>
         </div>
       </div>
     </Layout>

@@ -1,7 +1,11 @@
 import React, { useState } from "react";
 
+interface Filters {
+  cuisine: string;
+}
+
 interface FilterProps {
-  onChange: (filters: any) => void;
+  onChange: (filters: Filters) => void;
 }
 
 const Filter: React.FC<FilterProps> = ({ onChange }) => {
@@ -52,16 +56,16 @@ const Filter: React.FC<FilterProps> = ({ onChange }) => {
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg md:rounded-l-none md:border-r md:border-t md:border-b h-full">
-      <div className="p-3 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-[#4b7e53] font-medium">Cuisine</h3>
-        {/* Toggle button only visible on small screens */}
+    <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      {/* Filter Header */}
+      <div className="bg-[#4b7e53] p-4 flex justify-between items-center">
+        <h3 className="text-white font-semibold text-lg">Filters</h3>
         <button 
-          className="md:hidden text-gray-500 p-1"
+          className="md:hidden text-white p-1 hover:bg-[#3a6442] rounded transition-colors duration-200"
           onClick={() => setShowFilters(!showFilters)}
           aria-label={showFilters ? "Hide filters" : "Show filters"}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {showFilters ? (
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             ) : (
@@ -70,68 +74,76 @@ const Filter: React.FC<FilterProps> = ({ onChange }) => {
           </svg>
         </button>
       </div>
-      
-      <div className={`p-2 space-y-1 overflow-visible ${showFilters ? 'block' : 'hidden md:block'}`}>
-        {/* "All" option gets full width and different styling */}
-        <div 
-          className={`
-            p-1.5 rounded-md cursor-pointer flex items-center space-x-2
-            transition-all duration-200 
-            ${filters.cuisine === "" 
-              ? "bg-[#edf5ef] border-[#4b7e53] text-[#4b7e53] border" 
-              : "bg-white border-gray-200 hover:bg-gray-50 border"
-            }
-          `}
-          onClick={() => handleCuisineChange("")}
-        >
-          <div 
-            className={`
-              w-4 h-4 rounded-full border flex items-center justify-center
-              ${filters.cuisine === "" 
-                ? "border-[#4b7e53]" 
-                : "border-gray-400"
-              }
-            `}
-          >
-            {filters.cuisine === "" && (
-              <div className="w-2 h-2 rounded-full bg-[#4b7e53]"></div>
-            )}
-          </div>
-          
-          <span className="text-sm font-medium">All</span>
-        </div>
 
-        {/* Other cuisine options */}
-        {cuisineOptions.slice(1).map((option) => (
-          <div 
-            key={option.value}
-            className={`
-              p-1.5 rounded-md cursor-pointer flex items-center space-x-2
-              transition-all duration-200 
-              ${filters.cuisine === option.value 
-                ? "bg-[#edf5ef] border-[#4b7e53] text-[#4b7e53] border" 
-                : "bg-white border-gray-200 hover:bg-gray-50 border"
-              }
-            `}
-            onClick={() => handleCuisineChange(option.value)}
-          >
+      {/* Cuisine Section */}
+      <div className={`${showFilters ? 'block' : 'hidden md:block'}`}>
+        <div className="p-4 border-b border-gray-100">
+          <h4 className="text-gray-700 font-medium mb-3">Cuisine Type</h4>
+          <div className="space-y-2 max-h-[400px] overflow-y-auto custom-scrollbar">
+            {/* "All" option */}
             <div 
               className={`
-                w-4 h-4 rounded-full border flex items-center justify-center
-                ${filters.cuisine === option.value 
-                  ? "border-[#4b7e53]" 
-                  : "border-gray-400"
+                p-2.5 rounded-lg cursor-pointer flex items-center space-x-3
+                transition-all duration-200 
+                ${filters.cuisine === "" 
+                  ? "bg-[#edf5ef] text-[#4b7e53] ring-1 ring-[#4b7e53]" 
+                  : "hover:bg-gray-50"
                 }
               `}
+              onClick={() => handleCuisineChange("")}
             >
-              {filters.cuisine === option.value && (
-                <div className="w-2 h-2 rounded-full bg-[#4b7e53]"></div>
-              )}
+              <div 
+                className={`
+                  w-5 h-5 rounded-full border-2 flex items-center justify-center
+                  ${filters.cuisine === "" 
+                    ? "border-[#4b7e53]" 
+                    : "border-gray-300"
+                  }
+                `}
+              >
+                {filters.cuisine === "" && (
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#4b7e53]"></div>
+                )}
+              </div>
+              <span className={`text-sm ${filters.cuisine === "" ? "font-medium" : ""}`}>
+                All Cuisines
+              </span>
             </div>
-            
-            <span className="text-sm">{option.label}</span>
+
+            {/* Other cuisine options */}
+            {cuisineOptions.slice(1).map((option) => (
+              <div 
+                key={option.value}
+                className={`
+                  p-2.5 rounded-lg cursor-pointer flex items-center space-x-3
+                  transition-all duration-200 
+                  ${filters.cuisine === option.value 
+                    ? "bg-[#edf5ef] text-[#4b7e53] ring-1 ring-[#4b7e53]" 
+                    : "hover:bg-gray-50"
+                  }
+                `}
+                onClick={() => handleCuisineChange(option.value)}
+              >
+                <div 
+                  className={`
+                    w-5 h-5 rounded-full border-2 flex items-center justify-center
+                    ${filters.cuisine === option.value 
+                      ? "border-[#4b7e53]" 
+                      : "border-gray-300"
+                    }
+                  `}
+                >
+                  {filters.cuisine === option.value && (
+                    <div className="w-2.5 h-2.5 rounded-full bg-[#4b7e53]"></div>
+                  )}
+                </div>
+                <span className={`text-sm ${filters.cuisine === option.value ? "font-medium" : ""}`}>
+                  {option.label}
+                </span>
+              </div>
+            ))}
           </div>
-        ))}
+        </div>
       </div>
     </div>
   );

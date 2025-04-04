@@ -7,6 +7,10 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
 
+interface Filters {
+  cuisine: string;
+}
+
 const RecipesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({ cuisine: "" });
@@ -31,7 +35,7 @@ const RecipesPage = () => {
     console.log("📝 [UI] User typing search keyword:", e.target.value);
   };
 
-  const handleFilterChange = (updatedFilters: any) => {
+  const handleFilterChange = (updatedFilters: Filters) => {
     setFilters(updatedFilters);
     console.log("🧩 [UI] Filters updated:", updatedFilters);
   };
@@ -116,9 +120,11 @@ const RecipesPage = () => {
 
         {/* Responsive layout that adapts to all screen sizes */}
         <div className="flex flex-col md:flex-row">
-          {/* Filter sidebar - full width on mobile, fixed width on larger screens */}
+          {/* Filter sidebar - Sticky on desktop, full width on mobile */}
           <div className="w-full md:w-64 shrink-0 mb-6 md:mb-0">
-            <Filter onChange={handleFilterChange} />
+            <div className="md:sticky md:top-[calc(50vh-250px)] bg-white shadow-md rounded-lg transition-all duration-300">
+              <Filter onChange={handleFilterChange} />
+            </div>
           </div>
 
           {/* Results area taking all available space */}
