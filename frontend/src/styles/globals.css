@@ -2,14 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ✅ 기본 스타일 */
+/* ✅ Base Styles */
 body {
   font-family: 'Poppins', sans-serif;
   background-color: #f8f3e7;
-  color: #333; /* 기본 글자색 */
+  color: #333; /* Default text color */
 }
 
-/* ✅ 버튼 스타일 */
+/* ✅ Button Styles */
 .btn-primary {
   background-color: #4b7e53;
   color: white;
@@ -23,7 +23,7 @@ body {
   background-color: #3a6442;
 }
 
-/* ✅ 헤더 & 푸터 스타일 */
+/* ✅ Header & Footer Styles */
 .header, .footer {
   background-color: #4b7e53;
   color: white;
@@ -38,15 +38,15 @@ body {
   color: white;
 }
 
-/* ✅ 레이아웃 균형 조정 */
+/* ✅ Layout Balance */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 16px;
-  text-align: center; /* 모든 섹션을 중앙 정렬 */
+  text-align: center; /* Center align all sections */
 }
 
-/* ✅ Hero Section (메인 콘텐츠 위치 조정) */
+/* ✅ Hero Section (Main Content Positioning) */
 .hero {
   display: flex;
   justify-content: center;
@@ -64,7 +64,7 @@ body {
   justify-content: center;
 }
 
-/* ✅ 공백 줄이기 */
+/* ✅ Reduce Spacing */
 .section {
   padding: 60px 0;
 }

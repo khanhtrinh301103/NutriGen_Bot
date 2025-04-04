@@ -388,6 +388,9 @@ const OnboardingPage = () => {
           </form>
         </div>
       </div>
+
+      {/* Additional Footer Spacing */}
+      <div className="h-16 bg-white"></div>
     </Layout>
   );
 };

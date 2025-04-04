@@ -12,13 +12,11 @@ const HEADING_STYLES = {
   secondary: "text-3xl font-bold text-[#4b7e53]"
 };
 
-const CARD_STYLES = "bg-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-shadow";
-
 const HomePage = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section className={`${SECTION_STYLES.padding} bg-[#f8f3e7]`}>
+      <section className={`${SECTION_STYLES.padding} bg-gradient-to-b from-[#f8f3e7] via-[#f8f3e7] to-white`}>
         <div className={`${SECTION_STYLES.container} flex flex-col md:flex-row items-center gap-12`}>
           {/* Left Section */}
           <div className="text md:w-1/2">
@@ -53,7 +51,7 @@ const HomePage = () => {
       </section>
 
       {/* Why NutriGen Bot Section */}
-      <section className={`${SECTION_STYLES.padding} bg-white`}>
+      <section className={`${SECTION_STYLES.padding} bg-gradient-to-b from-white to-[#f3f8f4]`}>
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-[#4b7e53] text-2xl font-semibold uppercase tracking-wider text-center mb-2">
             FEATURES
@@ -62,7 +60,7 @@ const HomePage = () => {
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* Feature 1: Personalization */}
-            <div className="bg-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+            <div className="bg-gradient-to-br from-white to-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="mb-4 flex justify-center">
                 <BeakerIcon className="h-12 w-12 text-[#4b7e53]" />
               </div>
@@ -75,7 +73,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 2: Allergy Safety */}
-            <div className="bg-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+            <div className="bg-gradient-to-br from-white to-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="mb-4 flex justify-center">
                 <ShieldCheckIcon className="h-12 w-12 text-[#4b7e53]" />
               </div>
@@ -88,7 +86,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 3: Nutrition Analysis */}
-            <div className="bg-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-shadow">
+            <div className="bg-gradient-to-br from-white to-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="mb-4 flex justify-center">
                 <ChartBarIcon className="h-12 w-12 text-[#4b7e53]" />
               </div>
@@ -101,7 +99,7 @@ const HomePage = () => {
             </div>
 
             {/* Feature 4: Quick Filter */}
-            <div className={CARD_STYLES}>
+            <div className="bg-gradient-to-br from-white to-[#f8f3e7] rounded-xl p-6 text-center hover:shadow-lg transition-all hover:-translate-y-1">
               <div className="mb-6 flex justify-center">
                 <FunnelIcon className="h-14 w-14 text-[#4b7e53]" aria-hidden="true" />
               </div>
@@ -117,7 +115,7 @@ const HomePage = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className={`${SECTION_STYLES.padding} bg-[#f8f3e7]`}>
+      <section className={`${SECTION_STYLES.padding} bg-gradient-to-b from-[#f3f8f4] to-[#f8f3e7]`}>
         <div className="max-w-6xl mx-auto px-4">
           <h2 className={`${HEADING_STYLES.secondary} text-center mb-16`}>
             How It Works
@@ -130,7 +128,7 @@ const HomePage = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
               {/* Step 1 */}
               <div className="relative">
-                <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                <div className="bg-gradient-to-br from-white to-[#f3f8f4] rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
                   <div className="w-12 h-12 bg-[#4b7e53] text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                     1
                   </div>
@@ -151,7 +149,7 @@ const HomePage = () => {
 
               {/* Step 2 */}
               <div className="relative">
-                <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                <div className="bg-gradient-to-br from-white to-[#f3f8f4] rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
                   <div className="w-12 h-12 bg-[#4b7e53] text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                     2
                   </div>
@@ -171,7 +169,7 @@ const HomePage = () => {
 
               {/* Step 3 */}
               <div className="relative">
-                <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                <div className="bg-gradient-to-br from-white to-[#f3f8f4] rounded-xl p-6 text-center shadow-md hover:shadow-lg transition-all">
                   <div className="w-12 h-12 bg-[#4b7e53] text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4">
                     3
                   </div>
@@ -195,7 +193,7 @@ const HomePage = () => {
       </section>
 
       {/* Get Started CTA */}
-      <section className={`${SECTION_STYLES.padding} bg-gradient-to-b from-[#f8f3e7] to-white`}>
+      <section className={`${SECTION_STYLES.padding} bg-gradient-to-b from-[#f8f3e7] via-white to-white`}>
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className={`${HEADING_STYLES.secondary} mb-6`}>
             Ready to Discover Your Personalized Recipes?
