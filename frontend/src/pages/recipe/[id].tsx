@@ -1,7 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { getRecipeDetails } from '../../api/getRecipe';
-import { CheckCircleIcon, ArrowLeftIcon, ClockIcon, BeakerIcon, FireIcon } from '@heroicons/react/24/outline';
+import { 
+  CheckCircleIcon, 
+  ArrowLeftIcon, 
+  ClockIcon, 
+  BeakerIcon, 
+  FireIcon,
+  UserIcon,
+  PlusIcon,
+  PrinterIcon,
+  ShareIcon,
+  BookmarkIcon
+} from '@heroicons/react/24/outline';
+import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
 import Header from '../components/common/header';
 import Footer from '../components/common/footer';
 
@@ -50,6 +62,14 @@ const RecipeDetailPage: React.FC = () => {
   const [recipe, setRecipe] = useState<RecipeDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
+  const [servingMultiplier, setServingMultiplier] = useState<number>(1);
+  const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  // Animation effect when component mounts
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchRecipeDetails = async () => {
@@ -81,15 +101,61 @@ const RecipeDetailPage: React.FC = () => {
     router.push('/recipes');
   };
 
+  // Handler for increasing/decreasing servings
+  const adjustServings = (delta: number) => {
+    const newMultiplier = Math.max(0.5, servingMultiplier + delta);
+    console.log(`🍽️ [UI] Adjusting servings multiplier to: ${newMultiplier}x`);
+    setServingMultiplier(newMultiplier);
+  };
+
+  // Calculate adjusted amounts based on servingMultiplier
+  const calculateAmount = (value: number): number => {
+    return parseFloat((value * servingMultiplier).toFixed(1));
+  };
+
+  // Toggle save recipe
+  const toggleSave = () => {
+    setIsSaved(!isSaved);
+    console.log(`📌 [UI] Recipe ${isSaved ? 'removed from' : 'saved to'} bookmarks`);
+  };
+
+  // Render loading skeleton
   if (loading) {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center py-12">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-32 w-32 bg-gray-200 rounded-full mb-4"></div>
-            <div className="h-6 w-40 bg-gray-200 rounded mb-4"></div>
-            <div className="text-gray-500">Loading recipe details...</div>
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="container mx-auto px-4">
+            <div className="animate-pulse">
+              {/* Hero section skeleton */}
+              <div className="h-60 md:h-80 bg-gray-300 rounded-lg mb-8"></div>
+              
+              {/* Title skeleton */}
+              <div className="h-10 bg-gray-300 rounded w-3/4 mb-6"></div>
+              
+              {/* Info boxes skeleton */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-24 bg-gray-300 rounded-lg"></div>
+                ))}
+              </div>
+              
+              {/* Content skeleton */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <div className="h-8 bg-gray-300 rounded w-1/2"></div>
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-300 rounded-lg"></div>
+                  ))}
+                </div>
+                <div className="space-y-4">
+                  <div className="h-8 bg-gray-300 rounded w-1/2"></div>
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-24 bg-gray-300 rounded-lg"></div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         <Footer />
@@ -97,17 +163,23 @@ const RecipeDetailPage: React.FC = () => {
     );
   }
 
+  // Render error state
   if (error || !recipe) {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center p-4 py-12">
-          <div className="text-center">
-            <h2 className="text-2xl text-red-600 mb-4">Error</h2>
-            <p className="mb-6">{error || "Recipe not found"}</p>
+        <div className="min-h-screen flex items-center justify-center p-4 py-12 bg-gray-50">
+          <div className="text-center max-w-md mx-auto bg-white p-8 rounded-lg shadow-md">
+            <div className="text-red-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Oops! Something went wrong</h2>
+            <p className="mb-6 text-gray-600">{error || "Recipe not found or unavailable"}</p>
             <button 
               onClick={() => router.push('/recipes')}
-              className="bg-[#4b7e53] text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+              className="bg-[#4b7e53] text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors shadow-sm"
             >
               Back to Recipes
             </button>
@@ -118,12 +190,17 @@ const RecipeDetailPage: React.FC = () => {
     );
   }
 
+  // Calculate classes for fade-in animation
+  const fadeInClass = isMounted 
+    ? "opacity-100 translate-y-0" 
+    : "opacity-0 translate-y-4";
+
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50">
-        {/* Recipe Header with image - removed the Back button from top */}
-        <div className="relative h-[40vh] md:h-[50vh] bg-gray-900">
+      <div className={`min-h-screen bg-gray-50 transition-all duration-500 ease-in-out ${fadeInClass}`}>
+        {/* Hero section with image and gradient overlay */}
+        <div className="relative h-[40vh] md:h-[50vh] lg:h-[60vh] bg-gray-900">
           <div className="absolute inset-0">
             <img 
               src={recipe.image} 
@@ -134,95 +211,156 @@ const RecipeDetailPage: React.FC = () => {
                 if (!recipe.image.startsWith('http')) {
                   e.currentTarget.src = `https://spoonacular.com/recipeImages/${recipe.id}-556x370.${recipe.imageType}`;
                 } else {
-                  e.currentTarget.src = "https://via.placeholder.com/400x300?text=Recipe+Image";
+                  e.currentTarget.src = "https://via.placeholder.com/800x600?text=Recipe+Image";
                 }
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
           </div>
+          
+          {/* Recipe title and tags */}
           <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
-            <h1 className="text-2xl md:text-4xl font-bold text-white mb-2">{recipe.title}</h1>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {recipe.cuisines && recipe.cuisines.map((cuisine, index) => (
-                <span key={`cuisine-${index}`} className="bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                  {cuisine}
-                </span>
-              ))}
-              {recipe.diets && recipe.diets.map((diet, index) => (
-                <span key={`diet-${index}`} className="bg-green-500 text-white text-xs px-2 py-1 rounded">
-                  {diet}
-                </span>
-              ))}
-              {recipe.dishTypes && recipe.dishTypes.map((type, index) => (
-                <span key={`type-${index}`} className="bg-purple-500 text-white text-xs px-2 py-1 rounded">
-                  {type}
-                </span>
-              ))}
+            <div className="container mx-auto">
+              <h1 className="text-2xl md:text-4xl lg:text-5xl font-bold text-white mb-2 drop-shadow-sm">{recipe.title}</h1>
+              
+              {/* Tags section - cuisines, diets, dishTypes */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {recipe.cuisines && recipe.cuisines.map((cuisine, index) => (
+                  cuisine !== "None" && (
+                    <span key={`cuisine-${index}`} className="bg-blue-500/90 text-white text-xs px-2 py-1 rounded-full">
+                      {cuisine}
+                    </span>
+                  )
+                ))}
+                {recipe.diets && recipe.diets.map((diet, index) => (
+                  diet !== "None" && (
+                    <span key={`diet-${index}`} className="bg-green-500/90 text-white text-xs px-2 py-1 rounded-full">
+                      {diet}
+                    </span>
+                  )
+                ))}
+                {recipe.dishTypes && recipe.dishTypes.map((type, index) => (
+                  type !== "None" && (
+                    <span key={`type-${index}`} className="bg-purple-500/90 text-white text-xs px-2 py-1 rounded-full">
+                      {type}
+                    </span>
+                  )
+                ))}
+              </div>
             </div>
           </div>
         </div>
         
-        {/* Recipe Information */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold mb-4">Recipe Information</h2>
+        {/* Recipe Content Container */}
+        <div className="container mx-auto px-4 py-8 -mt-8 relative z-10">
+          {/* Action buttons */}
+          <div className="flex justify-end mb-6 space-x-2">
+            <button
+              onClick={toggleSave}
+              className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition"
+            >
+              {isSaved ? (
+                <BookmarkSolid className="h-4 w-4 text-[#4b7e53] mr-1" />
+              ) : (
+                <BookmarkIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
+              )}
+              <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
+            </button>
+            <button className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition">
+              <PrinterIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
+              <span className="hidden sm:inline">Print</span>
+            </button>
+            <button className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition">
+              <ShareIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
+              <span className="hidden sm:inline">Share</span>
+            </button>
+          </div>
+          
+          {/* Recipe Information Card */}
+          <div className="bg-white rounded-xl shadow-sm p-6 mb-8 transform transition-all duration-300 hover:shadow-md">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-100">Recipe Information</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-              <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-                <ClockIcon className="h-6 w-6 text-[#4b7e53] mb-2" />
-                <span className="text-sm text-gray-500">Preparation</span>
-                <span className="font-medium">{recipe.preparationMinutes} min</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-6">
+              <div className="bg-[#f7faf8] rounded-lg p-4 flex flex-col items-center text-center transition hover:shadow-sm">
+                <ClockIcon className="h-7 w-7 text-[#4b7e53] mb-2" />
+                <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Prep Time</span>
+                <span className="font-bold text-gray-800">{recipe.preparationMinutes} min</span>
               </div>
-              <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-                <ClockIcon className="h-6 w-6 text-[#4b7e53] mb-2" />
-                <span className="text-sm text-gray-500">Cooking</span>
-                <span className="font-medium">{recipe.cookingMinutes} min</span>
+              
+              <div className="bg-[#f7faf8] rounded-lg p-4 flex flex-col items-center text-center transition hover:shadow-sm">
+                <ClockIcon className="h-7 w-7 text-[#4b7e53] mb-2" />
+                <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Cook Time</span>
+                <span className="font-bold text-gray-800">{recipe.cookingMinutes} min</span>
               </div>
-              <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-                <BeakerIcon className="h-6 w-6 text-[#4b7e53] mb-2" />
-                <span className="text-sm text-gray-500">Servings</span>
-                <span className="font-medium">{recipe.servings}</span>
+              
+              <div className="bg-[#f7faf8] rounded-lg p-4 flex flex-col items-center text-center group relative transition hover:shadow-sm">
+                <div className="flex items-center mb-1">
+                  <UserIcon className="h-7 w-7 text-[#4b7e53] mb-1" />
+                  <div className="ml-1 flex space-x-1">
+                    <button 
+                      onClick={() => adjustServings(-0.5)}
+                      className="h-5 w-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600"
+                    >
+                      -
+                    </button>
+                    <button 
+                      onClick={() => adjustServings(0.5)}
+                      className="h-5 w-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Servings</span>
+                <span className="font-bold text-gray-800">
+                  {calculateAmount(recipe.servings)}
+                </span>
               </div>
-              <div className="flex flex-col items-center p-3 bg-gray-50 rounded-lg">
-                <FireIcon className="h-6 w-6 text-[#4b7e53] mb-2" />
-                <span className="text-sm text-gray-500">Calories</span>
-                <span className="font-medium">{recipe.calories}</span>
+              
+              <div className="bg-[#f7faf8] rounded-lg p-4 flex flex-col items-center text-center transition hover:shadow-sm">
+                <FireIcon className="h-7 w-7 text-[#4b7e53] mb-2" />
+                <span className="text-xs text-gray-500 uppercase font-medium tracking-wide">Calories</span>
+                <span className="font-bold text-gray-800">{recipe.calories}</span>
               </div>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-2">Protein</h3>
-                <p className="text-lg font-semibold">{recipe.protein}</p>
+              <div className="bg-[#f7faf8] rounded-lg p-4 transition hover:shadow-sm">
+                <h3 className="text-sm text-gray-500 uppercase font-medium tracking-wide mb-1">Protein</h3>
+                <p className="text-xl font-bold text-gray-800">{recipe.protein}</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-2">Carbs</h3>
-                <p className="text-lg font-semibold">{recipe.carbs}</p>
+              
+              <div className="bg-[#f7faf8] rounded-lg p-4 transition hover:shadow-sm">
+                <h3 className="text-sm text-gray-500 uppercase font-medium tracking-wide mb-1">Carbs</h3>
+                <p className="text-xl font-bold text-gray-800">{recipe.carbs}</p>
               </div>
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium text-gray-700 mb-2">Fat</h3>
-                <p className="text-lg font-semibold">{recipe.fat}</p>
+              
+              <div className="bg-[#f7faf8] rounded-lg p-4 transition hover:shadow-sm">
+                <h3 className="text-sm text-gray-500 uppercase font-medium tracking-wide mb-1">Fat</h3>
+                <p className="text-xl font-bold text-gray-800">{recipe.fat}</p>
               </div>
             </div>
           </div>
           
           {/* Ingredients and Instructions in 2 columns on larger screens */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Ingredients */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Ingredients</h2>
-              <p className="text-sm text-gray-500 mb-4">Check off ingredients as you gather them:</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Ingredients Card */}
+            <div className="bg-white rounded-xl shadow-sm p-6 transform transition-all duration-300 hover:shadow-md">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-100">Ingredients</h2>
+              <p className="text-sm text-gray-500 mb-5">Check off ingredients as you gather them:</p>
               
               <ul className="space-y-3">
                 {recipe.ingredients && recipe.ingredients.map((ingredient) => {
-                  // Generate a unique key using both the ingredient id and name for better uniqueness
+                  // Generate a unique key using both the ingredient id and name
                   const ingredientKey = `${ingredient.id}-${ingredient.name.replace(/\s+/g, '-')}`;
                   
                   return (
                     <li 
                       key={ingredientKey}
-                      className={`flex items-start p-3 rounded-lg transition-colors ${
-                        checkedIngredients[ingredientKey] ? 'bg-green-50' : 'bg-gray-50'
+                      className={`flex items-start p-3 rounded-lg transition-all duration-300 ${
+                        checkedIngredients[ingredientKey] 
+                          ? 'bg-green-50 border border-green-100' 
+                          : 'bg-gray-50 hover:bg-gray-100'
                       }`}
                     >
                       <div 
@@ -246,18 +384,17 @@ const RecipeDetailPage: React.FC = () => {
                           <img 
                             src={ingredient.image} 
                             alt={ingredient.name}
-                            className="h-8 w-8 object-cover rounded-full mr-2"
+                            className="h-8 w-8 object-cover rounded-full mr-2 border border-gray-200"
                             onError={(e) => {
-                              console.error(`❌ [UI] Error loading ingredient image for ${ingredient.name}`);
                               e.currentTarget.src = "https://via.placeholder.com/100?text=Ingredient";
                             }}
                           />
-                          <span className={`font-medium ${checkedIngredients[ingredientKey] ? 'line-through text-gray-400' : ''}`}>
+                          <span className={`font-medium ${checkedIngredients[ingredientKey] ? 'line-through text-gray-400' : 'text-gray-700'}`}>
                             {ingredient.name}
                           </span>
                         </div>
                         <span className="text-sm text-gray-500 block mt-1">
-                          {ingredient.amount.value} {ingredient.amount.unit}
+                          {calculateAmount(ingredient.amount.value)} {ingredient.amount.unit}
                         </span>
                       </div>
                     </li>
@@ -266,33 +403,37 @@ const RecipeDetailPage: React.FC = () => {
               </ul>
               
               {(!recipe.ingredients || recipe.ingredients.length === 0) && (
-                <p className="text-gray-500 italic">No ingredient information available for this recipe.</p>
+                <div className="py-8 text-center">
+                  <p className="text-gray-500 italic">No ingredient information available for this recipe.</p>
+                </div>
               )}
             </div>
             
-            {/* Instructions */}
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold mb-4">Instructions</h2>
+            {/* Instructions Card */}
+            <div className="bg-white rounded-xl shadow-sm p-6 transform transition-all duration-300 hover:shadow-md">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6 pb-2 border-b border-gray-100">Instructions</h2>
               
               <ol className="space-y-6">
                 {recipe.instructions && recipe.instructions.map((instruction) => (
-                  <li key={instruction.number} className="relative pl-8">
-                    <div className="absolute left-0 top-0 flex items-center justify-center h-6 w-6 rounded-full bg-[#4b7e53] text-white text-sm">
+                  <li key={instruction.number} className="relative pl-9">
+                    <div className="absolute left-0 top-1 flex items-center justify-center h-6 w-6 rounded-full bg-[#4b7e53] text-white text-sm font-medium">
                       {instruction.number}
                     </div>
-                    <p className="text-gray-700">{instruction.step}</p>
+                    <p className="text-gray-700 leading-relaxed">{instruction.step}</p>
                   </li>
                 ))}
               </ol>
               
               {(!recipe.instructions || recipe.instructions.length === 0) && (
-                <p className="text-gray-500 italic">No instructions available for this recipe.</p>
+                <div className="py-8 text-center">
+                  <p className="text-gray-500 italic">No instructions available for this recipe.</p>
+                </div>
               )}
             </div>
           </div>
           
-          {/* Single "Back to Recipes" button at the bottom */}
-          <div className="flex justify-center mt-8 mb-6">
+          {/* Bottom "Back to Recipes" button */}
+          <div className="flex justify-center mt-10 mb-6">
             <button 
               onClick={handleBackToRecipes}
               className="bg-[#4b7e53] text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors shadow-md flex items-center"
