@@ -10,7 +10,10 @@ npm install
 
 
 
-
+public api key:
+7a6e45249407478683346a18f937ba47
+026008f475974904a5fff1f27ac6a23c
+d9d003f4f57646289aa4d50386b24ef6
 
 backend:
 cd D:\SEPM\NutriGen_Bot\backend

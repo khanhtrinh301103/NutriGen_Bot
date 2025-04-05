@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
+import { useRouter } from "next/router";
 
 interface RecipeCardProps {
+  id: number; // Added ID property for navigation
   image: string;
   title: string;
   calories: number;
@@ -12,6 +14,7 @@ interface RecipeCardProps {
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({
+  id, // Added ID property
   image,
   title,
   calories,
@@ -19,6 +22,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   fat,
   instructions = "No instructions available.",
 }) => {
+  const router = useRouter(); // Added for navigation
+  
   // State for controlling slide-bottom animation
   const [isVisible, setIsVisible] = useState<boolean>(false);
   // State for favorite button
@@ -40,6 +45,13 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     e.stopPropagation();
     setIsFavorite(!isFavorite);
     console.log(`❤️ [UI] Recipe ${title} ${!isFavorite ? 'added to' : 'removed from'} favorites`);
+  };
+  
+  // New function to navigate to recipe details page
+  const navigateToDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    console.log("🔍 [UI] Navigating to detailed view for recipe:", title, "with ID:", id);
+    router.push(`/recipe/${id}`);
   };
   
   return (
@@ -83,10 +95,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
           <div className="space-y-4 w-full max-w-[200px]">
             <button
               className="w-full text-white bg-[#4b7e53] hover:bg-green-700 text-sm py-2 px-4 rounded transition flex items-center justify-center gap-2"
-              onClick={(e) => {
-                e.stopPropagation();
-                console.log("🔍 [UI] Show instructions clicked for recipe:", title);
-              }}
+              onClick={navigateToDetails} // Updated to use navigation function
             >
               Show Instructions
             </button>

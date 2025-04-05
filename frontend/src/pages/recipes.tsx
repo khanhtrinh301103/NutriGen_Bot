@@ -7,14 +7,63 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
 
+// Define a Recipe interface to ensure type safety
+interface Recipe {
+  id: number;
+  title: string;
+  image: string;
+  calories: number;
+  protein?: number;
+  fat?: number;
+}
+
+// Define interface for search state
+interface SearchState {
+  searchTerm: string;
+  cuisine: string;
+  results: Recipe[];
+  currentPage: number;
+}
+
 const RecipesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({ cuisine: "" });
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [searchRestored, setSearchRestored] = useState(false); // Track if search was restored
   const cardsPerPage = 12; // Show 12 cards per page
+  
+  // Load saved search state when component mounts
+  useEffect(() => {
+    console.log("🔍 [UI] Checking for saved search state");
+    
+    const savedSearchState = localStorage.getItem('recipeSearchState');
+    if (savedSearchState) {
+      try {
+        const parsedState = JSON.parse(savedSearchState);
+        console.log("✅ [UI] Found saved search state:", parsedState);
+        
+        // Restore saved state
+        setSearchTerm(parsedState.searchTerm || "");
+        setFilters({ cuisine: parsedState.cuisine || "" });
+        
+        // Only set results if there are any
+        if (parsedState.results && parsedState.results.length > 0) {
+          setResults(parsedState.results);
+          setCurrentPage(parsedState.currentPage || 1);
+          setSearchRestored(true);
+          console.log("✅ [UI] Successfully restored search results");
+        }
+      } catch (error) {
+        console.error("❌ [UI] Error parsing saved search state:", error);
+        localStorage.removeItem('recipeSearchState');
+      }
+    } else {
+      console.log("ℹ️ [UI] No saved search state found");
+    }
+  }, []);
   
   // Effect to handle animations when results change
   useEffect(() => {
@@ -25,6 +74,22 @@ const RecipesPage = () => {
       setCurrentPage(1);
     }
   }, [results, isSearching]);
+
+  // Save search state whenever it changes
+  useEffect(() => {
+    // Only save if we have actual search results to prevent overwriting with empty state
+    if (results.length > 0) {
+      const searchState: SearchState = {
+        searchTerm,
+        cuisine: filters.cuisine,
+        results,
+        currentPage
+      };
+      
+      console.log("💾 [UI] Saving search state to localStorage");
+      localStorage.setItem('recipeSearchState', JSON.stringify(searchState));
+    }
+  }, [searchTerm, filters.cuisine, results, currentPage]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -55,7 +120,15 @@ const RecipesPage = () => {
     setTimeout(() => {
       sendSearchRequest(searchTerm, filters.cuisine, (newResults) => {
         console.log(`✅ [UI] Search complete. Found ${newResults.length} recipes.`);
+        
+        // Log first recipe to check if it has ID
+        if (newResults.length > 0) {
+          console.log("🔢 [UI] First recipe ID check:", newResults[0].id);
+        }
+        
         setResults(newResults);
+        // Mark that this is a new search, not a restored one
+        setSearchRestored(false);
       });
     }, 500);
   };
@@ -88,6 +161,17 @@ const RecipesPage = () => {
     });
   };
 
+  // Function to clear previous search
+  const clearPreviousSearch = () => {
+    console.log("🧹 [UI] Clearing previous search");
+    localStorage.removeItem('recipeSearchState');
+    setSearchTerm("");
+    setFilters({ cuisine: "" });
+    setResults([]);
+    setCurrentPage(1);
+    setSearchRestored(false);
+  };
+
   return (
     <>
       <Header />
@@ -114,11 +198,27 @@ const RecipesPage = () => {
           </div>
         </div>
 
+        {/* Search restored notification */}
+        {searchRestored && results.length > 0 && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded mx-2 sm:mx-4 md:max-w-3xl md:mx-auto text-sm flex justify-between items-center">
+            <span>Showing your previous search results.</span>
+            <button 
+              onClick={clearPreviousSearch}
+              className="text-blue-600 hover:text-blue-800 underline text-xs font-medium"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
         {/* Responsive layout that adapts to all screen sizes */}
         <div className="flex flex-col md:flex-row">
           {/* Filter sidebar - full width on mobile, fixed width on larger screens */}
           <div className="w-full md:w-64 shrink-0 mb-6 md:mb-0">
-            <Filter onChange={handleFilterChange} />
+            <Filter 
+              onChange={handleFilterChange} 
+              initialCuisine={filters.cuisine} // Pass the initial cuisine value
+            />
           </div>
 
           {/* Results area taking all available space */}
@@ -131,13 +231,20 @@ const RecipesPage = () => {
               <>
                 <div className="text-sm text-gray-500 mb-4">
                   {results.length} {results.length === 1 ? 'recipe' : 'recipes'} found
+                  {filters.cuisine && ` for "${filters.cuisine}" cuisine`}
+                  {searchTerm && ` matching "${searchTerm}"`}
                 </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
                   {currentRecipes.map((recipe, idx) => (
                     <RecipeCard 
-                      key={`${indexOfFirstRecipe + idx}-${recipe.title}`} 
-                      {...recipe} 
+                      key={`${recipe.id || idx}`}
+                      id={recipe.id} // Explicitly passing id prop
+                      image={recipe.image}
+                      title={recipe.title}
+                      calories={recipe.calories}
+                      protein={recipe.protein}
+                      fat={recipe.fat}
                     />
                   ))}
                 </div>
@@ -188,7 +295,7 @@ const RecipesPage = () => {
                 )}
               </>
             ) : (
-              <div className="text-gray-500 italic mt-8">
+              <div className="text-gray-500 italic mt-8 text-center">
                 {isSearching
                   ? "No recipes found. Try a different keyword or cuisine."
                   : "Search results will appear here based on keyword & filters..."}

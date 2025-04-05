@@ -1,15 +1,24 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 interface FilterProps {
   onChange: (filters: any) => void;
+  initialCuisine?: string; // Added to allow setting initial value
 }
 
-const Filter: React.FC<FilterProps> = ({ onChange }) => {
+const Filter: React.FC<FilterProps> = ({ onChange, initialCuisine = "" }) => {
   const [filters, setFilters] = useState({
-    cuisine: "",
+    cuisine: initialCuisine || "", // Use initialCuisine if provided
   });
 
   const [showFilters, setShowFilters] = useState(false);
+
+  // Update filters when initialCuisine changes (e.g. from localStorage)
+  useEffect(() => {
+    if (initialCuisine !== filters.cuisine) {
+      console.log("🔄 [UI] Restoring cuisine filter to:", initialCuisine);
+      setFilters(prev => ({ ...prev, cuisine: initialCuisine }));
+    }
+  }, [initialCuisine]);
 
   const cuisineOptions = [
     { value: "", label: "All" },
