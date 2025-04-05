@@ -8,12 +8,9 @@ import {
   BeakerIcon, 
   FireIcon,
   UserIcon,
-  PlusIcon,
-  PrinterIcon,
-  ShareIcon,
-  BookmarkIcon
+  HeartIcon
 } from '@heroicons/react/24/outline';
-import { BookmarkIcon as BookmarkSolid } from '@heroicons/react/24/solid';
+import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import Header from '../components/common/header';
 import Footer from '../components/common/footer';
 
@@ -63,7 +60,7 @@ const RecipeDetailPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
   const [servingMultiplier, setServingMultiplier] = useState<number>(1);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // Animation effect when component mounts
@@ -113,10 +110,10 @@ const RecipeDetailPage: React.FC = () => {
     return parseFloat((value * servingMultiplier).toFixed(1));
   };
 
-  // Toggle save recipe
-  const toggleSave = () => {
-    setIsSaved(!isSaved);
-    console.log(`📌 [UI] Recipe ${isSaved ? 'removed from' : 'saved to'} bookmarks`);
+  // Toggle favorite
+  const toggleFavorite = () => {
+    setIsFavorite(!isFavorite);
+    console.log(`❤️ [UI] Recipe ${isFavorite ? 'removed from' : 'added to'} favorites`);
   };
 
   // Render loading skeleton
@@ -253,26 +250,23 @@ const RecipeDetailPage: React.FC = () => {
         
         {/* Recipe Content Container */}
         <div className="container mx-auto px-4 py-8 -mt-8 relative z-10">
-          {/* Action buttons */}
-          <div className="flex justify-end mb-6 space-x-2">
+          {/* Favorite button */}
+          <div className="flex justify-end mb-6">
             <button
-              onClick={toggleSave}
-              className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition"
+              onClick={toggleFavorite}
+              className="flex items-center bg-white px-4 py-2 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition"
             >
-              {isSaved ? (
-                <BookmarkSolid className="h-4 w-4 text-[#4b7e53] mr-1" />
+              {isFavorite ? (
+                <>
+                  <HeartIconSolid className="h-5 w-5 text-red-500 mr-2" />
+                  <span>Remove from Favorites</span>
+                </>
               ) : (
-                <BookmarkIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
+                <>
+                  <HeartIcon className="h-5 w-5 text-red-500 mr-2" />
+                  <span>Add to Favorites</span>
+                </>
               )}
-              <span className="hidden sm:inline">{isSaved ? 'Saved' : 'Save'}</span>
-            </button>
-            <button className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition">
-              <PrinterIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
-              <span className="hidden sm:inline">Print</span>
-            </button>
-            <button className="flex items-center bg-white px-3 py-1.5 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition">
-              <ShareIcon className="h-4 w-4 text-[#4b7e53] mr-1" />
-              <span className="hidden sm:inline">Share</span>
             </button>
           </div>
           

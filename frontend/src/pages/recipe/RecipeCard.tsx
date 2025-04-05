@@ -103,8 +103,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             <button
               className={`w-full flex items-center justify-center gap-2 text-sm py-2 px-4 rounded transition ${
                 isFavorite === true 
-                  ? "bg-red-100 text-red-600 hover:bg-red-200" 
-                  : "bg-blue-50 hover:bg-blue-100 text-blue-600"
+                  ? "bg-blue-100 text-blue-600 hover:bg-blue-200" 
+                  : "bg-red-50 hover:bg-red-100 text-red-600"
               }`}
               onClick={(e) => toggleFavorite(e)}
             >
@@ -115,7 +115,7 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
                 </>
               ) : (
                 <>
-                  <HeartIcon className="h-5 w-5 text-blue-500" />
+                  <HeartIcon className="h-5 w-5 text-red-500" />
                   <span>Add to Favorites</span>
                 </>
               )}

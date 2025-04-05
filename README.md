@@ -40,6 +40,7 @@ NutriGen_Bot/
 │   ├── functions/ (backend workspace here)
 │   │   ├── node_modules/
 │   │   ├── .gitignore
+│   │   ├── getRecipeDetails.js
 │   │   ├── index.js
 │   │   ├── uploadPhoto.js
 │   │   ├── searchRecipe.js
@@ -75,8 +76,10 @@ NutriGen_Bot/
 │   │   │   ├── getRecipe.js
 │   │   │   ├── login.js
 │   │   │   ├── profile.js
+│   │   │   ├── ProtectedRoute.js
 │   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
+│   │   │   ├── useAuth.js
 │   │   ├── pages/
 │   │   │   ├── auth/
 │   │   │   │   ├── forgotPassword.tsx

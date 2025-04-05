@@ -6,6 +6,7 @@ import { sendSearchRequest } from "../api/getRecipe";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
+import ProtectedRoute from "../api/ProtectedRoute";
 
 // Define a Recipe interface to ensure type safety
 interface Recipe {
@@ -173,6 +174,7 @@ const RecipesPage = () => {
   };
 
   return (
+    <ProtectedRoute>
     <>
       <Header />
       <main className="w-full mx-auto py-8">
@@ -306,6 +308,7 @@ const RecipesPage = () => {
       </main>
       <Footer />
     </>
+    </ProtectedRoute>
   );
 };
 
