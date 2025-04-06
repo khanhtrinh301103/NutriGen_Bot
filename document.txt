@@ -1,0 +1,101 @@
+Project structure:
+
+NutriGen_Bot/
+│
+├── backend/
+│   ├── dataconnect/
+│   │   ├── connector/
+│   │   │   ├── connector.yaml
+│   │   │   ├── mutations.gql
+│   │   │   ├── queries.gql
+│   │   ├── schema/
+│   │   │   ├── schema.gql
+│   │   │   ├── dataconnect.yaml
+│   ├── functions/ (backend workspace here)
+│   │   ├── node_modules/
+│   │   ├── .gitignore
+│   │   ├── getRecipeDetails.js
+│   │   ├── index.js
+│   │   ├── uploadPhoto.js
+│   │   ├── searchRecipe.js
+│   │   ├── firestore-debug.log
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   ├── src/
+│   │   ├── cacheResults.js
+│   │   ├── calculateTDEE.js
+│   │   ├── searchRecipe.js
+│   ├── .firebaserc
+│   ├── .gitignore
+│   ├── firebase.json
+│   ├── firebase-debug.log
+│   ├── package-lock.json
+│   ├── package.json
+│
+├── frontend/
+│   ├── .next/
+│   ├── node_modules/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   ├── window.svg
+│   ├── src/ (frontend workspace here)
+│   │   ├── api/
+│   │   │   ├── authService.js
+│   │   │   ├── blogService.js
+│   │   │   ├── firebaseConfig.js
+│   │   │   ├── getRecipe.js
+│   │   │   ├── login.js
+│   │   │   ├── profile.js
+│   │   │   ├── ProtectedRoute.js
+│   │   │   ├── sendResetLinkEmail.js
+│   │   │   ├── signup.js
+│   │   │   ├── useAuth.js
+│   │   │   ├──profileValidation.js
+│   │   ├── pages/
+│   │   │   ├── auth/
+│   │   │   │   ├── forgotPassword.tsx
+│   │   │   │   ├── login.tsx
+│   │   │   │   ├── signup.tsx
+│   │   │   │   ├── onboarding.tsx
+│   │   │   ├── components/
+│   │   │   │   ├── common/
+│   │   │   │   │   ├── BottomNav.tsx
+│   │   │   │   │   ├── footer.tsx
+│   │   │   │   │   ├── header.tsx
+│   │   │   │   │   ├── layout.tsx
+│   │   │   │   │   ├──ProfileRouteGuard.tsx
+│   │   │   │   ├── profile/
+│   │   │   │   │   ├── HealthProfileSection.tsx
+│   │   │   │   │   ├── NutritionDashboard.tsx
+│   │   │   │   │   ├── ProfileTabs.tsx
+│   │   │   │   │   ├── SavedRecipes.tsx
+│   │   │   ├── recipe/
+│   │   │   │   ├── Filter.tsx
+│   │   │   │   ├── [id].tsx
+│   │   │   │   ├── RecipeCard.tsx
+│   │   │   ├── _app.tsx
+│   │   │   ├── _document.tsx
+│   │   │   ├── index.tsx
+│   │   │   ├── about.tsx
+│   │   │   ├── profile.tsx
+│   │   │   ├── recipes.tsx
+│   │   ├── styles/
+│   │   │   ├── globals.css
+│   │   ├── utils
+│   │   │   ├── nutritionCalculator.ts
+│   ├── .gitignore
+│   ├── eslint.config.mjs
+│   ├── next-env.d.ts
+│   ├── next.config.mjs
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── postcss.config.mjs
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── netlify.toml
+│   ├── README.md
