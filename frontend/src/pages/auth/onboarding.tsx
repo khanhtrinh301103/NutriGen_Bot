@@ -334,7 +334,7 @@ const OnboardingPage = () => {
                 <div></div> // Empty div to maintain flex spacing
               )}
               
-              {activeStep < 3 ? (
+              {activeStep <= 3 ? (
                 <button
                   type="button"
                   onClick={handleNext}
