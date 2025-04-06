@@ -7,6 +7,15 @@ import { getUserProfile, updateUserProfile } from '../api/profile';
 import { signOutUser } from '../api/authService';
 import { updateProfile } from "firebase/auth";
 
+// Định nghĩa các thông báo tương ứng với các mục tiêu
+const goalMessages = {
+  'Weight Loss': 'For weight loss',
+  'Weight Gain': 'For weight gain',
+  'Weight Maintenance': 'For maintenance',
+  'Muscle Gain': 'For muscle gain',
+  'Improve Health': 'For health improvement'
+};
+
 const ProfilePage: React.FC = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -23,6 +32,14 @@ const ProfilePage: React.FC = () => {
     goal: 'Weight Maintenance',
     allergies: [],
     dietaryRestrictions: []
+  });
+  
+  // New state variables for nutrition settings
+  const [isEditingNutrition, setIsEditingNutrition] = useState(false);
+  const [editingField, setEditingField] = useState(null);
+  const [nutritionEditData, setNutritionEditData] = useState({
+    mealsPerDay: 3,
+    macroDistribution: 'Balanced'
   });
   
   useEffect(() => {
@@ -78,6 +95,16 @@ const ProfilePage: React.FC = () => {
     });
     return () => unsubscribe();
   }, [router]);
+
+  // Initialize nutrition edit data when profile data changes
+  useEffect(() => {
+    if (profileData && profileData.healthProfile) {
+      setNutritionEditData({
+        mealsPerDay: profileData.healthProfile.mealsPerDay || 3,
+        macroDistribution: profileData.healthProfile.macroDistribution || 'Balanced'
+      });
+    }
+  }, [profileData]);
 
   // Xử lý Upload Ảnh
   const handleUploadPhoto = async (event) => {
@@ -190,6 +217,54 @@ const ProfilePage: React.FC = () => {
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle editing nutrition settings
+  const handleEditNutrition = (field) => {
+    setIsEditingNutrition(true);
+    setEditingField(field);
+    if (profileData && profileData.healthProfile) {
+      setNutritionEditData({
+        ...nutritionEditData,
+        [field]: profileData.healthProfile[field] || (field === 'mealsPerDay' ? 3 : 'Balanced')
+      });
+    }
+  };
+
+  // Handle nutrition edit data changes
+  const handleNutritionEditChange = (e) => {
+    const { name, value } = e.target;
+    setNutritionEditData({
+      ...nutritionEditData,
+      [name]: value
+    });
+  };
+
+  // Handle saving nutrition settings
+  const handleSaveNutritionSetting = async () => {
+    if (!user) return;
+    
+    try {
+      setLoading(true);
+      
+      // Create update object with only the field being edited
+      const updateData = {
+        [editingField]: nutritionEditData[editingField]
+      };
+      
+      await updateUserProfile(user.uid, updateData);
+      
+      // Reload profile data
+      const userData = await getUserProfile(user.uid);
+      setProfileData(userData);
+      
+      setIsEditingNutrition(false);
+      setEditingField(null);
+    } catch (error) {
+      console.error("Error saving nutrition setting:", error);
     } finally {
       setLoading(false);
     }
@@ -561,7 +636,7 @@ const ProfilePage: React.FC = () => {
             )}
 
             {activeTab === 'nutrition' && (
-              <div className="max-w-4xl mx-auto">
+              <div className="max-w-5xl mx-auto">
                 <div className="bg-white shadow rounded-lg overflow-hidden">
                   <div className="px-4 py-5 sm:px-6 bg-emerald-50">
                     <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -569,9 +644,10 @@ const ProfilePage: React.FC = () => {
                     </h3>
                   </div>
                   <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
-                        <>
+                    {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
+                      <>
+                        <h4 className="text-md font-medium text-gray-700 mb-4">Daily Caloric Needs</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                           <div className="bg-emerald-50 p-4 rounded-lg text-center">
                             <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
                             <div className="text-2xl font-bold text-emerald-600 mt-2">
@@ -581,7 +657,7 @@ const ProfilePage: React.FC = () => {
                           </div>
                           
                           <div className="bg-blue-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Total Daily Energy</h4>
+                            <h4 className="text-sm font-medium text-gray-500">Total Daily Energy Expenditure</h4>
                             <div className="text-2xl font-bold text-blue-600 mt-2">
                               {calculateTDEE(profileData.healthProfile)} calories
                             </div>
@@ -594,20 +670,178 @@ const ProfilePage: React.FC = () => {
                               {calculateTarget(profileData.healthProfile)} calories
                             </div>
                             <p className="text-xs text-gray-500 mt-1">
-                              {profileData.healthProfile.goal === 'Weight Loss' ? 'For weight loss' : 
-                               profileData.healthProfile.goal === 'Weight Gain' ? 'For weight gain' : 
-                               'For maintenance'}
+                              {goalMessages[profileData.healthProfile.goal] || 'For maintenance'}
                             </p>
                           </div>
-                        </>
-                      ) : (
-                        <div className="col-span-3 text-center py-8">
-                          <p className="text-gray-500">
-                            Please complete your health profile to see nutrition insights.
-                          </p>
                         </div>
-                      )}
-                    </div>
+                        
+                        <h4 className="text-md font-medium text-gray-700 mb-4">Per Meal Breakdown</h4>
+                        <div className="bg-gray-50 p-5 rounded-lg mb-8">
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div className="bg-white p-4 rounded-lg text-center shadow-sm">
+                              <h4 className="text-sm font-medium text-gray-500">Calories Per Meal</h4>
+                              <div className="text-xl font-bold text-purple-600 mt-2">
+                                {calculateCaloriesPerMeal(profileData.healthProfile)} calories
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Based on {profileData.healthProfile.mealsPerDay || 3} meals per day
+                              </p>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg text-center shadow-sm">
+                              <h4 className="text-sm font-medium text-gray-500">Protein Per Meal</h4>
+                              <div className="text-xl font-bold text-green-600 mt-2">
+                                {calculateProteinPerMeal(profileData.healthProfile)}g
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Builds and repairs muscle tissue
+                              </p>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg text-center shadow-sm">
+                              <h4 className="text-sm font-medium text-gray-500">Carbs Per Meal</h4>
+                              <div className="text-xl font-bold text-amber-600 mt-2">
+                                {calculateCarbsPerMeal(profileData.healthProfile)}g
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Primary energy source
+                              </p>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg text-center shadow-sm">
+                              <h4 className="text-sm font-medium text-gray-500">Fat Per Meal</h4>
+                              <div className="text-xl font-bold text-blue-600 mt-2">
+                                {calculateFatPerMeal(profileData.healthProfile)}g
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Hormone production and nutrient absorption
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <h4 className="text-md font-medium text-gray-700 mb-4">Daily Macronutrient Distribution</h4>
+                        <div className="bg-gray-50 p-5 rounded-lg">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-white p-4 rounded-lg shadow-sm">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-sm font-medium text-gray-700">Daily Protein</h4>
+                                <span className="text-xs text-gray-500">{calculateMacroPercentage(profileData.healthProfile, 'protein')}%</span>
+                              </div>
+                              <div className="mt-2 h-3 relative max-w-xl rounded-full overflow-hidden">
+                                <div className="w-full h-full bg-gray-200 absolute"></div>
+                                <div className="h-full bg-green-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'protein')}%`}}></div>
+                              </div>
+                              <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyProtein(profileData.healthProfile)}g</p>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg shadow-sm">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-sm font-medium text-gray-700">Daily Carbs</h4>
+                                <span className="text-xs text-gray-500">{calculateMacroPercentage(profileData.healthProfile, 'carbs')}%</span>
+                              </div>
+                              <div className="mt-2 h-3 relative max-w-xl rounded-full overflow-hidden">
+                                <div className="w-full h-full bg-gray-200 absolute"></div>
+                                <div className="h-full bg-amber-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'carbs')}%`}}></div>
+                              </div>
+                              <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyCarbs(profileData.healthProfile)}g</p>
+                            </div>
+                            
+                            <div className="bg-white p-4 rounded-lg shadow-sm">
+                              <div className="flex justify-between items-center">
+                                <h4 className="text-sm font-medium text-gray-700">Daily Fat</h4>
+                                <span className="text-xs text-gray-500">{calculateMacroPercentage(profileData.healthProfile, 'fat')}%</span>
+                              </div>
+                              <div className="mt-2 h-3 relative max-w-xl rounded-full overflow-hidden">
+                                <div className="w-full h-full bg-gray-200 absolute"></div>
+                                <div className="h-full bg-blue-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'fat')}%`}}></div>
+                              </div>
+                              <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyFat(profileData.healthProfile)}g</p>
+                            </div>
+                          </div>
+                        </div>
+
+                          {/* New Nutrition Settings Section */}
+                        <div className="mt-8 border-t border-gray-200 pt-6">
+                          <h4 className="text-md font-medium text-gray-700 mb-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            Number of meals per day
+                          </h4>
+                          
+                          <div className="bg-gray-50 p-5 rounded-lg">
+                            {/* Meals Per Day Setting */}
+                            <div className="bg-white p-5 rounded-lg shadow-sm max-w-md mx-auto">
+                              <div className="flex justify-between items-center mb-4">
+                                <h4 className="text-md font-medium text-gray-700">Meals Per Day</h4>
+                                {!isEditingNutrition ? (
+                                  <button 
+                                    onClick={() => handleEditNutrition('mealsPerDay')}
+                                    className="px-3 py-1 text-sm text-emerald-600 hover:text-emerald-800 border border-emerald-200 rounded-md hover:bg-emerald-50 transition-colors"
+                                  >
+                                    Edit
+                                  </button>
+                                ) : editingField === 'mealsPerDay' && (
+                                  <div className="flex space-x-2">
+                                    <button 
+                                      onClick={handleSaveNutritionSetting}
+                                      className="px-3 py-1 text-sm text-emerald-600 hover:text-emerald-800 border border-emerald-200 rounded-md hover:bg-emerald-50 transition-colors"
+                                    >
+                                      Save
+                                    </button>
+                                    <button 
+                                      onClick={() => setIsEditingNutrition(false)}
+                                      className="px-3 py-1 text-sm text-gray-500 hover:text-gray-700 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {!isEditingNutrition || editingField !== 'mealsPerDay' ? (
+                                <div className="flex items-center justify-between py-3 px-5 bg-emerald-50 rounded-lg">
+                                  <div>
+                                    <span className="text-4xl font-bold text-emerald-600">{profileData.healthProfile.mealsPerDay || 3}</span>
+                                    <span className="ml-2 text-sm text-gray-500">meals per day</span>
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    <span className="block text-center">Affects calories &</span>
+                                    <span className="block text-center">nutrient distribution</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="p-2 bg-gray-50 rounded-lg">
+                                  <select
+                                    id="mealsPerDay"
+                                    name="mealsPerDay"
+                                    value={nutritionEditData.mealsPerDay}
+                                    onChange={handleNutritionEditChange}
+                                    className="w-full p-3 border border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500 text-lg"
+                                  >
+                                    <option value={1}>1 meal per day</option>
+                                    <option value={2}>2 meals per day</option>
+                                    <option value={3}>3 meals per day</option>
+                                    <option value={4}>4 meals per day</option>
+                                    <option value={5}>5 meals per day</option>
+                                    <option value={6}>6 meals per day</option>
+                                  </select>
+                                  <p className="mt-2 text-xs text-gray-500 text-center">This will display how your daily calories and nutrients are distributed throughout the day.</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-8">
+                        <p className="text-gray-500">
+                          Please complete your health profile to see nutrition insights.
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -693,11 +927,95 @@ function calculateTarget(healthProfile) {
     case 'Weight Loss':
       return Math.round(tdee * 0.8); // 20% deficit
     case 'Weight Gain':
-    case 'Muscle Gain':
       return Math.round(tdee * 1.15); // 15% surplus
+    case 'Muscle Gain':
+      return Math.round(tdee * 1.2); // 20% surplus for muscle building
+    case 'Improve Health':
+      return Math.round(tdee * 0.95); // 5% deficit for gradual improvement
+    case 'Weight Maintenance':
     default:
       return tdee; // Maintenance
   }
+}
+
+// Function to calculate calories per meal based on target and meals per day
+function calculateCaloriesPerMeal(healthProfile) {
+  const dailyCalories = calculateTarget(healthProfile);
+  const mealsPerDay = healthProfile.mealsPerDay || 3;
+  
+  return Math.round(dailyCalories / mealsPerDay);
+}
+
+// Function to get macro distribution percentages based on selected plan
+function getMacroDistribution(macroDistribution) {
+  switch (macroDistribution) {
+    case 'HighProtein':
+      return { protein: 0.45, carbs: 0.25, fat: 0.3 };
+    case 'LowCarb':
+      return { protein: 0.4, carbs: 0.2, fat: 0.4 };
+    case 'Ketogenic':
+      return { protein: 0.35, carbs: 0.05, fat: 0.6 };
+    case 'Balanced':
+    default:
+      return { protein: 0.3, carbs: 0.4, fat: 0.3 };
+  }
+}
+
+// Function to calculate macro percentage for progress bars
+function calculateMacroPercentage(healthProfile, macroType) {
+  const macroDistribution = getMacroDistribution(healthProfile.macroDistribution || 'Balanced');
+  return Math.round(macroDistribution[macroType] * 100);
+}
+
+// Function to calculate daily protein in grams
+function calculateDailyProtein(healthProfile) {
+  const dailyCalories = calculateTarget(healthProfile);
+  const macroDistribution = getMacroDistribution(healthProfile.macroDistribution || 'Balanced');
+  
+  // 1g protein = 4 calories
+  return Math.round((dailyCalories * macroDistribution.protein) / 4);
+}
+
+// Function to calculate daily carbs in grams
+function calculateDailyCarbs(healthProfile) {
+  const dailyCalories = calculateTarget(healthProfile);
+  const macroDistribution = getMacroDistribution(healthProfile.macroDistribution || 'Balanced');
+  
+  // 1g carbs = 4 calories
+  return Math.round((dailyCalories * macroDistribution.carbs) / 4);
+}
+
+// Function to calculate daily fat in grams
+function calculateDailyFat(healthProfile) {
+  const dailyCalories = calculateTarget(healthProfile);
+  const macroDistribution = getMacroDistribution(healthProfile.macroDistribution || 'Balanced');
+  
+  // 1g fat = 9 calories
+  return Math.round((dailyCalories * macroDistribution.fat) / 9);
+}
+
+// Function to calculate protein per meal in grams
+function calculateProteinPerMeal(healthProfile) {
+  const dailyProtein = calculateDailyProtein(healthProfile);
+  const mealsPerDay = healthProfile.mealsPerDay || 3;
+  
+  return Math.round(dailyProtein / mealsPerDay);
+}
+
+// Function to calculate carbs per meal in grams
+function calculateCarbsPerMeal(healthProfile) {
+  const dailyCarbs = calculateDailyCarbs(healthProfile);
+  const mealsPerDay = healthProfile.mealsPerDay || 3;
+  
+  return Math.round(dailyCarbs / mealsPerDay);
+}
+
+// Function to calculate fat per meal in grams
+function calculateFatPerMeal(healthProfile) {
+  const dailyFat = calculateDailyFat(healthProfile);
+  const mealsPerDay = healthProfile.mealsPerDay || 3;
+  
+  return Math.round(dailyFat / mealsPerDay);
 }
 
 export default ProfilePage;

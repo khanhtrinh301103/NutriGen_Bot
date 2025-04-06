@@ -80,6 +80,7 @@ NutriGen_Bot/
 │   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
 │   │   │   ├── useAuth.js
+│   │   │   ├──profileValidation.js
 │   │   ├── pages/
 │   │   │   ├── auth/
 │   │   │   │   ├── forgotPassword.tsx
@@ -92,6 +93,7 @@ NutriGen_Bot/
 │   │   │   │   │   ├── footer.tsx
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx
+│   │   │   │   │   ├──ProfileRouteGuard.tsx
 │   │   │   ├── recipe/
 │   │   │   │   ├── Filter.tsx
 │   │   │   │   ├── [id].tsx
