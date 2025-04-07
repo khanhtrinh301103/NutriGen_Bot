@@ -68,6 +68,11 @@ NutriGen_Bot/
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx
 │   │   │   │   │   ├──ProfileRouteGuard.tsx
+│   │   │   │   ├── onboarding/
+│   │   │   │   │   ├── ActivityGoalsStep.tsx
+│   │   │   │   │   ├── AllergiesStep.tsx
+│   │   │   │   │   ├── BasicInfoStep.tsx
+│   │   │   │   │   ├── ProgressBar.tsx
 │   │   │   │   ├── profile/
 │   │   │   │   │   ├── HealthProfileSection.tsx
 │   │   │   │   │   ├── NutritionDashboard.tsx

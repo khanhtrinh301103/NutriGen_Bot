@@ -24,6 +24,19 @@ interface NutritionDashboardProps {
   onProfileUpdated: () => Promise<void>;
 }
 
+interface CalculatedNutrition {
+  bmr: number;
+  tdee: number;
+  targetCalories: number;
+  caloriesPerMeal: number;
+  dailyProtein: number;
+  dailyCarbs: number;
+  dailyFat: number;
+  proteinPerMeal: number;
+  carbsPerMeal: number;
+  fatPerMeal: number;
+}
+
 // Diet Plans with descriptions for better user understanding
 const DIET_PLANS = [
   { 
@@ -76,6 +89,33 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
       });
     }
   }, [profileData]);
+
+  // Helper function to get calculated nutrition values
+  const getNutritionValues = (): CalculatedNutrition => {
+    if (
+      profileData?.healthProfile?.calculatedNutrition && 
+      Object.keys(profileData.healthProfile.calculatedNutrition).length > 0
+    ) {
+      // Use pre-calculated values from Firestore
+      console.log('Using pre-calculated nutrition values from Firestore');
+      return profileData.healthProfile.calculatedNutrition;
+    }
+    
+    // Fallback: Calculate values on the fly if not available
+    console.log('Calculating nutrition values on the fly (fallback)');
+    return {
+      bmr: calculateBMR(profileData.healthProfile),
+      tdee: calculateTDEE(profileData.healthProfile),
+      targetCalories: calculateTarget(profileData.healthProfile),
+      caloriesPerMeal: calculateCaloriesPerMeal(profileData.healthProfile),
+      dailyProtein: calculateDailyProtein(profileData.healthProfile),
+      dailyCarbs: calculateDailyCarbs(profileData.healthProfile),
+      dailyFat: calculateDailyFat(profileData.healthProfile),
+      proteinPerMeal: calculateProteinPerMeal(profileData.healthProfile),
+      carbsPerMeal: calculateCarbsPerMeal(profileData.healthProfile),
+      fatPerMeal: calculateFatPerMeal(profileData.healthProfile)
+    };
+  };
 
   // Handle nutrition edit data changes
   const handleNutritionEditChange = (e) => {
@@ -143,6 +183,9 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
     );
   }
 
+  // Get nutrition values either from Firestore or calculate them
+  const nutritionValues = getNutritionValues();
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -177,7 +220,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                   <div className="bg-emerald-50 p-4 rounded-lg text-center">
                     <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
                     <div className="text-2xl font-bold text-emerald-600 mt-2">
-                      {calculateBMR(profileData.healthProfile)} calories
+                      {nutritionValues.bmr} calories
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Calories you burn at rest</p>
                   </div>
@@ -185,7 +228,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                   <div className="bg-blue-50 p-4 rounded-lg text-center">
                     <h4 className="text-sm font-medium text-gray-500">Total Daily Energy Expenditure</h4>
                     <div className="text-2xl font-bold text-blue-600 mt-2">
-                      {calculateTDEE(profileData.healthProfile)} calories
+                      {nutritionValues.tdee} calories
                     </div>
                     <p className="text-xs text-gray-500 mt-1">Calories you burn daily with activity</p>
                   </div>
@@ -193,7 +236,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                   <div className="bg-purple-50 p-4 rounded-lg text-center">
                     <h4 className="text-sm font-medium text-gray-500">Target Daily Calories</h4>
                     <div className="text-2xl font-bold text-purple-600 mt-2">
-                      {calculateTarget(profileData.healthProfile)} calories
+                      {nutritionValues.targetCalories} calories
                     </div>
                     <p className="text-xs text-gray-500 mt-1">
                       {goalMessages[profileData.healthProfile.goal] || 'For maintenance'}
@@ -263,7 +306,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                     >
                       <option value={1}>1 meal per day</option>
                       <option value={2}>2 meals per day</option>
-                      <option value={3}>3 meals per day</option>
+                      <option value={3}>3 meals per day (Default) </option>
                       <option value={4}>4 meals per day</option>
                       <option value={5}>5 meals per day</option>
                       <option value={6}>6 meals per day</option>
@@ -281,7 +324,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                     <div className="bg-white p-4 rounded-lg text-center shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500">Calories Per Meal</h4>
                       <div className="text-xl font-bold text-purple-600 mt-2">
-                        {calculateCaloriesPerMeal(profileData.healthProfile)} calories
+                        {nutritionValues.caloriesPerMeal} calories
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Based on {profileData.healthProfile.mealsPerDay || 3} meals per day
@@ -291,7 +334,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                     <div className="bg-white p-4 rounded-lg text-center shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500">Protein Per Meal</h4>
                       <div className="text-xl font-bold text-green-600 mt-2">
-                        {calculateProteinPerMeal(profileData.healthProfile)}g
+                        {nutritionValues.proteinPerMeal}g
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Builds and repairs muscle tissue
@@ -301,7 +344,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                     <div className="bg-white p-4 rounded-lg text-center shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500">Carbs Per Meal</h4>
                       <div className="text-xl font-bold text-amber-600 mt-2">
-                        {calculateCarbsPerMeal(profileData.healthProfile)}g
+                        {nutritionValues.carbsPerMeal}g
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Primary energy source
@@ -311,7 +354,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                     <div className="bg-white p-4 rounded-lg text-center shadow-sm">
                       <h4 className="text-sm font-medium text-gray-500">Fat Per Meal</h4>
                       <div className="text-xl font-bold text-blue-600 mt-2">
-                        {calculateFatPerMeal(profileData.healthProfile)}g
+                        {nutritionValues.fatPerMeal}g
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
                         Hormone production and nutrient absorption
@@ -386,7 +429,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                             <div className="w-full h-full bg-gray-200 absolute"></div>
                             <div className="h-full bg-green-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'protein')}%`}}></div>
                           </div>
-                          <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyProtein(profileData.healthProfile)}g</p>
+                          <p className="mt-2 text-sm font-medium text-gray-900">{nutritionValues.dailyProtein}g</p>
                         </div>
                         
                         <div className="bg-white p-4 rounded-lg shadow-sm">
@@ -398,7 +441,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                             <div className="w-full h-full bg-gray-200 absolute"></div>
                             <div className="h-full bg-amber-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'carbs')}%`}}></div>
                           </div>
-                          <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyCarbs(profileData.healthProfile)}g</p>
+                          <p className="mt-2 text-sm font-medium text-gray-900">{nutritionValues.dailyCarbs}g</p>
                         </div>
                         
                         <div className="bg-white p-4 rounded-lg shadow-sm">
@@ -410,7 +453,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                             <div className="w-full h-full bg-gray-200 absolute"></div>
                             <div className="h-full bg-blue-500 absolute" style={{width: `${calculateMacroPercentage(profileData.healthProfile, 'fat')}%`}}></div>
                           </div>
-                          <p className="mt-2 text-sm font-medium text-gray-900">{calculateDailyFat(profileData.healthProfile)}g</p>
+                          <p className="mt-2 text-sm font-medium text-gray-900">{nutritionValues.dailyFat}g</p>
                         </div>
                       </div>
                     </div>

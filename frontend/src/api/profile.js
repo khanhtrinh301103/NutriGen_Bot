@@ -1,6 +1,18 @@
 // frontend/src/api/profile.js
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
+import { 
+  calculateBMR, 
+  calculateTDEE, 
+  calculateTarget, 
+  calculateCaloriesPerMeal,
+  calculateDailyProtein,
+  calculateDailyCarbs,
+  calculateDailyFat,
+  calculateProteinPerMeal,
+  calculateCarbsPerMeal,
+  calculateFatPerMeal
+} from "../utils/nutritionCalculator";
 
 // Get user profile data
 export const getUserProfile = async (userId) => {
@@ -26,7 +38,19 @@ export const getUserProfile = async (userId) => {
           allergies: [],
           dietaryRestrictions: [],
           mealsPerDay: 3,
-          macroDistribution: 'Balanced'
+          macroDistribution: 'Balanced',
+          calculatedNutrition: {
+            bmr: 0,
+            tdee: 0,
+            targetCalories: 0,
+            caloriesPerMeal: 0,
+            dailyProtein: 0,
+            dailyCarbs: 0,
+            dailyFat: 0,
+            proteinPerMeal: 0,
+            carbsPerMeal: 0,
+            fatPerMeal: 0
+          }
         },
         savedRecipes: [],
         createdAt: new Date().toISOString()
@@ -39,6 +63,66 @@ export const getUserProfile = async (userId) => {
     console.error("Error fetching user profile:", error);
     throw error;
   }
+};
+
+// Helper function to calculate nutrition values based on health profile
+const calculateNutritionValues = (healthProfile) => {
+  // Only calculate if we have the necessary data
+  if (!healthProfile.height || !healthProfile.weight || !healthProfile.age) {
+    console.log("Missing required data for nutrition calculations");
+    return {
+      bmr: 0,
+      tdee: 0,
+      targetCalories: 0,
+      caloriesPerMeal: 0,
+      dailyProtein: 0,
+      dailyCarbs: 0,
+      dailyFat: 0,
+      proteinPerMeal: 0,
+      carbsPerMeal: 0,
+      fatPerMeal: 0
+    };
+  }
+
+  console.log("Calculating nutrition values based on health profile:", healthProfile);
+  
+  // Calculate all nutrition values
+  const bmr = calculateBMR(healthProfile);
+  const tdee = calculateTDEE(healthProfile);
+  const targetCalories = calculateTarget(healthProfile);
+  const caloriesPerMeal = calculateCaloriesPerMeal(healthProfile);
+  const dailyProtein = calculateDailyProtein(healthProfile);
+  const dailyCarbs = calculateDailyCarbs(healthProfile);
+  const dailyFat = calculateDailyFat(healthProfile);
+  const proteinPerMeal = calculateProteinPerMeal(healthProfile);
+  const carbsPerMeal = calculateCarbsPerMeal(healthProfile);
+  const fatPerMeal = calculateFatPerMeal(healthProfile);
+  
+  console.log("Calculated nutrition values:", {
+    bmr,
+    tdee,
+    targetCalories,
+    caloriesPerMeal,
+    dailyProtein,
+    dailyCarbs,
+    dailyFat,
+    proteinPerMeal,
+    carbsPerMeal,
+    fatPerMeal
+  });
+  
+  return {
+    bmr,
+    tdee,
+    targetCalories,
+    caloriesPerMeal,
+    dailyProtein,
+    dailyCarbs,
+    dailyFat,
+    proteinPerMeal,
+    carbsPerMeal,
+    fatPerMeal
+  };
 };
 
 // Update user profile data
@@ -75,6 +159,20 @@ export const updateUserProfile = async (userId, profileData) => {
         updateFields[`healthProfile.${key}`] = profileData[key];
       });
       
+      // Get updated health profile for calculations
+      const updatedHealthProfile = {
+        ...currentHealthProfile,
+        ...profileData
+      };
+      
+      // Calculate nutrition values with updated data
+      const nutritionValues = calculateNutritionValues(updatedHealthProfile);
+      
+      // Add calculated values to update
+      Object.keys(nutritionValues).forEach(key => {
+        updateFields[`healthProfile.calculatedNutrition.${key}`] = nutritionValues[key];
+      });
+      
       // Add updatedAt field
       updateFields.updatedAt = new Date().toISOString();
       
@@ -85,18 +183,31 @@ export const updateUserProfile = async (userId, profileData) => {
     }
     
     // Regular health profile update
-    console.log("Updating full health profile");
+    console.log("Updating full health profile", profileData);
+    
+    // Create updated health profile
+    const updatedHealthProfile = {
+      ...currentHealthProfile,
+      height: profileData.height,
+      weight: profileData.weight,
+      age: profileData.age,
+      gender: profileData.gender,
+      activityLevel: profileData.activityLevel,
+      goal: profileData.goal,
+      allergies: profileData.allergies || [],
+      dietaryRestrictions: profileData.dietaryRestrictions || [],
+      mealsPerDay: profileData.mealsPerDay || currentHealthProfile.mealsPerDay || 3,
+      macroDistribution: profileData.macroDistribution || currentHealthProfile.macroDistribution || 'Balanced'
+    };
+    
+    // Calculate nutrition values
+    const nutritionValues = calculateNutritionValues(updatedHealthProfile);
+    
+    // Update document with all values
     await updateDoc(userRef, {
       healthProfile: {
-        ...currentHealthProfile,
-        height: profileData.height,
-        weight: profileData.weight,
-        age: profileData.age,
-        gender: profileData.gender,
-        activityLevel: profileData.activityLevel,
-        goal: profileData.goal,
-        allergies: profileData.allergies || [],
-        dietaryRestrictions: profileData.dietaryRestrictions || []
+        ...updatedHealthProfile,
+        calculatedNutrition: nutritionValues
       },
       updatedAt: new Date().toISOString()
     });
