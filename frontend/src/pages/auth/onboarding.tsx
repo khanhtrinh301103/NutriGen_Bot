@@ -188,7 +188,6 @@ const OnboardingPage = () => {
                     >
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
-                      <option value="Other">Other</option>
                     </select>
                   </div>
                 </div>
@@ -421,8 +420,12 @@ function calculateTarget(formData) {
     case 'Weight Loss':
       return Math.round(tdee * 0.8); // 20% deficit
     case 'Weight Gain':
-    case 'Muscle Gain':
       return Math.round(tdee * 1.15); // 15% surplus
+    case 'Muscle Gain':
+      return Math.round(tdee * 1.2); // 20% surplus for muscle building
+    case 'Improve Health':
+      return Math.round(tdee * 0.95); // Slight 5% deficit for health improvement
+    case 'Weight Maintenance':
     default:
       return tdee; // Maintenance
   }
