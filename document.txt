@@ -94,6 +94,7 @@ NutriGen_Bot/
 │   │   │   ├── globals.css
 │   │   ├── utils
 │   │   │   ├── nutritionCalculator.ts
+│   │   │   ├── dietaryConflicts.ts
 │   ├── .gitignore
 │   ├── eslint.config.mjs
 │   ├── next-env.d.ts
