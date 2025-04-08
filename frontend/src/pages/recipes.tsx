@@ -8,6 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
 import ProtectedRoute from "../api/ProtectedRoute";
 import ProfileRouteGuard from "./components/common/ProfileRouteGuard";
+import { getUserHealthProfile } from "../api/getUserHealthProfile"; // Import getUserHealthProfile
 
 // Define a Recipe interface to ensure type safety
 interface Recipe {
@@ -28,6 +29,37 @@ interface SearchState {
   nutritionMode: boolean; // Add nutritionMode to search state
 }
 
+// Define interface for user health profile
+interface UserHealthProfile {
+  userId: string;
+  email: string;
+  displayName: string;
+  height?: number;
+  weight?: number;
+  age?: number;
+  gender?: string;
+  activityLevel?: string;
+  goal?: string;
+  allergies?: string[];
+  dietaryRestrictions?: string[];
+  calculatedNutrition?: {
+    bmr: number;
+    tdee: number;
+    targetCalories: number;
+    dailyProtein: number;
+    dailyCarbs: number;
+    dailyFat: number;
+    caloriesPerMeal: number;
+    proteinPerMeal: number;
+    carbsPerMeal: number;
+    fatPerMeal: number;
+  };
+  [key: string]: any; // Allow for additional properties
+}
+
+// Create a localStorage key constant for better maintainability
+const NUTRITION_MODE_STORAGE_KEY = 'nutritionModeEnabled';
+
 const RecipesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({ cuisine: "" });
@@ -37,11 +69,29 @@ const RecipesPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchRestored, setSearchRestored] = useState(false); // Track if search was restored
   const [nutritionMode, setNutritionMode] = useState(false); // State for nutrition mode toggle
+  const [userHealthProfile, setUserHealthProfile] = useState<UserHealthProfile | null>(null); // Add health profile state
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false); // Add loading state for profile
+  const [profileError, setProfileError] = useState<string | null>(null); // Add error state for profile
+  const [showNutritionBanner, setShowNutritionBanner] = useState(false); // Control animation
+  const [bannerExiting, setBannerExiting] = useState(false); // Control exit animation
   const cardsPerPage = 12; // Show 12 cards per page
   
-  // Load saved search state when component mounts
+  // Load saved search state and nutrition mode when component mounts
   useEffect(() => {
-    console.log("🔍 [UI] Checking for saved search state");
+    console.log("🔍 [UI] Checking for saved search state and nutrition mode");
+    
+    // First check for global nutrition mode setting
+    const savedNutritionMode = localStorage.getItem(NUTRITION_MODE_STORAGE_KEY);
+    if (savedNutritionMode) {
+      try {
+        const isEnabled = JSON.parse(savedNutritionMode);
+        console.log("📊 [UI] Nutrition mode global setting:", isEnabled);
+        setNutritionMode(isEnabled);
+      } catch (error) {
+        console.error("❌ [UI] Error parsing saved nutrition mode:", error);
+        localStorage.removeItem(NUTRITION_MODE_STORAGE_KEY);
+      }
+    }
     
     const savedSearchState = localStorage.getItem('recipeSearchState');
     if (savedSearchState) {
@@ -52,12 +102,6 @@ const RecipesPage = () => {
         // Restore saved state
         setSearchTerm(parsedState.searchTerm || "");
         setFilters({ cuisine: parsedState.cuisine || "" });
-        
-        // Restore nutrition mode if it exists in saved state
-        if (parsedState.nutritionMode !== undefined) {
-          setNutritionMode(parsedState.nutritionMode);
-          console.log("📊 [UI] Nutrition mode restored:", parsedState.nutritionMode);
-        }
         
         // Only set results if there are any
         if (parsedState.results && parsedState.results.length > 0) {
@@ -102,6 +146,66 @@ const RecipesPage = () => {
     }
   }, [searchTerm, filters.cuisine, results, currentPage, nutritionMode]);
 
+  // Effect to handle nutrition mode changes
+  useEffect(() => {
+    // Store nutrition mode preference in localStorage
+    localStorage.setItem(NUTRITION_MODE_STORAGE_KEY, JSON.stringify(nutritionMode));
+    console.log("💾 [UI] Nutrition mode preference saved globally:", nutritionMode);
+    
+    // Only fetch health profile if nutrition mode is enabled
+    if (nutritionMode) {
+      fetchUserHealthProfile();
+    } else {
+      // Start exit animation
+      if (userHealthProfile) {
+        setBannerExiting(true);
+        
+        // After animation completes, clear data
+        const timer = setTimeout(() => {
+          setUserHealthProfile(null);
+          setShowNutritionBanner(false);
+          setBannerExiting(false);
+          console.log("🧹 [UI] Health profile data cleared due to nutrition mode disabled");
+        }, 500); // Match this to the CSS transition duration
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [nutritionMode]);
+
+  // Effect to handle animation for nutrition banner
+  useEffect(() => {
+    if (nutritionMode && userHealthProfile && !isLoadingProfile && !profileError) {
+      // Delay showing the banner for animation effect
+      const timer = setTimeout(() => {
+        setShowNutritionBanner(true);
+        setBannerExiting(false);
+      }, 300);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [nutritionMode, userHealthProfile, isLoadingProfile, profileError]);
+
+  // Function to fetch user health profile
+  const fetchUserHealthProfile = async () => {
+    console.log("🔄 [UI] Fetching user health profile for nutrition mode");
+    setIsLoadingProfile(true);
+    setProfileError(null);
+    setShowNutritionBanner(false);
+    
+    try {
+      const profile = await getUserHealthProfile();
+      setUserHealthProfile(profile);
+      console.log("✅ [UI] Successfully loaded user health profile:", profile);
+    } catch (error) {
+      console.error("❌ [UI] Error loading user health profile:", error);
+      setProfileError("Failed to load health profile. Nutrition recommendations may be limited.");
+      // Keep nutrition mode on but show error
+    } finally {
+      setIsLoadingProfile(false);
+    }
+  };
+
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     console.log("📝 [UI] User typing search keyword:", e.target.value);
@@ -116,6 +220,8 @@ const RecipesPage = () => {
     const newMode = !nutritionMode;
     setNutritionMode(newMode);
     console.log("📊 [UI] Nutrition mode toggled:", newMode);
+    
+    // The health profile fetching will be handled by the useEffect
   };
 
   const performSearch = () => {
@@ -142,6 +248,12 @@ const RecipesPage = () => {
         // Log first recipe to check if it has ID
         if (newResults.length > 0) {
           console.log("🔢 [UI] First recipe ID check:", newResults[0].id);
+        }
+        
+        // Apply nutrition info if needed
+        if (nutritionMode && userHealthProfile) {
+          console.log("📊 [UI] Applying nutrition recommendations to results (in memory only)");
+          // This would happen server-side in a real app
         }
         
         setResults(newResults);
@@ -220,7 +332,7 @@ const RecipesPage = () => {
                   </button>
                 </div>
                 
-                {/* Nutrition Mode Toggle Button */}
+                {/* Nutrition Mode Toggle Button with label and animation */}
                 <div className="flex items-center shrink-0">
                   <span className="text-sm mr-2 text-gray-600 hidden sm:inline">Nutrition Mode</span>
                   <button
@@ -259,10 +371,87 @@ const RecipesPage = () => {
               </div>
             )}
 
-            {/* Nutrition Mode active indicator */}
-            {nutritionMode && (
-              <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded mx-2 sm:mx-4 md:max-w-3xl md:mx-auto text-sm">
-                <span>Nutrition Mode is active. Recipes will display detailed nutritional information.</span>
+            {/* Nutrition Mode loading state */}
+            {nutritionMode && isLoadingProfile && (
+              <div className="mb-4 bg-green-50 border border-green-200 text-green-800 px-4 py-2 rounded mx-2 sm:mx-4 md:max-w-3xl md:mx-auto text-sm flex items-center animate-pulse">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-green-700 mr-2"></div>
+                <span>Loading your nutrition profile...</span>
+              </div>
+            )}
+            
+            {/* Nutrition Mode error state */}
+            {nutritionMode && profileError && (
+              <div className="mb-4 bg-red-50 border border-red-200 text-red-800 px-4 py-2 rounded mx-2 sm:mx-4 md:max-w-3xl md:mx-auto text-sm">
+                <span>{profileError}</span>
+              </div>
+            )}
+
+            {/* Enhanced Nutrition Mode active indicator with entrance/exit animations */}
+            {(nutritionMode || bannerExiting) && userHealthProfile && !isLoadingProfile && !profileError && (
+              <div 
+                className={`mb-4 bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg shadow-sm mx-2 sm:mx-4 md:max-w-3xl md:mx-auto overflow-hidden transition-all duration-500 ease-in-out ${
+                  showNutritionBanner && !bannerExiting 
+                    ? 'opacity-100 max-h-96 transform translate-y-0' 
+                    : bannerExiting
+                      ? 'opacity-0 max-h-96 transform translate-y-4' 
+                      : 'opacity-0 max-h-0 transform -translate-y-4'
+                }`}
+              >
+                <div className="p-4">
+                  {/* Header with icon */}
+                  <div className="flex items-center mb-2">
+                    <svg className="w-5 h-5 text-green-700 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 className="text-green-800 font-medium">Nutrition Mode Active</h3>
+                  </div>
+                  
+                  {/* Description */}
+                  <p className="text-green-800 text-sm mb-3">
+                    Recipes will be tailored to your health profile. Here are your nutritional information per meal:
+                  </p>
+                  
+                  {/* Nutrition Stats Cards */}
+                  {userHealthProfile.calculatedNutrition && (
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mt-2">
+                      {/* Calories Per Meal Card */}
+                      <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm transition-all hover:shadow-md hover:scale-105">
+                        <div className="text-xs text-green-700 font-medium mb-1">Calories</div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {Math.round(userHealthProfile.calculatedNutrition.caloriesPerMeal || 0)}
+                          <span className="text-xs font-normal text-gray-500 ml-1">kcal</span>
+                        </div>
+                      </div>
+                      
+                      {/* Protein Per Meal Card */}
+                      <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm transition-all hover:shadow-md hover:scale-105">
+                        <div className="text-xs text-green-700 font-medium mb-1">Protein</div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {Math.round(userHealthProfile.calculatedNutrition.proteinPerMeal || 0)}
+                          <span className="text-xs font-normal text-gray-500 ml-1">g</span>
+                        </div>
+                      </div>
+                      
+                      {/* Carbs Per Meal Card */}
+                      <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm transition-all hover:shadow-md hover:scale-105">
+                        <div className="text-xs text-green-700 font-medium mb-1">Carbs</div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {Math.round(userHealthProfile.calculatedNutrition.carbsPerMeal || 0)}
+                          <span className="text-xs font-normal text-gray-500 ml-1">g</span>
+                        </div>
+                      </div>
+                      
+                      {/* Fat Per Meal Card */}
+                      <div className="bg-white rounded-lg p-3 border border-green-200 shadow-sm transition-all hover:shadow-md hover:scale-105">
+                        <div className="text-xs text-green-700 font-medium mb-1">Fat</div>
+                        <div className="text-lg font-bold text-gray-800">
+                          {Math.round(userHealthProfile.calculatedNutrition.fatPerMeal || 0)}
+                          <span className="text-xs font-normal text-gray-500 ml-1">g</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
