@@ -38,7 +38,7 @@ const Footer = () => {
       </div>
 
       <div className="mt-8 text-center text-gray-200">
-        &copy; {currentYear} NutriGen Bot. All rights reserved.
+        &copy; {currentYear} NutriGen Bot. All rights reserved and this website is only for educational purposes.
       </div>
     </footer>
   );
