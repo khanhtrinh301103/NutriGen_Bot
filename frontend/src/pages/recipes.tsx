@@ -8,7 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
 import ProtectedRoute from "../api/ProtectedRoute";
 import ProfileRouteGuard from "./components/common/ProfileRouteGuard";
-import { getUserHealthProfile } from "../api/getUserHealthProfile"; // Import getUserHealthProfile
+import { getUserHealthProfile, clearHealthProfileCache } from "../api/getUserHealthProfile"; // Import them clearHealthProfileCache
 
 // Define a Recipe interface to ensure type safety
 interface Recipe {
@@ -146,6 +146,9 @@ const RecipesPage = () => {
     }
   }, [searchTerm, filters.cuisine, results, currentPage, nutritionMode]);
 
+  // Biến để theo dõi đã gửi dữ liệu đến backend hay chưa
+  const [hasInitializedNutrition, setHasInitializedNutrition] = useState(false);
+
   // Effect to handle nutrition mode changes
   useEffect(() => {
     // Store nutrition mode preference in localStorage
@@ -155,6 +158,8 @@ const RecipesPage = () => {
     // Only fetch health profile if nutrition mode is enabled
     if (nutritionMode) {
       fetchUserHealthProfile();
+      // Reset flag when nutrition mode is turned off then on again
+      setHasInitializedNutrition(false);
     } else {
       // Start exit animation
       if (userHealthProfile) {
@@ -165,7 +170,9 @@ const RecipesPage = () => {
           setUserHealthProfile(null);
           setShowNutritionBanner(false);
           setBannerExiting(false);
-          console.log("🧹 [UI] Health profile data cleared due to nutrition mode disabled");
+          // Xóa cache và dữ liệu khi tắt chế độ nutrition mode
+          clearHealthProfileCache();
+          console.log("🧹 [UI] Health profile data and cache cleared due to nutrition mode disabled");
         }, 500); // Match this to the CSS transition duration
         
         return () => clearTimeout(timer);
@@ -194,9 +201,32 @@ const RecipesPage = () => {
     setShowNutritionBanner(false);
     
     try {
-      const profile = await getUserHealthProfile();
+      // Luôn lấy dữ liệu mới từ Firestore bằng cách truyền tham số bypassCache=true
+      const profile = await getUserHealthProfile(true);
       setUserHealthProfile(profile);
       console.log("✅ [UI] Successfully loaded user health profile:", profile);
+      
+      // Chỉ gửi dữ liệu đến backend một lần sau khi bật Nutrition Mode
+      if (!hasInitializedNutrition) {
+        console.log("🔄 [UI] Initializing nutrition data with backend - first time only");
+        
+        try {
+          // Import hàm getNutritionRecommendations từ getUserHealthProfile.js
+          const { getNutritionRecommendations } = await import("../api/getUserHealthProfile");
+          
+          // Truyền tham số forceRefresh=true để luôn lấy dữ liệu mới
+          await getNutritionRecommendations(true);
+          console.log("✅ [UI] Successfully initialized nutrition data with backend");
+          
+          // Đánh dấu đã khởi tạo thành công để không gửi lại
+          setHasInitializedNutrition(true);
+        } catch (err) {
+          console.log("⚠️ [UI] Non-critical error initializing nutrition data:", err);
+          // Không hiển thị lỗi này cho người dùng vì không ảnh hưởng đến UI chính
+        }
+      } else {
+        console.log("ℹ️ [UI] Skipping backend communication - already initialized");
+      }
     } catch (error) {
       console.error("❌ [UI] Error loading user health profile:", error);
       setProfileError("Failed to load health profile. Nutrition recommendations may be limited.");
@@ -220,6 +250,12 @@ const RecipesPage = () => {
     const newMode = !nutritionMode;
     setNutritionMode(newMode);
     console.log("📊 [UI] Nutrition mode toggled:", newMode);
+    
+    // Nếu bật chế độ dinh dưỡng, xóa cache trước để đảm bảo lấy dữ liệu mới
+    if (newMode) {
+      console.log("🔄 [UI] Clearing health profile cache before fetching fresh data");
+      clearHealthProfileCache();
+    }
     
     // The health profile fetching will be handled by the useEffect
   };

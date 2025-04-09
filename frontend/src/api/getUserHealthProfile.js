@@ -48,6 +48,9 @@ export const getUserHealthProfile = async (bypassCache = false) => {
   try {
     console.log('Getting health profile for current user');
     
+    // Khi nutritionMode được bật từ UI, buộc lấy dữ liệu mới nhất từ Firestore
+    // bằng cách đặt bypassCache = true
+    
     // Check if we can use cached data
     const now = Date.now();
     if (!bypassCache && 
@@ -66,7 +69,7 @@ export const getUserHealthProfile = async (bypassCache = false) => {
     
     // Get user ID
     const userId = currentUser.uid;
-    console.log(`Current user ID: ${userId}`);
+    console.log(`Current user ID: ${userId}, fetching fresh profile data from Firestore`);
     
     // Get user profile from Firestore
     const profileData = await getUserProfile(userId);
@@ -88,20 +91,10 @@ export const getUserHealthProfile = async (bypassCache = false) => {
       lastUpdated: profileData.updatedAt || profileData.createdAt
     };
     
-    console.log('Successfully retrieved health profile', enrichedHealthProfile);
+    console.log('Successfully retrieved health profile from Firestore', enrichedHealthProfile);
     
-    // After getting the profile, immediately fetch nutrition recommendations
-    if (nutritionModeEnabled) {
-      try {
-        // We use a non-await call to avoid blocking and let it run in background
-        getNutritionRecommendations(false).catch(err => {
-          console.log('Background nutrition fetch error (non-critical):', err);
-        });
-      } catch (error) {
-        // We ignore errors here since this is just a background prefetch
-        console.log('Failed to prefetch nutrition data (non-critical)');
-      }
-    }
+    // Không tự động gửi yêu cầu đến backend ở đây nữa
+    // Thay vào đó, chúng ta sẽ để recipes.tsx kiểm soát việc này
     
     // Update cache
     healthProfileCache = enrichedHealthProfile;
@@ -139,7 +132,8 @@ export const getFormattedHealthProfileForAPI = async () => {
       throw new Error('Nutrition mode is disabled');
     }
     
-    const healthProfile = await getUserHealthProfile();
+    // Luôn lấy dữ liệu mới nhất từ Firestore khi chuẩn bị gửi dữ liệu đến API
+    const healthProfile = await getUserHealthProfile(true);
     
     // Format the data for API transmission
     const formattedData = {
