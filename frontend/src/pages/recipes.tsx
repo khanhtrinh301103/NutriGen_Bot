@@ -75,6 +75,8 @@ const RecipesPage = () => {
   const [showNutritionBanner, setShowNutritionBanner] = useState(false); // Control animation
   const [bannerExiting, setBannerExiting] = useState(false); // Control exit animation
   const cardsPerPage = 12; // Show 12 cards per page
+  // Thêm state mới cho thông tin fallback
+  const [fallbackInfo, setFallbackInfo] = useState<{applied: boolean, message: string, type: string} | null>(null);
   
   // Load saved search state and nutrition mode when component mounts
   useEffect(() => {
@@ -260,6 +262,7 @@ const RecipesPage = () => {
     // The health profile fetching will be handled by the useEffect
   };
 
+  // Cập nhật hàm performSearch để xử lý thông tin fallback
   const performSearch = () => {
     if (!searchTerm.trim() && !filters.cuisine) {
       console.log("⚠️ [UI] Search cancelled: No search criteria provided");
@@ -268,6 +271,9 @@ const RecipesPage = () => {
     
     console.log("🔎 [UI] Performing search with keyword:", searchTerm, "and filter:", filters);
     console.log("📊 [UI] Nutrition mode active:", nutritionMode);
+    
+    // Reset fallback info
+    setFallbackInfo(null);
     
     // Set loading state and trigger fade-out effect
     setIsLoading(true);
@@ -278,24 +284,35 @@ const RecipesPage = () => {
     
     // Small delay to show loading effect
     setTimeout(() => {
+      // Truyền thêm tham số nutritionMode vào hàm sendSearchRequest
       sendSearchRequest(searchTerm, filters.cuisine, (newResults) => {
         console.log(`✅ [UI] Search complete. Found ${newResults.length} recipes.`);
+        
+        // Kiểm tra xem có thông tin fallback từ backend không
+        // Thông tin này sẽ được thêm vào bởi getRecipe.js khi nhận response từ backend
+        if (Array.isArray(newResults) && newResults.length > 0 && (newResults as any).fallbackInfo) {
+          const fallback = (newResults as any).fallbackInfo;
+          setFallbackInfo(fallback);
+          console.log(`ℹ️ [UI] Search used fallback: ${fallback.message}`);
+          // Xóa thông tin fallback khỏi mảng kết quả
+          delete (newResults as any).fallbackInfo;
+        }
         
         // Log first recipe to check if it has ID
         if (newResults.length > 0) {
           console.log("🔢 [UI] First recipe ID check:", newResults[0].id);
-        }
-        
-        // Apply nutrition info if needed
-        if (nutritionMode && userHealthProfile) {
-          console.log("📊 [UI] Applying nutrition recommendations to results (in memory only)");
-          // This would happen server-side in a real app
+          
+          // Log thông tin dinh dưỡng nếu có
+          if (nutritionMode && newResults[0].nutritionMatchPercentage) {
+            console.log("📊 [UI] First recipe nutrition match:", newResults[0].nutritionMatchPercentage + "%");
+            console.log("📊 [UI] First recipe overall match:", newResults[0].overallMatchPercentage + "%");
+          }
         }
         
         setResults(newResults);
         // Mark that this is a new search, not a restored one
         setSearchRestored(false);
-      });
+      }, nutritionMode);
     }, 500);
   };
 
@@ -488,6 +505,16 @@ const RecipesPage = () => {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Thêm component thông báo fallback - đặt code này sau đoạn Nutrition Mode active indicator */}
+            {fallbackInfo && fallbackInfo.applied && (
+              <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-800 px-4 py-2 rounded mx-2 sm:mx-4 md:max-w-3xl md:mx-auto text-sm flex items-center">
+                <svg className="w-5 h-5 text-blue-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>{fallbackInfo.message}</span>
               </div>
             )}
 
