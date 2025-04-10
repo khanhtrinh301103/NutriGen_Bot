@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { getRecipeDetails } from '../../api/getRecipe';
+import { saveRecipe, removeRecipe, getSavedRecipes } from '../../api/profile';
 import { 
   CheckCircleIcon, 
   ArrowLeftIcon, 
@@ -61,6 +62,7 @@ const RecipeDetailPage: React.FC = () => {
   const [checkedIngredients, setCheckedIngredients] = useState<Record<string, boolean>>({});
   const [servingMultiplier, setServingMultiplier] = useState<number>(1);
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
+  const [favoriteLoading, setFavoriteLoading] = useState<boolean>(false);
   const [isMounted, setIsMounted] = useState<boolean>(false);
 
   // Animation effect when component mounts
@@ -68,29 +70,63 @@ const RecipeDetailPage: React.FC = () => {
     setIsMounted(true);
   }, []);
 
-  useEffect(() => {
-    const fetchRecipeDetails = async () => {
-      if (!id) return;
-      
-      setLoading(true);
-      console.log("🔍 [UI] Fetching details for recipe ID:", id);
-      
-      try {
-        const recipeData = await getRecipeDetails(id);
-        console.log("✅ [UI] Successfully loaded recipe details:", recipeData.title);
-        setRecipe(recipeData);
-        setError(null);
-      } catch (err) {
-        console.error("❌ [UI] Error loading recipe details:", err);
-        setError("Failed to load recipe details. Please try again later.");
-        setRecipe(null);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch recipe details
+// Trong useEffect của [id].tsx, thay thế đoạn code fetch recipe details:
 
-    fetchRecipeDetails();
-  }, [id]);
+useEffect(() => {
+  const fetchRecipeDetails = async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    
+    // Xử lý id có thể là string hoặc string[]
+    const recipeId = Array.isArray(id) ? id[0] : id;
+    console.log("🔍 [UI] Fetching details for recipe ID:", recipeId);
+    
+    try {
+      const recipeData = await getRecipeDetails(recipeId);
+      console.log("✅ [UI] Successfully loaded recipe details:", recipeData.title);
+      setRecipe(recipeData);
+      setError(null);
+    } catch (err) {
+      console.error("❌ [UI] Error loading recipe details:", err);
+      setError("Failed to load recipe details. Please try again later.");
+      setRecipe(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchRecipeDetails();
+}, [id]);
+
+// Check if recipe is in favorites
+useEffect(() => {
+  const checkFavoriteStatus = async () => {
+    if (!id) return;
+    
+    try {
+      // Xử lý id có thể là string hoặc string[]
+      const recipeId = Array.isArray(id) ? id[0] : id;
+      
+      // Chuyển đổi sang số nếu có thể
+      const numericId = typeof recipeId === 'string' ? parseInt(recipeId, 10) : recipeId;
+      
+      const savedRecipes = await getSavedRecipes();
+      const isInFavorites = savedRecipes.some((recipe) => {
+        const savedId = typeof recipe.id === 'string' ? parseInt(recipe.id, 10) : recipe.id;
+        return savedId === numericId;
+      });
+      
+      console.log(`📊 [UI] Recipe ${numericId} favorite status:`, isInFavorites);
+      setIsFavorite(isInFavorites);
+    } catch (error) {
+      console.error("❌ [UI] Error checking favorite status:", error);
+    }
+  };
+  
+  checkFavoriteStatus();
+}, [id]);
 
   // Simple handler for navigating back to recipes page
   const handleBackToRecipes = () => {
@@ -111,9 +147,52 @@ const RecipeDetailPage: React.FC = () => {
   };
 
   // Toggle favorite
-  const toggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    console.log(`❤️ [UI] Recipe ${isFavorite ? 'removed from' : 'added to'} favorites`);
+  const toggleFavorite = async () => {
+    if (!recipe) return;
+    
+    try {
+      setFavoriteLoading(true);
+      
+      // Convert string values to numbers for consistency
+      const prepareNutritionData = (value) => {
+        if (typeof value === 'string') {
+          // Remove any non-numeric characters (like 'g' or 'kcal')
+          const numericValue = value.replace(/[^0-9.]/g, '');
+          return parseFloat(numericValue) || 0;
+        }
+        return value || 0;
+      };
+      
+      if (isFavorite) {
+        // Remove from favorites
+        console.log(`❤️ [UI] Removing recipe ${recipe.id} from favorites`);
+        await removeRecipe(recipe.id);
+      } else {
+        // Add to favorites
+        console.log(`❤️ [UI] Adding recipe ${recipe.id} to favorites`);
+        const recipeData = {
+          id: recipe.id,
+          title: recipe.title,
+          image: recipe.image,
+          calories: prepareNutritionData(recipe.calories),
+          protein: prepareNutritionData(recipe.protein),
+          fat: prepareNutritionData(recipe.fat),
+          carbs: prepareNutritionData(recipe.carbs),
+          readyInMinutes: recipe.readyInMinutes || 30,
+          servings: recipe.servings || 4,
+        };
+        console.log("📦 [UI] Saving recipe data:", recipeData);
+        await saveRecipe(recipeData);
+      }
+      
+      // Toggle state after successful API call
+      setIsFavorite(!isFavorite);
+      console.log(`❤️ [UI] Recipe ${recipe.title} ${!isFavorite ? 'added to' : 'removed from'} favorites`);
+    } catch (error) {
+      console.error("❌ [UI] Error toggling favorite:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
 
   // Render loading skeleton
@@ -254,9 +333,19 @@ const RecipeDetailPage: React.FC = () => {
           <div className="flex justify-end mb-6">
             <button
               onClick={toggleFavorite}
-              className="flex items-center bg-white px-4 py-2 rounded-full shadow-sm hover:bg-gray-50 text-sm font-medium transition"
+              disabled={favoriteLoading}
+              className={`flex items-center px-4 py-2 rounded-full shadow-sm text-sm font-medium transition ${
+                favoriteLoading
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : "bg-white hover:bg-gray-50"
+              }`}
             >
-              {isFavorite ? (
+              {favoriteLoading ? (
+                <>
+                  <div className="h-5 w-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin mr-2"></div>
+                  <span>Processing...</span>
+                </>
+              ) : isFavorite ? (
                 <>
                   <HeartIconSolid className="h-5 w-5 text-red-500 mr-2" />
                   <span>Remove from Favorites</span>

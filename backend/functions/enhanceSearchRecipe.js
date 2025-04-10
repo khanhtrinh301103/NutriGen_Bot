@@ -22,7 +22,7 @@ const {
   generateAlternativeSuggestions 
 } = require("../src/conflictDetector");
 
-const SPOONACULAR_API_KEY = "7a6e45249407478683346a18f937ba47";
+const SPOONACULAR_API_KEY = "026008f475974904a5fff1f27ac6a23c";
 
 // Main search endpoint
 router.post("/searchRecipe", async (req, res) => {

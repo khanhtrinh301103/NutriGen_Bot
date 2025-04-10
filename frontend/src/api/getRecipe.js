@@ -133,7 +133,7 @@ export const sendSearchRequest = async (searchTerm, cuisine, setResult, nutritio
 
 /**
  * Fetches detailed recipe information by ID
- * @param {number} recipeId - ID of the recipe to fetch
+ * @param {number|string|string[]} recipeId - ID of the recipe to fetch (can be number, string, or string array)
  * @returns {Promise<Object>} Recipe details object
  */
 export const getRecipeDetails = async (recipeId) => {
@@ -146,17 +146,32 @@ export const getRecipeDetails = async (recipeId) => {
   }
   
   try {
-    const res = await fetch(`http://localhost:5000/api/recipe/${recipeId}`, {
+    // Handle array of IDs - take the first one
+    const idToUse = Array.isArray(recipeId) ? recipeId[0] : recipeId;
+    
+    // Ensure recipeId is treated as string for the URL
+    const recipeIdStr = String(idToUse);
+    
+    console.log(`🔍 [Frontend] Making API request for recipe ID: ${recipeIdStr}`);
+    const res = await fetch(`http://localhost:5000/api/recipe/${recipeIdStr}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`❌ [Frontend] API error: ${res.status} - ${errorText}`);
       throw new Error(`HTTP error! Status: ${res.status}`);
     }
 
     const data = await res.json();
     console.log("✅ [Frontend] Received recipe details from backend:", data.title);
+    
+    // Ensure the ID is consistently a number in the data
+    if (data && typeof data.id === 'string') {
+      data.id = parseInt(data.id, 10);
+    }
+    
     return data;
   } catch (error) {
     console.error("❌ [Frontend] Error fetching recipe details:", error);

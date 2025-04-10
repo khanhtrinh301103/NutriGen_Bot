@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { HeartIcon } from "@heroicons/react/24/outline";
 import { HeartIcon as HeartIconSolid } from "@heroicons/react/24/solid";
 import { useRouter } from "next/router";
+import { saveRecipe, removeRecipe, getSavedRecipes } from "../../api/profile";
 
 interface NutritionInfo {
   proteinMatch?: number;
@@ -25,6 +26,8 @@ interface RecipeCardProps {
   overallMatchPercentage?: number;
   nutritionInfo?: NutritionInfo;
   instructions?: string;
+  readyInMinutes?: number;
+  servings?: number;
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({
@@ -39,6 +42,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   overallMatchPercentage,
   nutritionInfo,
   instructions = "No instructions available.",
+  readyInMinutes,
+  servings,
 }) => {
   const router = useRouter();
   
@@ -48,6 +53,32 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
   const [isFavorite, setIsFavorite] = useState<boolean>(false);
   // Tình trạng chế độ dinh dưỡng
   const [isNutritionMode, setIsNutritionMode] = useState<boolean>(false);
+  // Loading state for favorite action
+  const [favoriteLoading, setFavoriteLoading] = useState<boolean>(false);
+
+  // Check if recipe is in favorites
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        // Ensure id is converted to a number for consistent comparison
+        const recipeId = typeof id === 'string' ? parseInt(id, 10) : id;
+        const savedRecipes = await getSavedRecipes();
+        
+        // Convert both to ensure type safety
+        const isInFavorites = savedRecipes.some((recipe) => {
+          const savedId = typeof recipe.id === 'string' ? parseInt(recipe.id, 10) : recipe.id;
+          return savedId === recipeId;
+        });
+        
+        console.log(`📊 [UI] Recipe ${recipeId} favorite status:`, isInFavorites);
+        setIsFavorite(isInFavorites);
+      } catch (error) {
+        console.error("❌ [UI] Error checking favorite status:", error);
+      }
+    };
+    
+    checkFavoriteStatus();
+  }, [id]);
 
   // Effect để kiểm tra chế độ dinh dưỡng
   useEffect(() => {
@@ -72,10 +103,48 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
     return () => clearTimeout(timer);
   }, [title]);
 
-  const toggleFavorite = (e: React.MouseEvent) => {
+  const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
-    console.log(`❤️ [UI] Recipe ${title} ${!isFavorite ? 'added to' : 'removed from'} favorites`);
+    
+    try {
+      setFavoriteLoading(true);
+      
+      // Ensure id is a number for consistency
+      const recipeId = typeof id === 'string' ? parseInt(id, 10) : id;
+      
+      if (isFavorite) {
+        // Remove from favorites
+        console.log(`❤️ [UI] Removing recipe ${recipeId} from favorites`);
+        await removeRecipe(recipeId);
+      } else {
+        // Add to favorites
+        console.log(`❤️ [UI] Adding recipe ${recipeId} to favorites`);
+        
+        // Ensure all values are of expected types
+        const recipeData = {
+          id: recipeId,
+          title,
+          image,
+          calories: typeof calories === 'string' ? parseFloat(calories) : calories || 0,
+          protein: typeof protein === 'string' ? parseFloat(protein) : protein || 0,
+          fat: typeof fat === 'string' ? parseFloat(fat) : fat || 0,
+          carbs: typeof carbs === 'string' ? parseFloat(carbs) : carbs || 0,
+          readyInMinutes: readyInMinutes || 30,
+          servings: servings || 4,
+        };
+        
+        console.log("📦 [UI] Saving recipe data:", recipeData);
+        await saveRecipe(recipeData);
+      }
+      
+      // Toggle state after successful API call
+      setIsFavorite(!isFavorite);
+      console.log(`❤️ [UI] Recipe ${title} ${!isFavorite ? 'added to' : 'removed from'} favorites`);
+    } catch (error) {
+      console.error("❌ [UI] Error toggling favorite:", error);
+    } finally {
+      setFavoriteLoading(false);
+    }
   };
   
   // Navigate to recipe details page
@@ -221,14 +290,22 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
             </button>
             
             <button
+              disabled={favoriteLoading}
               className={`w-full flex items-center justify-center gap-2 text-sm py-2 px-4 rounded transition ${
-                isFavorite === true 
-                  ? "bg-blue-100 text-blue-600 hover:bg-blue-200" 
-                  : "bg-red-50 hover:bg-red-100 text-red-600"
+                favoriteLoading 
+                  ? "bg-gray-100 text-gray-400 cursor-not-allowed" 
+                  : isFavorite 
+                    ? "bg-blue-100 text-blue-600 hover:bg-blue-200" 
+                    : "bg-red-50 hover:bg-red-100 text-red-600"
               }`}
               onClick={(e) => toggleFavorite(e)}
             >
-              {isFavorite === true ? (
+              {favoriteLoading ? (
+                <>
+                  <div className="h-5 w-5 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                  <span>Processing...</span>
+                </>
+              ) : isFavorite ? (
                 <>
                   <HeartIconSolid className="h-5 w-5 text-red-500" />
                   <span>Remove from Favorites</span>
