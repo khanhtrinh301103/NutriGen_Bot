@@ -165,19 +165,14 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ user }) => {
                         parseFloat(recipe.calories.replace(/[^0-9.]/g, '')) : recipe.calories)} kcal
                     </span>
                   )}
-                  {recipe.protein && (
+                  {recipe.protein && parseFloat(String(recipe.protein)) > 0 && (
                     <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-full">
                       {Math.round(typeof recipe.protein === 'string' ? 
                         parseFloat(recipe.protein.replace(/[^0-9.]/g, '')) : recipe.protein)}g protein
                     </span>
                   )}
-                  {recipe.carbs && (
-                    <span className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-full">
-                      {Math.round(typeof recipe.carbs === 'string' ? 
-                        parseFloat(recipe.carbs.replace(/[^0-9.]/g, '')) : recipe.carbs)}g carbs
-                    </span>
-                  )}
-                  {recipe.fat && (
+                  {/* Loại bỏ hiển thị carbs */}
+                  {recipe.fat && parseFloat(String(recipe.fat)) > 0 && (
                     <span className="bg-yellow-50 text-yellow-700 text-xs px-2 py-1 rounded-full">
                       {Math.round(typeof recipe.fat === 'string' ? 
                         parseFloat(recipe.fat.replace(/[^0-9.]/g, '')) : recipe.fat)}g fat
