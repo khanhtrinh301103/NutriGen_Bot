@@ -16,6 +16,12 @@ const {
   enhanceRecipesWithNutritionInfo
 } = require("../src/nutritionSearchProcessor");
 
+// Import conflict detection utility
+const { 
+  detectSearchConflicts, 
+  generateAlternativeSuggestions 
+} = require("../src/conflictDetector");
+
 const SPOONACULAR_API_KEY = "7a6e45249407478683346a18f937ba47";
 
 // Main search endpoint
@@ -37,9 +43,28 @@ router.post("/searchRecipe", async (req, res) => {
       apiKey: SPOONACULAR_API_KEY,
     };
 
+    // Variables to track dietary conflicts
+    let searchConflicts = null;
+    let alternativeSuggestions = [];
+
     // Apply nutrition-based parameters if nutrition mode is enabled
     if (nutritionMode && nutritionProfile) {
       console.log("📊 [Backend] Applying nutrition profile to search");
+      
+      // Check for potential conflicts between search term and dietary restrictions
+      if (searchTerm) {
+        console.log("🔍 [Backend] Checking for dietary conflicts in search term");
+        searchConflicts = detectSearchConflicts(searchTerm, nutritionProfile);
+        
+        if (searchConflicts.hasConflicts) {
+          console.log(`⚠️ [Backend] Found ${searchConflicts.conflicts.length} dietary conflicts in search`);
+          alternativeSuggestions = generateAlternativeSuggestions(
+            searchConflicts.conflicts, 
+            searchTerm
+          );
+          console.log("💡 [Backend] Generated alternative suggestions:", alternativeSuggestions);
+        }
+      }
       
       // Check if nutrition profile has required data
       if (shouldApplyNutritionProfile(nutritionProfile)) {
@@ -198,20 +223,32 @@ router.post("/searchRecipe", async (req, res) => {
       console.log("🔢 [Backend] Sample recipe with ID:", cleanedRecipes[0].id, "Title:", cleanedRecipes[0].title);
     }
     
-    // Gửi kết quả kèm thông tin fallback nếu có
+    // Construct the response object with all necessary information
+    const responseObject = {
+      recipes: cleanedRecipes
+    };
+    
+    // Add fallback information if applicable
     if (didFallback) {
       console.log(`ℹ️ [Backend] Response includes fallback info: ${fallbackMessage}`);
-      return res.status(200).json({
-        recipes: cleanedRecipes,
-        fallback: {
-          applied: true,
-          type: fallbackType,
-          message: fallbackMessage
-        }
-      });
-    } else {
-      return res.status(200).json(cleanedRecipes);
+      responseObject.fallback = {
+        applied: true,
+        type: fallbackType,
+        message: fallbackMessage
+      };
     }
+    
+    // Add dietary conflict information if applicable
+    if (searchConflicts && searchConflicts.hasConflicts) {
+      console.log(`ℹ️ [Backend] Response includes dietary conflict warnings`);
+      responseObject.dietaryConflicts = {
+        hasConflicts: true,
+        conflicts: searchConflicts.conflicts,
+        alternativeSuggestions: alternativeSuggestions
+      };
+    }
+    
+    return res.status(200).json(responseObject);
   } catch (error) {
     console.error("❌ [Backend] Error calling Spoonacular API:", error.message);
     

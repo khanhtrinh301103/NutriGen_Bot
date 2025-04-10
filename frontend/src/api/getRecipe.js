@@ -5,6 +5,8 @@
 
 // Import getNutritionRecommendations để lấy thông tin profile dinh dưỡng
 import { getNutritionRecommendations } from './getUserHealthProfile';
+// Import conflict detection utils from searchConflictDetector
+import { detectSearchConflicts, generateConflictWarning, getSuggestedAlternatives } from '../utils/searchConflictDetector';
 
 /**
  * Sends a search request to the backend API
@@ -27,14 +29,31 @@ export const sendSearchRequest = async (searchTerm, cuisine, setResult, nutritio
       nutritionMode
     };
 
+    // Xác định xung đột từ frontend để hiển thị cảnh báo nhanh hơn
+    let frontendConflicts = null;
+    let nutritionProfile = null;
+    
     // Nếu chế độ dinh dưỡng được bật, thêm thông tin dinh dưỡng
     if (nutritionMode) {
       console.log("📊 [Frontend] Fetching nutrition profile for search");
       try {
         // Lấy khuyến nghị dinh dưỡng từ cache hoặc API
-        const nutritionProfile = await getNutritionRecommendations();
+        nutritionProfile = await getNutritionRecommendations();
         requestData.nutritionProfile = nutritionProfile;
         console.log("✅ [Frontend] Added nutrition profile to search request");
+        
+        // Phát hiện xung đột từ frontend để hiển thị nhanh hơn
+        if (searchTerm && nutritionProfile) {
+          const userDiets = nutritionProfile.dietaryProfile?.restrictions || [];
+          const userAllergies = nutritionProfile.dietaryProfile?.allergies || [];
+          
+          console.log("🔍 [Frontend] Checking for dietary conflicts from frontend");
+          frontendConflicts = detectSearchConflicts(searchTerm, userDiets, userAllergies);
+          
+          if (frontendConflicts.hasConflicts) {
+            console.log(`⚠️ [Frontend] Detected ${frontendConflicts.conflicts.length} dietary conflicts locally`);
+          }
+        }
       } catch (profileError) {
         console.error("⚠️ [Frontend] Unable to get nutrition profile:", profileError);
         // Vẫn tiếp tục tìm kiếm nhưng không có thông tin dinh dưỡng
@@ -57,46 +76,58 @@ export const sendSearchRequest = async (searchTerm, cuisine, setResult, nutritio
 
     const data = await res.json();
     
-    // Kiểm tra cấu trúc dữ liệu trả về (đơn giản hoặc có fallback)
-    if (data && typeof data === 'object' && data.recipes) {
-      // Đây là cấu trúc trả về có thông tin fallback
-      console.log("✅ [Frontend] Received results from backend:", data.recipes.length);
-      
-      // Xử lý thông tin fallback
-      if (data.fallback && data.fallback.applied) {
-        console.log(`⚠️ [Frontend] Search used fallback mode: ${data.fallback.message}`);
-        // Có thể hiển thị thông báo cho người dùng về việc đã nới lỏng điều kiện tìm kiếm
-        
-        // Nhưng giữ nguyên kết quả đã lọc
-        setResult(data.recipes);
-      } else {
-        setResult(data.recipes);
-      }
-    } else {
-      // Cấu trúc dữ liệu trả về đơn giản (mảng recipes)
-      console.log("✅ [Frontend] Received results from backend:", data.length);
-      setResult(data);
+    // Kết hợp thông tin xung đột từ backend với kết quả
+    const resultObject = {
+      recipes: Array.isArray(data) ? data : (data.recipes || [])
+    };
+    
+    // Thêm thông tin fallback nếu có
+    if (data.fallback && data.fallback.applied) {
+      console.log(`⚠️ [Frontend] Search used fallback mode: ${data.fallback.message}`);
+      resultObject.fallbackInfo = data.fallback;
     }
     
-    // Log chi tiết hơn nếu ở chế độ dinh dưỡng
-    if (nutritionMode) {
-      const resultArray = Array.isArray(data) ? data : (data.recipes || []);
-      if (resultArray.length > 0) {
-        console.log("📊 [Frontend] Sample recipe with nutrition scores:", {
-          title: resultArray[0].title,
-          nutritionMatchPercentage: resultArray[0].nutritionMatchPercentage,
-          overallMatchPercentage: resultArray[0].overallMatchPercentage
-        });
-      }
-    } else {
-      const resultArray = Array.isArray(data) ? data : (data.recipes || []);
-      console.table(resultArray.slice(0, 3)); // Hiển thị 3 kết quả đầu tiên
+    // Ưu tiên sử dụng thông tin xung đột từ backend nếu có
+    if (data.dietaryConflicts && data.dietaryConflicts.hasConflicts) {
+      console.log(`⚠️ [Frontend] Using backend dietary conflict data`);
+      resultObject.dietaryConflicts = {
+        hasConflicts: true,
+        conflicts: data.dietaryConflicts.conflicts,
+        warningMessage: generateConflictWarning(data.dietaryConflicts.conflicts),
+      };
+    } 
+    // Nếu không có từ backend, sử dụng dữ liệu được phát hiện từ frontend
+    else if (frontendConflicts && frontendConflicts.hasConflicts) {
+      console.log(`⚠️ [Frontend] Using frontend dietary conflict data`);
+      resultObject.dietaryConflicts = {
+        hasConflicts: true,
+        conflicts: frontendConflicts.conflicts,
+        warningMessage: generateConflictWarning(frontendConflicts.conflicts),
+      };
     }
+    
+    console.log("✅ [Frontend] Received results:", resultObject.recipes.length);
+    
+    // Log chi tiết hơn nếu ở chế độ dinh dưỡng
+    if (nutritionMode && resultObject.recipes.length > 0) {
+      console.log("📊 [Frontend] Sample recipe with nutrition scores:", {
+        title: resultObject.recipes[0].title,
+        nutritionMatchPercentage: resultObject.recipes[0].nutritionMatchPercentage,
+        overallMatchPercentage: resultObject.recipes[0].overallMatchPercentage
+      });
+    }
+    
+    // Hiển thị cảnh báo xung đột nếu có
+    if (resultObject.dietaryConflicts?.hasConflicts) {
+      console.log("⚠️ [Frontend] Warning message:", resultObject.dietaryConflicts.warningMessage);
+    }
+    
+    // Chuyển kết quả cho callback
+    setResult(resultObject);
   } catch (error) {
     console.error("❌ [Frontend] Error calling backend:", error);
     // Vẫn gọi callback nhưng với mảng rỗng để tránh UI bị treo
     setResult([]);
-    // Có thể thêm xử lý lỗi ở đây nếu cần
   }
 };
 

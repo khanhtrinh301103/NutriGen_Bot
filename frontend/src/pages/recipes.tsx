@@ -3,7 +3,7 @@ import Header from "./components/common/header";
 import Footer from "./components/common/footer";
 import Filter from "../pages/recipe/Filter";
 import { sendSearchRequest } from "../api/getRecipe";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/solid";
+import { MagnifyingGlassIcon, ExclamationTriangleIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import RecipeCard from "../pages/recipe/RecipeCard";
 import ProtectedRoute from "../api/ProtectedRoute";
@@ -20,6 +20,22 @@ interface Recipe {
   fat?: number;
 }
 
+// Define interface for search conflict
+interface SearchConflict {
+  type: 'allergy' | 'diet';
+  item: string;
+  searchTerm: string;
+  severity: 'high' | 'medium' | 'low';
+  explanation: string;
+}
+
+// Define interface for dietary conflict info
+interface DietaryConflictInfo {
+  hasConflicts: boolean;
+  conflicts: SearchConflict[];
+  warningMessage: string;
+}
+
 // Define interface for search state
 interface SearchState {
   searchTerm: string;
@@ -27,6 +43,7 @@ interface SearchState {
   results: Recipe[];
   currentPage: number;
   nutritionMode: boolean; // Add nutritionMode to search state
+  dietaryConflicts?: DietaryConflictInfo;
 }
 
 // Define interface for user health profile
@@ -74,9 +91,10 @@ const RecipesPage = () => {
   const [profileError, setProfileError] = useState<string | null>(null); // Add error state for profile
   const [showNutritionBanner, setShowNutritionBanner] = useState(false); // Control animation
   const [bannerExiting, setBannerExiting] = useState(false); // Control exit animation
-  const cardsPerPage = 12; // Show 12 cards per page
-  // Thêm state mới cho thông tin fallback
   const [fallbackInfo, setFallbackInfo] = useState<{applied: boolean, message: string, type: string} | null>(null);
+  const [dietaryConflicts, setDietaryConflicts] = useState<DietaryConflictInfo | null>(null);
+  
+  const cardsPerPage = 12; // Show 12 cards per page
   
   // Load saved search state and nutrition mode when component mounts
   useEffect(() => {
@@ -262,7 +280,7 @@ const RecipesPage = () => {
     // The health profile fetching will be handled by the useEffect
   };
 
-  // Cập nhật hàm performSearch để xử lý thông tin fallback
+  // Cập nhật hàm performSearch để xử lý thông tin xung đột
   const performSearch = () => {
     if (!searchTerm.trim() && !filters.cuisine) {
       console.log("⚠️ [UI] Search cancelled: No search criteria provided");
@@ -272,8 +290,9 @@ const RecipesPage = () => {
     console.log("🔎 [UI] Performing search with keyword:", searchTerm, "and filter:", filters);
     console.log("📊 [UI] Nutrition mode active:", nutritionMode);
     
-    // Reset fallback info
+    // Reset fallback và dietary conflict info
     setFallbackInfo(null);
+    setDietaryConflicts(null);
     
     // Set loading state and trigger fade-out effect
     setIsLoading(true);
@@ -284,36 +303,45 @@ const RecipesPage = () => {
     
     // Small delay to show loading effect
     setTimeout(() => {
-      // Truyền thêm tham số nutritionMode vào hàm sendSearchRequest
-      sendSearchRequest(searchTerm, filters.cuisine, (newResults) => {
-        console.log(`✅ [UI] Search complete. Found ${newResults.length} recipes.`);
-        
-        // Kiểm tra xem có thông tin fallback từ backend không
-        // Thông tin này sẽ được thêm vào bởi getRecipe.js khi nhận response từ backend
-        if (Array.isArray(newResults) && newResults.length > 0 && (newResults as any).fallbackInfo) {
-          const fallback = (newResults as any).fallbackInfo;
-          setFallbackInfo(fallback);
-          console.log(`ℹ️ [UI] Search used fallback: ${fallback.message}`);
-          // Xóa thông tin fallback khỏi mảng kết quả
-          delete (newResults as any).fallbackInfo;
-        }
-        
-        // Log first recipe to check if it has ID
-        if (newResults.length > 0) {
-          console.log("🔢 [UI] First recipe ID check:", newResults[0].id);
+      sendSearchRequest(searchTerm, filters.cuisine, (result) => {
+        // Kiểm tra cấu trúc kết quả trả về
+        if (Array.isArray(result)) {
+          // Trường hợp kết quả là mảng recipes đơn giản
+          console.log(`✅ [UI] Search complete. Found ${result.length} recipes.`);
+          setResults(result);
+        } else {
+          // Trường hợp kết quả là object phức tạp với recipes và thông tin bổ sung
+          console.log(`✅ [UI] Search complete. Found ${result.recipes.length} recipes.`);
+          setResults(result.recipes);
           
-          // Log thông tin dinh dưỡng nếu có
-          if (nutritionMode && newResults[0].nutritionMatchPercentage) {
-            console.log("📊 [UI] First recipe nutrition match:", newResults[0].nutritionMatchPercentage + "%");
-            console.log("📊 [UI] First recipe overall match:", newResults[0].overallMatchPercentage + "%");
+          // Xử lý thông tin fallback nếu có
+          if (result.fallbackInfo) {
+            setFallbackInfo(result.fallbackInfo);
+            console.log(`ℹ️ [UI] Search used fallback: ${result.fallbackInfo.message}`);
+          }
+          
+          // Xử lý thông tin xung đột chế độ ăn kiêng/dị ứng nếu có
+          if (result.dietaryConflicts && result.dietaryConflicts.hasConflicts) {
+            setDietaryConflicts(result.dietaryConflicts);
+            console.log(`⚠️ [UI] Search has dietary conflicts:`, result.dietaryConflicts.warningMessage);
           }
         }
         
-        setResults(newResults);
         // Mark that this is a new search, not a restored one
         setSearchRestored(false);
       }, nutritionMode);
     }, 500);
+  };
+
+  // Thêm hàm xử lý khi người dùng chọn tìm kiếm lựa chọn thay thế
+  const handleAlternativeSearch = (suggestion: string) => {
+    console.log(`🔄 [UI] Using alternative search suggestion: ${suggestion}`);
+    setSearchTerm(suggestion);
+    
+    // Delay một chút để người dùng thấy thay đổi trong ô tìm kiếm
+    setTimeout(() => {
+      performSearch();
+    }, 100);
   };
 
   const handleSearchClick = () => {
@@ -353,6 +381,28 @@ const RecipesPage = () => {
     setResults([]);
     setCurrentPage(1);
     setSearchRestored(false);
+  };
+
+  // Component for displaying dietary conflicts alert - without alternatives
+  const DietaryConflictsAlert = () => {
+    if (!dietaryConflicts || !dietaryConflicts.hasConflicts) return null;
+    
+    return (
+      <div className="mb-4 bg-amber-50 border border-amber-300 rounded-lg shadow-sm mx-2 sm:mx-4 md:max-w-3xl md:mx-auto overflow-hidden transition-all duration-300 ease-in-out animate-fadeIn">
+        <div className="p-4">
+          {/* Header with warning icon */}
+          <div className="flex items-center mb-2">
+            <ExclamationTriangleIcon className="w-5 h-5 text-amber-500 mr-2" />
+            <h3 className="text-amber-800 font-medium">Dietary Conflict Detected</h3>
+          </div>
+          
+          {/* Warning message */}
+          <p className="text-amber-800 text-sm mb-3">
+            {dietaryConflicts.warningMessage}
+          </p>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -507,6 +557,9 @@ const RecipesPage = () => {
                 </div>
               </div>
             )}
+
+            {/* Dietary Conflicts Alert */}
+            <DietaryConflictsAlert />
 
             {/* Thêm component thông báo fallback - đặt code này sau đoạn Nutrition Mode active indicator */}
             {fallbackInfo && fallbackInfo.applied && (
