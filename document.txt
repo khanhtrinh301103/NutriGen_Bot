@@ -24,6 +24,7 @@ NutriGen_Bot/
 │   │   ├── package-lock.json
 │   │   ├── package.json
 │   ├── src/
+│   │   ├── conflictDetector.js
 │   │   ├── nutritionSearchProcessor.js
 │   │   ├── recipeFilter.js
 │   │   ├── recipeScorer.js
@@ -96,6 +97,7 @@ NutriGen_Bot/
 │   │   ├── utils
 │   │   │   ├── nutritionCalculator.ts
 │   │   │   ├── dietaryConflicts.ts
+│   │   │   ├── searchConflictDetector.ts
 │   ├── .gitignore
 │   ├── eslint.config.mjs
 │   ├── next-env.d.ts
