@@ -149,12 +149,6 @@ const SavedRecipes: React.FC<SavedRecipesProps> = ({ user }) => {
                       <span>{recipe.readyInMinutes} min</span>
                     </div>
                   )}
-                  {recipe.servings && (
-                    <div className="flex items-center">
-                      <UserIcon className="h-4 w-4 mr-1" />
-                      <span>{recipe.servings} servings</span>
-                    </div>
-                  )}
                 </div>
                 
                 <div className="flex flex-wrap gap-2 mb-4">
