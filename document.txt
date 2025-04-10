@@ -14,6 +14,7 @@ NutriGen_Bot/
 │   ├── functions/ (backend workspace here)
 │   │   ├── node_modules/
 │   │   ├── .gitignore
+│   │   ├── enhanceSearchRecipe.js
 │   │   ├── getNutritionProfile.js
 │   │   ├── getRecipeDetails.js
 │   │   ├── index.js
@@ -23,9 +24,9 @@ NutriGen_Bot/
 │   │   ├── package-lock.json
 │   │   ├── package.json
 │   ├── src/
-│   │   ├── cacheResults.js
-│   │   ├── calculateTDEE.js
-│   │   ├── searchRecipe.js
+│   │   ├── nutritionSearchProcessor.js
+│   │   ├── recipeFilter.js
+│   │   ├── recipeScorer.js
 │   ├── .firebaserc
 │   ├── .gitignore
 │   ├── firebase.json
@@ -49,14 +50,14 @@ NutriGen_Bot/
 │   │   │   ├── blogService.js
 │   │   │   ├── firebaseConfig.js
 │   │   │   ├── getRecipe.js
+│   │   │   ├── getUserHealthProfile.js
 │   │   │   ├── login.js
 │   │   │   ├── profile.js
+│   │   │   ├── profileValidation.js
 │   │   │   ├── ProtectedRoute.js
 │   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
 │   │   │   ├── useAuth.js
-│   │   │   ├── profileValidation.js
-│   │   │   ├── getUserHealthProfile.js
 │   │   ├── pages/
 │   │   │   ├── auth/
 │   │   │   │   ├── forgotPassword.tsx
