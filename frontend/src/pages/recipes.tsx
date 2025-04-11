@@ -10,7 +10,7 @@ import ProtectedRoute from "../api/ProtectedRoute";
 import ProfileRouteGuard from "./components/common/ProfileRouteGuard";
 import { getUserHealthProfile, clearHealthProfileCache } from "../api/getUserHealthProfile"; // Import them clearHealthProfileCache
 
-// Define a Recipe interface to ensure type safety
+// Cập nhật interface Recipe ở đầu file recipes.tsx
 interface Recipe {
   id: number;
   title: string;
@@ -18,6 +18,7 @@ interface Recipe {
   calories: number;
   protein?: number;
   fat?: number;
+  carbs?: number; // Thêm dòng này
 }
 
 // Define interface for search conflict
@@ -596,17 +597,18 @@ const RecipesPage = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3 sm:gap-4">
-                      {currentRecipes.map((recipe, idx) => (
-                        <RecipeCard 
-                          key={`${recipe.id || idx}`}
-                          id={recipe.id} // Explicitly passing id prop
-                          image={recipe.image}
-                          title={recipe.title}
-                          calories={recipe.calories}
-                          protein={recipe.protein}
-                          fat={recipe.fat}
-                        />
-                      ))}
+                    {currentRecipes.map((recipe, idx) => (
+                      <RecipeCard 
+                        key={`${recipe.id || idx}`}
+                        id={recipe.id}
+                        image={recipe.image}
+                        title={recipe.title}
+                        calories={recipe.calories}
+                        protein={recipe.protein}
+                        fat={recipe.fat}
+                        carbs={recipe.carbs} // Thêm dòng này
+                      />
+                    ))}
                     </div>
                     
                     {/* Pagination */}

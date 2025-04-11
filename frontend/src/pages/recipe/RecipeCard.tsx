@@ -265,12 +265,10 @@ const RecipeCard: React.FC<RecipeCardProps> = ({
               <p className="text-sm font-medium text-gray-700">
                 <span className="font-semibold">Fat:</span> {Math.round(fat || 0)} g
               </p>
-              {carbs !== undefined && (
-                <p className="text-sm font-medium text-gray-700">
-                  <span className="font-semibold">Carbs:</span> {Math.round(carbs)} g
-                </p>
-              )}
-              
+              <p className="text-sm font-medium text-gray-700">
+                <span className="font-semibold">Carbs:</span> {Math.round(carbs || 0)} g
+              </p>
+                            
               {/* Render nutrition match bars if in nutrition mode */}
               {isNutritionMode && renderNutrientMatchBars()}
             </div>
