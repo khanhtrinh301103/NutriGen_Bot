@@ -9,6 +9,10 @@ import RecipeCard from "../pages/recipe/RecipeCard";
 import ProtectedRoute from "../api/ProtectedRoute";
 import ProfileRouteGuard from "./components/common/ProfileRouteGuard";
 import { getUserHealthProfile, clearHealthProfileCache } from "../api/getUserHealthProfile"; // Import them clearHealthProfileCache
+import SearchHistory from "./recipe/SearchHistory";
+import SearchSuggestions from "./recipe/SearchSuggestions";
+import { getSearchSuggestions } from "../api/suggestionService";
+import { addSearchToHistory } from "../api/searchHistoryService";
 
 // Cập nhật interface Recipe ở đầu file recipes.tsx
 interface Recipe {
@@ -94,6 +98,9 @@ const RecipesPage = () => {
   const [bannerExiting, setBannerExiting] = useState(false); // Control exit animation
   const [fallbackInfo, setFallbackInfo] = useState<{applied: boolean, message: string, type: string} | null>(null);
   const [dietaryConflicts, setDietaryConflicts] = useState<DietaryConflictInfo | null>(null);
+  const [showSearchHistory, setShowSearchHistory] = useState<boolean>(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   
   const cardsPerPage = 12; // Show 12 cards per page
   
@@ -114,6 +121,7 @@ const RecipesPage = () => {
       }
     }
     
+
     const savedSearchState = localStorage.getItem('recipeSearchState');
     if (savedSearchState) {
       try {
@@ -139,6 +147,21 @@ const RecipesPage = () => {
       console.log("ℹ️ [UI] No saved search state found");
     }
   }, []);
+
+      // Xử lý hiển thị lịch sử khi focus vào ô tìm kiếm
+      const handleSearchFocus = () => {
+        setShowSearchHistory(true);
+        setShowSuggestions(false);
+      };
+      
+      // Xử lý khi blur khỏi ô tìm kiếm
+      const handleSearchBlur = () => {
+        // Để delay cho phép click vào lịch sử tìm kiếm trước khi ẩn
+        setTimeout(() => {
+          setShowSearchHistory(false);
+          setShowSuggestions(false);
+        }, 200);
+      };
   
   // Effect to handle animations when results change
   useEffect(() => {
@@ -257,10 +280,50 @@ const RecipesPage = () => {
     }
   };
 
+  // Cập nhật xử lý khi nhập tìm kiếm
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    console.log("📝 [UI] User typing search keyword:", e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
+    console.log("📝 [UI] User typing search keyword:", value);
+    
+    // Tìm kiếm gợi ý
+    if (value.trim().length >= 2) {
+      const suggestions = getSearchSuggestions(value);
+      setSearchSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+      setShowSearchHistory(false);
+    } else {
+      setSearchSuggestions([]);
+      setShowSuggestions(false);
+    }
   };
+
+    // Xử lý khi chọn từ lịch sử tìm kiếm
+    const handleSelectHistory = (term: string, filters: any) => {
+      setSearchTerm(term);
+      if (filters.cuisine) {
+        setFilters({ cuisine: filters.cuisine });
+      }
+      console.log(`🕒 [UI] Selected search from history: "${term}" with filters:`, filters);
+      
+      // Ẩn lịch sử và thực hiện tìm kiếm
+      setShowSearchHistory(false);
+      setTimeout(() => {
+        performSearch();
+      }, 100);
+    };
+    
+    // Xử lý khi chọn từ gợi ý
+    const handleSelectSuggestion = (suggestion: string) => {
+      setSearchTerm(suggestion);
+      console.log(`💡 [UI] Selected suggestion: "${suggestion}"`);
+      
+      // Ẩn gợi ý và thực hiện tìm kiếm
+      setShowSuggestions(false);
+      setTimeout(() => {
+        performSearch();
+      }, 100);
+    };
 
   const handleFilterChange = (updatedFilters: any) => {
     setFilters(updatedFilters);
@@ -281,7 +344,7 @@ const RecipesPage = () => {
     // The health profile fetching will be handled by the useEffect
   };
 
-  // Cập nhật hàm performSearch để xử lý thông tin xung đột
+  // Cập nhật hàm performSearch để lưu lịch sử tìm kiếm
   const performSearch = () => {
     if (!searchTerm.trim() && !filters.cuisine) {
       console.log("⚠️ [UI] Search cancelled: No search criteria provided");
@@ -290,6 +353,11 @@ const RecipesPage = () => {
     
     console.log("🔎 [UI] Performing search with keyword:", searchTerm, "and filter:", filters);
     console.log("📊 [UI] Nutrition mode active:", nutritionMode);
+    
+    // Lưu vào lịch sử tìm kiếm (chỉ lưu khi có từ khóa)
+    if (searchTerm.trim()) {
+      addSearchToHistory(searchTerm, filters);
+    }
     
     // Reset fallback và dietary conflict info
     setFallbackInfo(null);
@@ -425,6 +493,8 @@ const RecipesPage = () => {
                     value={searchTerm}
                     onChange={handleSearchChange}
                     onKeyDown={handleKeyDown}
+                    onFocus={handleSearchFocus}
+                    onBlur={handleSearchBlur}
                     placeholder="Search for recipes..."
                     className="w-full p-3 pr-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#4b7e53]"
                   />
@@ -434,6 +504,20 @@ const RecipesPage = () => {
                   >
                     <MagnifyingGlassIcon className="h-5 w-5" />
                   </button>
+                  
+                  {/* Search History Dropdown */}
+                  <SearchHistory 
+                    onSelectHistory={handleSelectHistory}
+                    isVisible={showSearchHistory}
+                  />
+                  
+                  {/* Search Suggestions Dropdown */}
+                  <SearchSuggestions
+                    suggestions={searchSuggestions}
+                    searchTerm={searchTerm}
+                    onSelectSuggestion={handleSelectSuggestion}
+                    isVisible={showSuggestions}
+                  />
                 </div>
                 
                 {/* Nutrition Mode Toggle Button with label and animation */}
