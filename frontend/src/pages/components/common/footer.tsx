@@ -5,40 +5,40 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="footer py-10 border-t border-[#3a6442]">
-      <div className="container grid grid-cols-3 gap-8">
+    <footer className="bg-[#3a6442] text-gray-200 py-10 px-6 md:px-20">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-base">
         {/* Branding */}
-        <div>
-          <Link href="/" className="flex items-center">
+        <div className="space-y-3">
+          <Link href="/" className="flex items-center gap-3">
             <img className="h-10 w-auto" src="/Logo.png" alt="NutriGen Bot" />
-            <span className="ml-2 text-xl font-bold">NutriGen Bot</span>
+            <span className="text-2xl font-bold">NutriGen Bot</span>
           </Link>
-          <p className="mt-2 text-sm text-gray-200">Your Daily Diet Assistant</p>
+          <p className="text-base opacity-80">Your Daily Diet Assistant</p>
         </div>
 
-        {/* Navigation Links */}
+        {/* Navigation */}
         <div>
-          <h3 className="text-sm font-semibold uppercase text-gray-200">Navigation</h3>
-          <ul className="mt-4 space-y-3">
-            <li><Link href="/" className="hover:text-white">Home</Link></li>
-            <li><Link href="/recipes" className="hover:text-white">Recipes</Link></li>
-            <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
-            <li><Link href="/about" className="hover:text-white">About</Link></li>
+          <h3 className="text-base font-semibold uppercase mb-4">Navigation</h3>
+          <ul className="space-y-2">
+            <li><Link href="/" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">🏠 Home</Link></li>
+            <li><Link href="/recipes" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">🍽️ Recipes</Link></li>
+            <li><Link href="/blog" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">✍️ Blog</Link></li>
+            <li><Link href="/about" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">ℹ️ About</Link></li>
           </ul>
         </div>
 
         {/* Legal */}
         <div>
-          <h3 className="text-sm font-semibold uppercase text-gray-200">Legal</h3>
-          <ul className="mt-4 space-y-3">
-            <li><Link href="/terms" className="hover:text-white">Terms of Service</Link></li>
-            <li><Link href="/privacy" className="hover:text-white">Privacy Policy</Link></li>
+          <h3 className="text-base font-semibold uppercase mb-4">Legal</h3>
+          <ul className="space-y-2">
+            <li><Link href="/terms" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">📜 Terms of Service</Link></li>
+            <li><Link href="/privacy" className="flex items-center gap-2 transition-all duration-300 hover:opacity-100 opacity-80 hover:translate-x-1">🔒 Privacy Policy</Link></li>
           </ul>
         </div>
       </div>
 
-      <div className="mt-8 text-center text-gray-200">
-        &copy; {currentYear} NutriGen Bot. All rights reserved and this website is only for educational purposes.
+      <div className="mt-10 border-t border-white pt-6 text-center text-base text-white">
+        <p>&copy; {currentYear} NutriGen Bot. All rights reserved. This website is for educational purposes only.</p>
       </div>
     </footer>
   );

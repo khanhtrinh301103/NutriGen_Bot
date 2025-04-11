@@ -6,8 +6,6 @@ import {
     ChatBubbleLeftRightIcon,
     InformationCircleIcon,
 } from "@heroicons/react/24/solid";
-  
-
 
 const BottomNav = () => {
   const router = useRouter();
@@ -27,14 +25,15 @@ const BottomNav = () => {
         return (
           <Link key={item.path} href={item.path} className="relative flex-1">
             <div
-              className={`flex flex-col items-center text-sm transition-all duration-300 ${
+              className={`flex flex-col items-center text-sm transition-all duration-500 ease-out ${
                 isActive ? "text-[#4b7e53] font-semibold" : "text-gray-400"
               }`}
             >
               <div
-                className={`w-12 h-12 flex items-center justify-center rounded-full transition-all duration-300
-                ${isActive ? "bg-white shadow-xl -translate-y-6 z-10" : "translate-y-0"}
-              `}
+                className={`w-12 h-12 flex items-center justify-center rounded-full transition-all duration-500 ease-out transform
+                  ${isActive
+                    ? "bg-white shadow-xl -translate-y-6 z-10 scale-125 rotate-[6deg]"
+                    : "hover:scale-110 hover:-translate-y-1.5 hover:rotate-[3deg]"}`}
               >
                 {item.icon}
               </div>
