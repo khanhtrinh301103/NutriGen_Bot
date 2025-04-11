@@ -56,8 +56,10 @@ NutriGen_Bot/
 │   │   │   ├── profile.js
 │   │   │   ├── profileValidation.js
 │   │   │   ├── ProtectedRoute.js
+│   │   │   ├── searchHistoryService.js
 │   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
+│   │   │   ├── suggestionService.js
 │   │   │   ├── useAuth.js
 │   │   ├── pages/
 │   │   │   ├── auth/
@@ -86,18 +88,24 @@ NutriGen_Bot/
 │   │   │   │   ├── Filter.tsx
 │   │   │   │   ├── [id].tsx
 │   │   │   │   ├── RecipeCard.tsx
+│   │   │   │   ├── SearchHistory.tsx
+│   │   │   │   ├── SearchSuggestions.tsx
 │   │   │   ├── _app.tsx
 │   │   │   ├── _document.tsx
 │   │   │   ├── index.tsx
 │   │   │   ├── about.tsx
+│   │   │   ├── privacy.tsx
 │   │   │   ├── profile.tsx
 │   │   │   ├── recipes.tsx
+│   │   │   ├── terms.tsx
 │   │   ├── styles/
 │   │   │   ├── globals.css
 │   │   ├── utils
 │   │   │   ├── nutritionCalculator.ts
+│   │   │   ├── ingredientSuggestions.ts
 │   │   │   ├── dietaryConflicts.ts
 │   │   │   ├── searchConflictDetector.ts
+│   │   │   ├── useScrollReveal.ts
 │   ├── .gitignore
 │   ├── eslint.config.mjs
 │   ├── next-env.d.ts
