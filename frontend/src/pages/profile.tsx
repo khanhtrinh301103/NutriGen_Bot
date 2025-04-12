@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Layout from './components/common/layout';
 import { auth } from '../api/firebaseConfig';
 import { getUserProfile } from '../api/profile';
-import { signOutUser } from '../api/authService';
+import { signOutUser, changePassword } from '../api/authService';
 import { updateProfile } from "firebase/auth";
 
 // Import component modules
@@ -20,6 +20,20 @@ const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
   const [profileData, setProfileData] = useState(null);
   
+  // Password change modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  
+  // Password visibility states
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   // Define all handler functions at the beginning of the component
   const handleTabChange = (tab) => {
     console.log(`Changed tab to: ${tab}`);
@@ -33,6 +47,107 @@ const ProfilePage: React.FC = () => {
       router.push('/');
     } catch (error) {
       console.error("Error signing out:", error);
+    }
+  };
+  
+  // Password change handlers
+  const handleOpenPasswordModal = () => {
+    // Check if user account is from Google
+    if (profileData?.provider === "google") {
+      setPasswordError("Your account is registered with Google, so you cannot change the password.");
+      setShowPasswordModal(true);
+      return;
+    }
+    
+    setShowPasswordModal(true);
+    // Reset fields when opening modal
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Reset password visibility
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+  
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+  };
+  
+  // Toggle password visibility handlers
+  const toggleCurrentPasswordVisibility = () => {
+    setShowCurrentPassword(!showCurrentPassword);
+  };
+  
+  const toggleNewPasswordVisibility = () => {
+    setShowNewPassword(!showNewPassword);
+  };
+  
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+  
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    
+    // If Google account, don't proceed
+    if (profileData?.provider === "google") {
+      return;
+    }
+    
+    // Reset messages
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      console.log("Changing password...");
+      await changePassword(currentPassword, newPassword);
+      setPasswordSuccess('Password changed successfully');
+      
+      // Clear fields after successful change
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      
+      // Display friendly error messages
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setPasswordError('Current password is incorrect');
+      } else if (error.code === 'auth/requires-recent-login') {
+        setPasswordError('Please sign out and sign in again before changing your password');
+      } else {
+        setPasswordError('An error occurred while changing your password. Please try again.');
+      }
+    } finally {
+      setPasswordLoading(false);
     }
   };
   
@@ -168,13 +283,24 @@ const ProfilePage: React.FC = () => {
             </div>
           </div>
           
-          {/* Sign Out Button */}
-          <button 
-            onClick={handleSignOut}
-            className="px-4 py-2 bg-white text-red-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
-          >
-            Sign Out
-          </button>
+          {/* Account Actions */}
+          <div className="flex space-x-2">
+            {/* Change Password Button */}
+            <button 
+              onClick={handleOpenPasswordModal}
+              className="px-4 py-2 bg-white text-emerald-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            >
+              Change Password
+            </button>
+            
+            {/* Sign Out Button */}
+            <button 
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-white text-red-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         <div className="mt-8">
@@ -206,6 +332,145 @@ const ProfilePage: React.FC = () => {
             )}
           </div>
         </div>
+        
+        {/* Password Change Modal - Updated to match the design in the image */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+              <h3 className="text-xl font-bold mb-6 text-center">Change Password</h3>
+              
+              {/* Show warning for Google accounts */}
+              {profileData?.provider === "google" ? (
+                <div>
+                  <div className="bg-amber-100 text-amber-800 p-4 rounded-md mb-4">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="font-medium">Your account is registered with Google, so you cannot change the password here.</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleClosePasswordModal}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors duration-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordChange}>
+                  {/* Current Password */}
+                  <div className="mb-4">
+                    <label htmlFor="currentPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        id="currentPassword"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleCurrentPasswordVisibility}
+                      >
+                        {showCurrentPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* New Password */}
+                  <div className="mb-4">
+                    <label htmlFor="newPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        id="newPassword"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                        minLength={6}
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleNewPasswordVisibility}
+                      >
+                        {showNewPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Confirm New Password */}
+                  <div className="mb-4">
+                    <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleConfirmPasswordVisibility}
+                      >
+                        {showConfirmPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Error Message */}
+                  {passwordError && (
+                    <div className="mb-4 text-red-600 text-center">
+                      {passwordError}
+                    </div>
+                  )}
+                  
+                  {/* Success Message */}
+                  {passwordSuccess && (
+                    <div className="mb-4 text-green-600 text-center">
+                      {passwordSuccess}
+                    </div>
+                  )}
+                  
+                  {/* Buttons */}
+                  <div className="flex justify-center space-x-2 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleClosePasswordModal}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors duration-200"
+                      disabled={passwordLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors duration-200"
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? "Changing..." : "Change Password"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );

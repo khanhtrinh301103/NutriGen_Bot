@@ -5,7 +5,10 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   updateProfile,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from "firebase/auth";
 
 /**
@@ -67,6 +70,35 @@ export const sendPasswordReset = async (email) => {
     console.log("📧 [Auth] Password reset email sent to:", email);
   } catch (error) {
     console.error("❌ [Auth] Password reset error:", error.code, error.message);
+    throw error;
+  }
+};
+
+/**
+ * Change password for current user
+ * Requires reauthentication with current password before changing
+ */
+export const changePassword = async (currentPassword, newPassword) => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  
+  if (!user) {
+    console.error("❌ [Auth] No user is currently logged in");
+    throw new Error("No user is currently logged in");
+  }
+  
+  try {
+    // Re-authenticate user before changing password
+    console.log("🔄 [Auth] Re-authenticating user before password change");
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+    
+    // Update password
+    await updatePassword(user, newPassword);
+    console.log("✅ [Auth] Password changed successfully");
+    return true;
+  } catch (error) {
+    console.error("❌ [Auth] Password change error:", error.code, error.message);
     throw error;
   }
 };
