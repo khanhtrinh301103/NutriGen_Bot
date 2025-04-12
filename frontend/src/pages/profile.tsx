@@ -256,27 +256,45 @@ const ProfilePage: React.FC = () => {
                 onChange={handleUploadPhoto} 
                 className="hidden" 
                 id="profile-image-input"
+                accept="image/*"
               />
               
               {/* Khi user click vào ảnh, sẽ kích hoạt input file */}
               {user?.photoURL ? (
-                <label htmlFor="profile-image-input" className="cursor-pointer">
+                <label htmlFor="profile-image-input" className="cursor-pointer group relative block h-16 w-16 rounded-full">
                   <img 
                     src={user.photoURL} 
                     alt="Profile" 
-                    className="h-16 w-16 rounded-full object-cover border-2 border-white cursor-pointer"
+                    className="h-16 w-16 rounded-full object-cover border-2 border-white transition-all duration-300"
                   />
+                  {/* Overlay mờ khi hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-300"></div>
+                  
+                  {/* Hiệu ứng viền sáng khi hover */}
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-emerald-400 group-hover:shadow-lg group-hover:shadow-emerald-400/30 transition-all duration-300"></div>
                 </label>
               ) : (
-                <label htmlFor="profile-image-input" className="cursor-pointer">
-                  <div className="bg-white p-2 rounded-full flex items-center justify-center w-16 h-16 border-2 border-white">
+                <label htmlFor="profile-image-input" className="cursor-pointer group relative block h-16 w-16">
+                  <div className="bg-white p-2 rounded-full flex items-center justify-center w-16 h-16 border-2 border-white transition-all duration-300">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   </div>
+                  
+                  {/* Overlay mờ khi hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full transition-all duration-300"></div>
+                  
+                  {/* Hiệu ứng viền sáng khi hover */}
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-emerald-400 group-hover:shadow-lg group-hover:shadow-emerald-400/30 transition-all duration-300"></div>
                 </label>
               )}
+              
+              {/* Tooltip "Edit Photo" khi hover */}
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs font-medium rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap">
+                Edit Photo
+              </div>
             </div>
+
             <div>
               <h1 className="text-2xl font-bold text-white">My Profile</h1>
               <p className="text-white">{user?.displayName || user?.email}</p>
