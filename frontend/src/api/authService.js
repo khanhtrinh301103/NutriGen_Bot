@@ -40,6 +40,15 @@ export const signInUser = async (email, password) => {
 };
 
 /**
+ * Check if the current user is an admin
+ */
+export const isAdminUser = (user) => {
+  // Check if the user exists and has the admin email
+  console.log("🔍 [Auth] Checking if user is admin");
+  return user && user.email === "admin@gmail.com";
+};
+
+/**
  * Register a new user
  */
 export const registerUser = async (email, password, displayName) => {

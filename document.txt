@@ -12,6 +12,10 @@ NutriGen_Bot/
 │   │   │   ├── schema.gql
 │   │   │   ├── dataconnect.yaml
 │   ├── functions/ (backend workspace here)
+│   │   ├── admin
+│   │   │   ├── adminStats.js
+│   │   │   ├── adminUtils.js
+│   │   │   ├── index.js
 │   │   ├── node_modules/
 │   │   ├── .gitignore
 │   │   ├── enhanceSearchRecipe.js
@@ -47,6 +51,9 @@ NutriGen_Bot/
 │   │   ├── window.svg
 │   ├── src/ (frontend workspace here)
 │   │   ├── api/
+│   │   │   ├── adminAPI
+│   │   │   │   ├── adminAPI.js
+│   │   │   │   ├── AdminRoute.js
 │   │   │   ├── authService.js
 │   │   │   ├── blogService.js
 │   │   │   ├── firebaseConfig.js
@@ -62,6 +69,13 @@ NutriGen_Bot/
 │   │   │   ├── suggestionService.js
 │   │   │   ├── useAuth.js
 │   │   ├── pages/
+│   │   │   ├── adminUI
+│   │   │   │   ├── components
+│   │   │   │   │   ├── AdminLayout.tsx
+│   │   │   │   ├── index.tsx
+│   │   │   │   ├── NutritionData.tsx
+│   │   │   │   ├── RecipeManagement.tsx
+│   │   │   │   ├── UserManagement.tsx
 │   │   │   ├── auth/
 │   │   │   │   ├── forgotPassword.tsx
 │   │   │   │   ├── login.tsx

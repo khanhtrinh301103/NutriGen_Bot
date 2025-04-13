@@ -14,17 +14,25 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (!email || !password) {
       setError('Please enter both email and password');
       return;
     }
-
+  
     try {
       setError('');
       setLoading(true);
-      await signInUser({ email, password });
-      router.push('/');
+      
+      const userCredential = await signInUser({ email, password });
+      
+      // Check if user is admin and redirect accordingly
+      if (email === "admin@gmail.com") {
+        console.log("🔐 [Auth] Admin user logged in, redirecting to admin dashboard");
+        router.push('/adminUI');
+      } else {
+        router.push('/');
+      }
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Failed to sign in. Please try again.');
