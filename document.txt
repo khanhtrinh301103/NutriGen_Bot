@@ -54,6 +54,8 @@ NutriGen_Bot/
 │   │   │   ├── adminAPI
 │   │   │   │   ├── adminAPI.js
 │   │   │   │   ├── AdminRoute.js
+│   │   │   │   ├── UserDetailsService.js
+│   │   │   │   ├── UserManagement.js
 │   │   │   ├── authService.js
 │   │   │   ├── blogService.js
 │   │   │   ├── firebaseConfig.js
@@ -75,6 +77,7 @@ NutriGen_Bot/
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
 │   │   │   │   ├── RecipeManagement.tsx
+│   │   │   │   ├── UserDetails.tsx
 │   │   │   │   ├── UserManagement.tsx
 │   │   │   ├── auth/
 │   │   │   │   ├── forgotPassword.tsx
