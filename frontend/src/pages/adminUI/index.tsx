@@ -6,7 +6,7 @@ import AdminCharts from '../adminUI/components/AdminCharts';
 import { getAdminStats } from '../../api/adminAPI/adminAPI';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -32,7 +32,6 @@ const AdminDashboard = () => {
   return (
     <AdminRoute>
       <AdminLayout title="Admin Dashboard">
-        {/* Content */}
         <div className="px-4 py-6 sm:px-0">
           <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
             {loading ? (
@@ -62,10 +61,23 @@ const AdminDashboard = () => {
                       <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.totalUsers}</dd>
                     </div>
                   </div>
+                  {/* Update Popular Keywords: Hiển thị dưới dạng list thay vì 1 dòng text */}
                   <div className="bg-blue-50 overflow-hidden shadow rounded-lg">
                     <div className="px-4 py-5 sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Active Users</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.activeUsers}</dd>
+                      <h3 className="text-sm font-medium text-gray-500 mb-2">Popular Keywords</h3>
+                      {stats.popularKeywords && stats.popularKeywords.length > 0 ? (
+                        <ul className="list-disc list-inside text-gray-900">
+                          {stats.popularKeywords
+                            .slice(0, 10) // Hiển thị top 10 từ khóa, bạn có thể điều chỉnh số lượng nếu cần
+                            .map((item: any, index: number) => (
+                              <li key={`${item.term}-${index}`}>
+                                {item.term} ({item.count})
+                              </li>
+                            ))}
+                        </ul>
+                      ) : (
+                        <p>No Data</p>
+                      )}
                     </div>
                   </div>
                   <div className="bg-yellow-50 overflow-hidden shadow rounded-lg">
@@ -92,8 +104,9 @@ const AdminDashboard = () => {
                 {stats.userTrendData && stats.userTrendData.length > 0 && (
                   <AdminCharts 
                     userTrendData={stats.userTrendData}
-                    userStatusData={stats.userStatusData}
+                    recipeSearchTrendData={stats.recipeSearchTrendData}
                     userRoleData={stats.userRoleData}
+                    popularKeywords={stats.popularKeywords}
                   />
                 )}
                 

@@ -73,6 +73,7 @@ NutriGen_Bot/
 │   │   ├── pages/
 │   │   │   ├── adminUI
 │   │   │   │   ├── components
+│   │   │   │   │   ├── AdminCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
