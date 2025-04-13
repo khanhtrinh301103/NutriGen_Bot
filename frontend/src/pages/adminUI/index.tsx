@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
+import AdminCharts from '../adminUI/components/AdminCharts';
 import { getAdminStats } from '../../api/adminAPI/adminAPI';
 
 const AdminDashboard = () => {
@@ -86,6 +87,15 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Analytics Charts */}
+                {stats.userTrendData && stats.userTrendData.length > 0 && (
+                  <AdminCharts 
+                    userTrendData={stats.userTrendData}
+                    userStatusData={stats.userStatusData}
+                    userRoleData={stats.userRoleData}
+                  />
+                )}
                 
                 <div className="mt-10">
                   <h2 className="text-xl font-semibold mb-6 text-gray-800">Quick Actions</h2>
