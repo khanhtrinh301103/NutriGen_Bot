@@ -12,7 +12,6 @@ import {
 } from 'firebase/firestore';
 import { 
   getAuth, 
-  updateEmail, 
   deleteUser, 
   updatePassword,
   listUsers,
@@ -114,59 +113,6 @@ export const getUserById = async (userId) => {
     return user;
   } catch (error) {
     console.error(`❌ [Admin] Error fetching user with ID ${userId}:`, error);
-    throw error;
-  }
-};
-
-// Update a user
-export const updateUser = async (userId, userData) => {
-  try {
-    console.log(`✏️ [Admin] Updating user with ID: ${userId}`);
-    console.log("Update data:", userData);
-    
-    // Update user in Firestore
-    const userDocRef = doc(db, "user", userId);
-    
-    // Check if the user exists first
-    const userDocSnap = await getDoc(userDocRef);
-    if (!userDocSnap.exists()) {
-      console.error(`❌ [Admin] User with ID ${userId} not found`);
-      throw new Error(`User with ID ${userId} not found`);
-    }
-    
-    // Create update object with only the fields that are provided
-    const updateData = {};
-    
-    // Update basic info
-    if (userData.name) updateData.displayName = userData.name;
-    if (userData.status) updateData.status = userData.status;
-    if (userData.role) updateData.role = userData.role;
-    
-    // Add updatedAt timestamp
-    updateData.updatedAt = new Date().toISOString();
-    
-    // Update the user document
-    await updateDoc(userDocRef, updateData);
-    
-    // Update email in Firebase Auth (this would typically require admin SDK)
-    // In a client environment, email updates would be limited
-    if (userData.email && userData.email !== userDocSnap.data().email) {
-      console.log(`📧 [Admin] Attempting to update email for user ${userId} to ${userData.email}`);
-      
-      // Note: In a real admin interface, you would use the Firebase Admin SDK
-      // which would allow updating user emails directly
-      console.log("⚠️ [Admin] Email update via client SDK not implemented - requires admin SDK");
-      
-      // Update the email in Firestore at least
-      await updateDoc(userDocRef, {
-        email: userData.email
-      });
-    }
-    
-    console.log(`✅ [Admin] Successfully updated user ${userId}`);
-    return true;
-  } catch (error) {
-    console.error(`❌ [Admin] Error updating user ${userId}:`, error);
     throw error;
   }
 };

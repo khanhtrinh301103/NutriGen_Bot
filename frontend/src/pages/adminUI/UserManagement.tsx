@@ -5,7 +5,6 @@ import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
 import { 
   getAllUsers, 
-  updateUser, 
   deleteUserAccount, 
   changeUserStatus,
   searchUsers,
@@ -16,8 +15,6 @@ import {
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [showModal, setShowModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all');
   const [error, setError] = useState(null);
@@ -126,42 +123,6 @@ const UserManagement = () => {
       setError("Failed to filter users. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleEditUser = (user) => {
-    setSelectedUser(user);
-    setShowModal(true);
-    console.log("✏️ [Admin] Editing user:", user.email);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setSelectedUser(null);
-  };
-
-  const handleUpdateUser = async () => {
-    try {
-      setError(null);
-      
-      // Update user in Firebase
-      console.log("💾 [Admin] Updating user:", selectedUser);
-      await updateUser(selectedUser.id, {
-        name: selectedUser.name,
-        email: selectedUser.email,
-        status: selectedUser.status,
-        role: selectedUser.role
-      });
-      
-      // Update user in local state
-      setUsers(users.map(user => 
-        user.id === selectedUser.id ? selectedUser : user
-      ));
-      
-      handleCloseModal();
-    } catch (error) {
-      console.error("❌ [Admin] Error updating user:", error);
-      setError("Failed to update user. " + error.message);
     }
   };
 
@@ -323,12 +284,6 @@ const UserManagement = () => {
                                   </td>
                                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button 
-                                      onClick={() => handleEditUser(user)}
-                                      className="text-green-600 hover:text-green-900 mr-4"
-                                    >
-                                      Edit
-                                    </button>
-                                    <button 
                                       onClick={() => handleDeleteUser(user.id)}
                                       className="text-red-600 hover:text-red-900"
                                       disabled={user.email === 'admin@gmail.com'}
@@ -390,108 +345,6 @@ const UserManagement = () => {
                   </div>
                 )}
               </>
-            )}
-
-            {/* Edit User Modal */}
-            {showModal && selectedUser && (
-              <div className="fixed z-10 inset-0 overflow-y-auto">
-                <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                  <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-                    <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-                  </div>
-
-                  <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-
-                  <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                      <div className="sm:flex sm:items-start">
-                        <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-                          <h3 className="text-lg leading-6 font-medium text-gray-900" id="modal-title">
-                            Edit User
-                          </h3>
-                          <div className="mt-2">
-                            <div className="mb-4">
-                              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Name</label>
-                              <input 
-                                type="text" 
-                                name="name" 
-                                id="name" 
-                                className="mt-1 focus:ring-green-500 focus:border-green-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                value={selectedUser.name || ''}
-                                onChange={(e) => setSelectedUser({...selectedUser, name: e.target.value})}
-                              />
-                            </div>
-                            <div className="mb-4">
-                              <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email</label>
-                              <input 
-                                type="email" 
-                                name="email" 
-                                id="email" 
-                                className="mt-1 focus:ring-green-500 focus:border-green-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
-                                value={selectedUser.email || ''}
-                                readOnly={selectedUser.email === 'admin@gmail.com'}
-                                onChange={(e) => setSelectedUser({...selectedUser, email: e.target.value})}
-                              />
-                              {selectedUser.email === 'admin@gmail.com' && (
-                                <p className="mt-1 text-xs text-gray-500">Admin email cannot be changed</p>
-                              )}
-                              {selectedUser.email !== 'admin@gmail.com' && (
-                                <p className="mt-1 text-xs text-yellow-500">
-                                  Note: Email changes require Firebase Admin SDK and may not be fully implemented in this version
-                                </p>
-                              )}
-                            </div>
-                            <div className="mb-4">
-                              <label htmlFor="status" className="block text-sm font-medium text-gray-700">Status</label>
-                              <select 
-                                id="status" 
-                                name="status"
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
-                                value={selectedUser.status || 'active'}
-                                onChange={(e) => setSelectedUser({...selectedUser, status: e.target.value})}
-                                disabled={selectedUser.email === 'admin@gmail.com'}
-                              >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                              </select>
-                            </div>
-                            <div className="mb-4">
-                              <label htmlFor="role" className="block text-sm font-medium text-gray-700">Role</label>
-                              <select 
-                                id="role" 
-                                name="role"
-                                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
-                                value={selectedUser.role || 'user'}
-                                onChange={(e) => setSelectedUser({...selectedUser, role: e.target.value})}
-                                disabled={selectedUser.email === 'admin@gmail.com'}
-                              >
-                                <option value="user">User</option>
-                                <option value="admin">Admin</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                      <button 
-                        type="button" 
-                        className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
-                        onClick={handleUpdateUser}
-                      >
-                        Save
-                      </button>
-                      <button 
-                        type="button" 
-                        className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-                        onClick={handleCloseModal}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
             )}
           </div>
         </div>
