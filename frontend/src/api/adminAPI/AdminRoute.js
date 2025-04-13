@@ -1,7 +1,7 @@
-// frontend/src/api/AdminRoute.js
+// frontend/src/api/adminAPI/AdminRoute.js
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../useAuth';
+import { useAuth } from '../useAuth'; // Sửa đường dẫn import từ './useAuth' thành '../useAuth'
 import { isAdminUser } from '../authService';
 
 /**
@@ -15,24 +15,30 @@ const AdminRoute = ({ children }) => {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // User not logged in, redirect to login
-        console.log("🔒 [AdminRoute] No user logged in, redirecting to login");
-        router.push('/auth/login');
-      } else {
-        // Check if user is admin
-        const adminStatus = isAdminUser(user);
-        setIsAdmin(adminStatus);
-        
-        if (!adminStatus) {
-          // User is not an admin, redirect to home
-          console.log("🚫 [AdminRoute] User is not an admin, redirecting to home");
-          router.push('/');
+    const checkAdminStatus = async () => {
+      if (!loading) {
+        if (!user) {
+          // User not logged in, redirect to login
+          console.log("🔒 [AdminRoute] No user logged in, redirecting to login");
+          router.push('/auth/login');
+        } else {
+          // Check if user is admin
+          const adminStatus = await isAdminUser(user);
+          setIsAdmin(adminStatus);
+          
+          if (!adminStatus) {
+            // User is not an admin, redirect to home
+            console.log("🚫 [AdminRoute] User is not an admin, redirecting to home");
+            router.push('/');
+          } else {
+            console.log("✅ [AdminRoute] Admin user verified");
+          }
         }
+        setChecking(false);
       }
-      setChecking(false);
-    }
+    };
+    
+    checkAdminStatus();
   }, [user, loading, router]);
 
   // Show nothing while checking authentication

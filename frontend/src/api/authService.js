@@ -10,6 +10,8 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider
 } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebaseConfig";
 
 /**
  * Check if user is currently authenticated
@@ -25,6 +27,29 @@ export const getCurrentUser = () => {
 };
 
 /**
+ * Get user role from Firestore
+ */
+export const getUserRole = async (uid) => {
+  try {
+    console.log("🔍 [Auth] Fetching role for user:", uid);
+    const userRef = doc(db, "user", uid);
+    const userSnap = await getDoc(userRef);
+    
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      console.log("✅ [Auth] User role found:", userData.role || "user");
+      return userData.role || "user"; // Default to "user" if no role specified
+    } else {
+      console.log("⚠️ [Auth] User document not found, defaulting to role: user");
+      return "user"; // Default role
+    }
+  } catch (error) {
+    console.error("❌ [Auth] Error fetching user role:", error);
+    return "user"; // Default to user role on error
+  }
+};
+
+/**
  * Sign in an existing user
  */
 export const signInUser = async (email, password) => {
@@ -32,7 +57,11 @@ export const signInUser = async (email, password) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log("🔐 [Auth] User signed in:", email);
-    return userCredential;
+    
+    // Fetch user role
+    const role = await getUserRole(userCredential.user.uid);
+    
+    return { ...userCredential, role };
   } catch (error) {
     console.error("❌ [Auth] Sign in error:", error.code, error.message);
     throw error;
@@ -42,16 +71,36 @@ export const signInUser = async (email, password) => {
 /**
  * Check if the current user is an admin
  */
-export const isAdminUser = (user) => {
-  // Check if the user exists and has the admin email
-  console.log("🔍 [Auth] Checking if user is admin");
-  return user && user.email === "admin@gmail.com";
-};
+export const isAdminUser = async (user) => {
+  if (!user) {
+    console.log("❌ [Auth] No user provided to check admin status");
+    return false;
+  }
+  
+  try {
+    // Get user document to check role
+    const userRef = doc(db, "user", user.uid);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const isAdmin = userData.role === "admin";
+      console.log("🔍 [Auth] Admin check for user:", user.email, "result:", isAdmin);
+      return isAdmin;
+    } else {
+      console.log("⚠️ [Auth] User document not found for admin check");
+      return false;
+    }
+  } catch (error) {
+    console.error("❌ [Auth] Error checking admin status:", error);
+    return false;
+  }
+}
 
 /**
  * Register a new user
  */
-export const registerUser = async (email, password, displayName) => {
+export const registerUser = async (email, password, displayName, role = "user") => {
   const auth = getAuth();
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -61,8 +110,8 @@ export const registerUser = async (email, password, displayName) => {
       await updateProfile(userCredential.user, { displayName });
     }
     
-    console.log("🔐 [Auth] User registered:", email);
-    return userCredential;
+    console.log("🔐 [Auth] User registered:", email, "with role:", role);
+    return { ...userCredential, role };
   } catch (error) {
     console.error("❌ [Auth] Registration error:", error.code, error.message);
     throw error;
