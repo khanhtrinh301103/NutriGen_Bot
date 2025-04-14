@@ -4,6 +4,7 @@ import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
 import { getDashboardStats } from '../../api/adminAPI/adminDashboard';
 import AdminDashboardCharts from './components/AdminDashboardCharts';
+import StatCard from './components/StatCard';
 
 const AdminDashboard = () => {
   const [dashboardStats, setDashboardStats] = useState<any>(null);
@@ -32,20 +33,13 @@ const AdminDashboard = () => {
     <AdminRoute>
       <AdminLayout title="Admin Dashboard">
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <header className="mb-8">
+          {/* Header với StatCard */}
+          <header className="mb-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <h2 className="text-3xl font-extrabold text-gray-900">System Overview</h2>
-          </header>
-
-          {/* Thẻ thống kê chính */}
-          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-            <div className="bg-white shadow rounded-lg p-6">
-              <p className="text-sm font-medium text-gray-500 uppercase">Total Users</p>
-              <p className="mt-2 text-4xl font-semibold text-gray-900">
-                {dashboardStats?.totalUsers ?? 0}
-              </p>
+            <div className="w-full max-w-xs">
+              <StatCard title="Total Users" value={dashboardStats?.totalUsers ?? 0} />
             </div>
-            {/* Bạn có thể bổ sung thêm các card khác nếu có */}
-          </section>
+          </header>
 
           {/* Phần biểu đồ */}
           <section>
