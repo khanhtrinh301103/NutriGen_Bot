@@ -53,6 +53,7 @@ NutriGen_Bot/
 │   │   ├── api/
 │   │   │   ├── adminAPI
 │   │   │   │   ├── adminAPI.js
+│   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
 │   │   │   │   ├── UserDetailsService.js
 │   │   │   │   ├── UserManagement.js
@@ -73,7 +74,7 @@ NutriGen_Bot/
 │   │   ├── pages/
 │   │   │   ├── adminUI
 │   │   │   │   ├── components
-│   │   │   │   │   ├── AdminCharts.tsx
+│   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
@@ -136,3 +137,60 @@ NutriGen_Bot/
 │   ├── tsconfig.json
 │   ├── netlify.toml
 │   ├── README.md
+
+
+
+
+
+
+firebase_structure = """
+Collection: user
+├── Document ID: 5ExyMAzEqFfV7vsgxSxxWcpkKHR2
+│   ├── createdAt: "2025-04-10T18:54:37.196Z"
+│   ├── email: "khanh.trinh03@truongvietanh.com"
+│   ├── fullName: "KHÁNH TRỊNH XUÂN"
+│   ├── healthProfile:
+│   │   ├── activityLevel: "Moderately Active"
+│   │   ├── age: "21"
+│   │   ├── allergies:
+│   │   │   ├── "Gluten"
+│   │   │   ├── "Wheat"
+│   │   │   ├── "Peanut"
+│   │   │   ├── "Tree Nut"
+│   │   │   └── "Grain"
+│   │   ├── calculatedNutrition:
+│   │   │   ├── bmr: 1838
+│   │   │   ├── caloriesPerMeal: 1092
+│   │   │   ├── carbsPerMeal: 109
+│   │   │   ├── dailyCarbs: 328
+│   │   │   ├── dailyFat: 109
+│   │   │   ├── dailyProtein: 246
+│   │   │   ├── fatPerMeal: 36
+│   │   │   ├── proteinPerMeal: 82
+│   │   │   ├── targetCalories: 3276
+│   │   │   └── tdee: 2849
+│   │   ├── dietaryRestrictions:
+│   │   │   ├── "Gluten-Free"
+│   │   │   ├── "Keto"
+│   │   │   └── "Pescatarian"
+│   │   ├── gender: "Male"
+│   │   ├── goal: "Weight Gain"
+│   │   ├── height: "198"
+│   │   ├── macroDistribution: "Balanced"
+│   │   ├── mealsPerDay: 3
+│   │   └── weight: "70"
+│   ├── provider: "google"
+│   ├── role: "user"
+│   ├── savedRecipes: []
+│   └── updatedAt: "2025-04-13T17:54:11.531Z"
+│
+Collection: search_history
+├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
+│   └── searches (array)
+│       └── 0:
+│           ├── filters:
+│           │   └── cuisine: ""
+│           ├── id: "1744560760189"
+│           ├── term: "fish"
+│           └── timestamp: "2025-04-13T16:12:40.189Z"
+"""

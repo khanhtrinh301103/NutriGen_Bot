@@ -2,38 +2,53 @@
 import React, { useEffect, useState } from 'react';
 import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
-import AdminCharts from '../adminUI/components/AdminCharts';
-import { getAdminStats } from '../../api/adminAPI/adminAPI';
+import { getDashboardStats } from '../../api/adminAPI/adminDashboard';
+import AdminDashboardCharts from './components/AdminDashboardCharts';
 
 const AdminDashboard = () => {
-  const [stats, setStats] = useState<any>(null);
+  const [dashboardStats, setDashboardStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
-    const fetchAdminData = async () => {
+    const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const adminStats = await getAdminStats();
-        setStats(adminStats);
+        const stats = await getDashboardStats();
+        setDashboardStats(stats);
         setError('');
-        console.log("📊 [Admin] Successfully loaded admin statistics");
+        console.log("📊 [Admin Dashboard] Loaded dashboard statistics", stats);
       } catch (err) {
-        console.error("❌ [Admin] Error fetching admin stats:", err);
-        setError('Failed to load admin statistics');
+        console.error("❌ [Admin Dashboard] Error fetching dashboard statistics:", err);
+        setError('Failed to load dashboard statistics');
       } finally {
         setLoading(false);
       }
     };
-
-    fetchAdminData();
+    fetchDashboardData();
   }, []);
 
   return (
     <AdminRoute>
       <AdminLayout title="Admin Dashboard">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <header className="mb-8">
+            <h2 className="text-3xl font-extrabold text-gray-900">System Overview</h2>
+          </header>
+
+          {/* Thẻ thống kê chính */}
+          <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div className="bg-white shadow rounded-lg p-6">
+              <p className="text-sm font-medium text-gray-500 uppercase">Total Users</p>
+              <p className="mt-2 text-4xl font-semibold text-gray-900">
+                {dashboardStats?.totalUsers ?? 0}
+              </p>
+            </div>
+            {/* Bạn có thể bổ sung thêm các card khác nếu có */}
+          </section>
+
+          {/* Phần biểu đồ */}
+          <section>
             {loading ? (
               <div className="flex justify-center items-center h-40">
                 <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-green-500"></div>
@@ -52,112 +67,16 @@ const AdminDashboard = () => {
                 </div>
               </div>
             ) : (
-              <div>
-                <h2 className="text-xl font-semibold mb-6 text-gray-800">System Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-green-50 overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Users</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.totalUsers}</dd>
-                    </div>
-                  </div>
-                  {/* Update Popular Keywords: Hiển thị dưới dạng list thay vì 1 dòng text */}
-                  <div className="bg-blue-50 overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <h3 className="text-sm font-medium text-gray-500 mb-2">Popular Keywords</h3>
-                      {stats.popularKeywords && stats.popularKeywords.length > 0 ? (
-                        <ul className="list-disc list-inside text-gray-900">
-                          {stats.popularKeywords
-                            .slice(0, 10) // Hiển thị top 10 từ khóa, bạn có thể điều chỉnh số lượng nếu cần
-                            .map((item: any, index: number) => (
-                              <li key={`${item.term}-${index}`}>
-                                {item.term} ({item.count})
-                              </li>
-                            ))}
-                        </ul>
-                      ) : (
-                        <p>No Data</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="bg-yellow-50 overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Total Recipes</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.totalRecipes}</dd>
-                    </div>
-                  </div>
-                  <div className="bg-indigo-50 overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">Recipe Searches</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.recipeSearches}</dd>
-                    </div>
-                  </div>
-                  <div className="bg-purple-50 overflow-hidden shadow rounded-lg">
-                    <div className="px-4 py-5 sm:p-6">
-                      <dt className="text-sm font-medium text-gray-500 truncate">New Users Today</dt>
-                      <dd className="mt-1 text-3xl font-semibold text-gray-900">{stats.newUsersToday}</dd>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Analytics Charts */}
-                {stats.userTrendData && stats.userTrendData.length > 0 && (
-                  <AdminCharts 
-                    userTrendData={stats.userTrendData}
-                    recipeSearchTrendData={stats.recipeSearchTrendData}
-                    userRoleData={stats.userRoleData}
-                    popularKeywords={stats.popularKeywords}
-                  />
-                )}
-                
-                <div className="mt-10">
-                  <h2 className="text-xl font-semibold mb-6 text-gray-800">Quick Actions</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                      <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium text-gray-900">User Management</h3>
-                        <div className="mt-2 max-w-xl text-sm text-gray-500">
-                          <p>Manage user accounts, permissions, and activities.</p>
-                        </div>
-                        <div className="mt-5">
-                          <a href="/adminUI/UserManagement" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Manage Users
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                      <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium text-gray-900">Recipe Management</h3>
-                        <div className="mt-2 max-w-xl text-sm text-gray-500">
-                          <p>Manage recipes, categories, and featured content.</p>
-                        </div>
-                        <div className="mt-5">
-                          <a href="/adminUI/RecipeManagement" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Manage Recipes
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white overflow-hidden shadow rounded-lg">
-                      <div className="px-4 py-5 sm:p-6">
-                        <h3 className="text-lg font-medium text-gray-900">Nutrition Database</h3>
-                        <div className="mt-2 max-w-xl text-sm text-gray-500">
-                          <p>Update and maintain nutrition data and dietary information.</p>
-                        </div>
-                        <div className="mt-5">
-                          <a href="/adminUI/NutritionData" className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Manage Nutrition Data
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <AdminDashboardCharts 
+                genderRatio={dashboardStats.genderRatio}
+                healthGoals={dashboardStats.healthGoals}
+                activityLevels={dashboardStats.activityLevels}
+                topDietaryRestrictions={dashboardStats.topDietaryRestrictions}
+                topAllergies={dashboardStats.topAllergies}
+              />
             )}
-          </div>
-        </div>
+          </section>
+        </main>
       </AdminLayout>
     </AdminRoute>
   );
