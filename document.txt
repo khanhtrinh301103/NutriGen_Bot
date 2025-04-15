@@ -155,12 +155,6 @@ NutriGen_Bot/
 
 
 firebase_structure = """
-Always show details
-
-Copy
-# Final version of Firestore structure for user LwkuRa2l09QuvphvxlWcn1MSE3I2, fully detailed
-
-full_user_structure = """
 Collection: user
 ├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
 │   ├── createdAt: "2025-04-13T16:10:55.025Z"
