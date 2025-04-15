@@ -3,7 +3,11 @@ import React, { useState, useEffect } from 'react';
 import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
 import { getAllUsers } from '../../api/adminAPI/UserManagement';
-import UserTable from './components/UserTable';
+import UserFilters from './components/UserFilters';
+import UserDataTable from './components/UserDataTable';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, UsersRound } from "lucide-react";
 
 const UserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -24,16 +28,28 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
+      console.log("🔍 [Admin] Fetching users for UserManagement page");
       setLoading(true);
       setError(null);
       const fetchedUsers = await getAllUsers();
       setUsers(fetchedUsers);
+      console.log(`✅ [Admin] Successfully loaded ${fetchedUsers.length} users`);
     } catch (err: any) {
-      console.error("Error fetching users:", err);
+      console.error("❌ [Admin] Error fetching users:", err);
       setError("Failed to fetch users. Please try again later.");
     } finally {
       setLoading(false);
     }
+  };
+
+  const resetFilters = () => {
+    console.log("🔄 [Admin] Resetting all user filters");
+    setGoalFilter('all');
+    setActivityFilter('all');
+    setDietaryFilter('all');
+    setGenderFilter('all');
+    setAllergyFilter('all');
+    setSearchTerm('');
   };
 
   // Client-side filtering
@@ -48,7 +64,7 @@ const UserManagement = () => {
 
     if (goalFilter !== 'all' && userGoal !== goalFilter.toLowerCase()) pass = false;
     if (activityFilter !== 'all' && userActivity !== activityFilter.toLowerCase()) pass = false;
-    if (genderFilter !== 'all' && userGender !== genderFilter) pass = false;
+    if (genderFilter !== 'all' && userGender !== genderFilter.toLowerCase()) pass = false;
     if (dietaryFilter !== 'all' && !userDietary.includes(dietaryFilter.toLowerCase())) pass = false;
     if (allergyFilter !== 'all' && !userAllergies.includes(allergyFilter.toLowerCase())) pass = false;
 
@@ -64,55 +80,56 @@ const UserManagement = () => {
     return pass;
   });
 
-  const goalOptions = ['all', 'Weight Gain', 'Weight Loss', 'Weight Maintenance', 'Muscle Gain', 'Improve Health'];
-  const activityOptions = ['all', 'Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Extremely Active'];
-  const dietaryOptions = ['all', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Keto', 'Paleo', 'Pescatarian', 'Mediterranean'];
-  const genderOptions = ['all', 'Male', 'Female', 'Other'];
-  const allergyOptions = ['all', 'Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood', 'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'];
-
   return (
     <AdminRoute>
       <AdminLayout title="User Management">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="bg-white shadow-lg rounded-xl p-6">
-            <div className="mb-6">
-              <div className="flex flex-wrap items-center gap-2 mb-4">
-                <input
-                  type="search"
-                  placeholder="Search by name, email, goal or activity level"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full md:w-auto flex-grow px-3 py-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-indigo-500 text-xs"
-                />
-                <select value={genderFilter} onChange={(e) => setGenderFilter(e.target.value)} className="text-xs px-3 py-2 border rounded-md">
-                  {genderOptions.map(g => <option key={g} value={g}>{g === 'all' ? 'All Genders' : g}</option>)}
-                </select>
-                <select value={allergyFilter} onChange={(e) => setAllergyFilter(e.target.value)} className="text-xs px-3 py-2 border rounded-md">
-                  {allergyOptions.map(a => <option key={a} value={a}>{a === 'all' ? 'All Allergies' : a}</option>)}
-                </select>
+        <div className="container mx-auto px-4 py-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-xl font-bold flex items-center">
+                    <UsersRound className="mr-2 h-5 w-5" />
+                    View and manage registered users and their health profiles
+                  </CardTitle>
+                </div>
               </div>
-              <div className="flex flex-wrap justify-end gap-2">
-                <select value={goalFilter} onChange={(e) => setGoalFilter(e.target.value)} className="text-xs px-3 py-2 border rounded-md">
-                  {goalOptions.map(g => <option key={g} value={g}>{g === 'all' ? 'All Goals' : g}</option>)}
-                </select>
-                <select value={activityFilter} onChange={(e) => setActivityFilter(e.target.value)} className="text-xs px-3 py-2 border rounded-md">
-                  {activityOptions.map(a => <option key={a} value={a}>{a === 'all' ? 'All Activity Levels' : a}</option>)}
-                </select>
-                <select value={dietaryFilter} onChange={(e) => setDietaryFilter(e.target.value)} className="text-xs px-3 py-2 border rounded-md">
-                  {dietaryOptions.map(d => <option key={d} value={d}>{d === 'all' ? 'All Dietary Options' : d}</option>)}
-                </select>
-              </div>
-            </div>
+            </CardHeader>
+            <CardContent>
+              <UserFilters
+                goalFilter={goalFilter}
+                setGoalFilter={setGoalFilter}
+                activityFilter={activityFilter}
+                setActivityFilter={setActivityFilter}
+                dietaryFilter={dietaryFilter}
+                setDietaryFilter={setDietaryFilter}
+                genderFilter={genderFilter}
+                setGenderFilter={setGenderFilter}
+                allergyFilter={allergyFilter}
+                setAllergyFilter={setAllergyFilter}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                resetFilters={resetFilters}
+              />
 
-            {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
-            {loading ? (
-              <div className="flex justify-center items-center h-40">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-              </div>
-            ) : (
-              <UserTable data={filteredUsers} />
-            )}
-          </div>
+              {error && (
+                <Alert variant="destructive" className="mb-6">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <div className="flex flex-col items-center">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                    <p className="text-sm text-muted-foreground">Loading users...</p>
+                  </div>
+                </div>
+              ) : (
+                <UserDataTable data={filteredUsers} />
+              )}
+            </CardContent>
+          </Card>
         </div>
       </AdminLayout>
     </AdminRoute>

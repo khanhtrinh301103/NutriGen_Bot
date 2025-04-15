@@ -71,12 +71,24 @@ NutriGen_Bot/
 │   │   │   ├── signup.js
 │   │   │   ├── suggestionService.js
 │   │   │   ├── useAuth.js
+│   │   ├── components\ui (shadcn UI files)
+│   │   ├── lib
+│   │   │   ├── utils.ts
 │   │   ├── pages/
 │   │   │   ├── adminUI
 │   │   │   │   ├── components
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   │   ├── StatCard.tsx
+│   │   │   │   │   ├── UserBasicInfo.tsx
+│   │   │   │   │   ├── UserDataTable.tsx
+│   │   │   │   │   ├── UserDetailsHeader.tsx
+│   │   │   │   │   ├── UserDetailsTabs.tsx
+│   │   │   │   │   ├── UserFilters.tsx
+│   │   │   │   │   ├── UserHealthProfile.tsx
+│   │   │   │   │   ├── UserNutritionInfo.tsx
+│   │   │   │   │   ├── UserSavedRecipes.tsx
+│   │   │   │   │   ├── UserTable.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
 │   │   │   │   ├── RecipeManagement.tsx
@@ -127,6 +139,8 @@ NutriGen_Bot/
 │   │   │   ├── searchConflictDetector.ts
 │   │   │   ├── useScrollReveal.ts
 │   ├── .gitignore
+│   ├── .env.local
+│   ├── components.json
 │   ├── eslint.config.mjs
 │   ├── next-env.d.ts
 │   ├── next.config.mjs
@@ -140,51 +154,73 @@ NutriGen_Bot/
 │   ├── README.md
 
 
-
-
-
-
 firebase_structure = """
+Always show details
+
+Copy
+# Final version of Firestore structure for user LwkuRa2l09QuvphvxlWcn1MSE3I2, fully detailed
+
+full_user_structure = """
 Collection: user
-├── Document ID: 5ExyMAzEqFfV7vsgxSxxWcpkKHR2
-│   ├── createdAt: "2025-04-10T18:54:37.196Z"
-│   ├── email: "khanh.trinh03@truongvietanh.com"
-│   ├── fullName: "KHÁNH TRỊNH XUÂN"
+├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
+│   ├── createdAt: "2025-04-13T16:10:55.025Z"
+│   ├── email: "khanh.trinh30112003@gmail.com"
+│   ├── fullName: "Khanh Trinh"
 │   ├── healthProfile:
-│   │   ├── activityLevel: "Moderately Active"
-│   │   ├── age: "21"
+│   │   ├── activityLevel: "Very Active"
+│   │   ├── age: "26"
 │   │   ├── allergies:
-│   │   │   ├── "Gluten"
-│   │   │   ├── "Wheat"
-│   │   │   ├── "Peanut"
-│   │   │   ├── "Tree Nut"
-│   │   │   └── "Grain"
+│   │   │   ├── "Shellfish"
+│   │   │   ├── "Dairy"
+│   │   │   └── "Sulfite"
 │   │   ├── calculatedNutrition:
-│   │   │   ├── bmr: 1838
-│   │   │   ├── caloriesPerMeal: 1092
-│   │   │   ├── carbsPerMeal: 109
-│   │   │   ├── dailyCarbs: 328
-│   │   │   ├── dailyFat: 109
-│   │   │   ├── dailyProtein: 246
-│   │   │   ├── fatPerMeal: 36
-│   │   │   ├── proteinPerMeal: 82
-│   │   │   ├── targetCalories: 3276
-│   │   │   └── tdee: 2849
+│   │   │   ├── bmr: 1363
+│   │   │   ├── caloriesPerMeal: 784
+│   │   │   ├── carbsPerMeal: 78
+│   │   │   ├── dailyCarbs: 235
+│   │   │   ├── dailyFat: 78
+│   │   │   ├── dailyProtein: 176
+│   │   │   ├── fatPerMeal: 26
+│   │   │   ├── proteinPerMeal: 59
+│   │   │   ├── targetCalories: 2351
+│   │   │   └── tdee: 2351
 │   │   ├── dietaryRestrictions:
-│   │   │   ├── "Gluten-Free"
-│   │   │   ├── "Keto"
-│   │   │   └── "Pescatarian"
-│   │   ├── gender: "Male"
-│   │   ├── goal: "Weight Gain"
-│   │   ├── height: "198"
+│   │   │   ├── "Dairy-Free"
+│   │   │   └── "Mediterranean"
+│   │   ├── gender: "Female"
+│   │   ├── goal: "Weight Maintenance"
+│   │   ├── height: "175"
 │   │   ├── macroDistribution: "Balanced"
 │   │   ├── mealsPerDay: 3
-│   │   └── weight: "70"
-│   ├── provider: "google"
+│   │   └── weight: "56"
+│   ├── provider: "password"
 │   ├── role: "user"
-│   ├── savedRecipes: []
-│   └── updatedAt: "2025-04-13T17:54:11.531Z"
-│
+│   ├── savedRecipes:
+│   │   ├── 0:
+│   │   │   ├── calories: 717.58
+│   │   │   ├── carbs: 108.54
+│   │   │   ├── fat: 6.67
+│   │   │   ├── id: 653686
+│   │   │   ├── image: "https://img.spoonacular.com/recipes/653686-312x231.jpg"
+│   │   │   ├── protein: 68.49
+│   │   │   ├── readyInMinutes: 30
+│   │   │   ├── savedAt: "2025-04-13T16:12:44.222Z"
+│   │   │   ├── servings: 4
+│   │   │   └── title: "One Pot Meal: Shrimp Boil"
+│   │   ├── 1:
+│   │   │   ├── calories: 626.12
+│   │   │   ├── carbs: 44.38
+│   │   │   ├── fat: 35.58
+│   │   │   ├── id: 663931
+│   │   │   ├── image: "https://img.spoonacular.com/recipes/663931-312x231.jpg"
+│   │   │   ├── protein: 33.78
+│   │   │   ├── readyInMinutes: 30
+│   │   │   ├── savedAt: "2025-04-13T16:12:46.091Z"
+│   │   │   ├── servings: 4
+│   │   │   └── title: "Tuna Mexi Melts"
+│   └── updatedAt: "2025-04-13T16:12:17.943Z"
+"""
+
 Collection: search_history
 ├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
 │   └── searches (array)
