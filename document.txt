@@ -230,4 +230,10 @@ Collection: search_history
 │           ├── id: "1744560760189"
 │           ├── term: "fish"
 │           └── timestamp: "2025-04-13T16:12:40.189Z"
+│           1:
+│           ├── filters:
+│           │   └── cuisine: "asian"
+│           ├── id: "1744736982996"
+│           ├── term: "beef"
+│           └── timestamp: "2025-04-13T16:12:40.189Z"
 """
