@@ -91,7 +91,7 @@ NutriGen_Bot/
 │   │   │   │   │   ├── UserTable.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
-│   │   │   │   ├── RecipeManagement.tsx
+│   │   │   │   ├── SearchManagement.tsx
 │   │   │   │   ├── UserDetails.tsx
 │   │   │   │   ├── UserManagement.tsx
 │   │   │   ├── auth/

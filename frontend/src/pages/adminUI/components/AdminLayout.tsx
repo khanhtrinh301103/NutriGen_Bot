@@ -62,7 +62,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                     router.pathname === '/adminUI/RecipeManagement' 
                       ? 'text-white' 
                       : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/RecipeManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
+                  }`} style={{ backgroundColor: router.pathname === '/adminUI/SearchManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                     <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                     </svg>
