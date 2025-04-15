@@ -40,7 +40,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                       : 'text-green-100 hover:text-white'
                   }`} style={{ backgroundColor: router.pathname === '/adminUI' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                     <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
                     </svg>
                     Dashboard
                   </a>
@@ -52,21 +52,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                       : 'text-green-100 hover:text-white'
                   }`} style={{ backgroundColor: router.pathname === '/adminUI/UserManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                     <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Users
                   </a>
                 </Link>
-                <Link href="/adminUI/RecipeManagement" legacyBehavior>
+                <Link href="/adminUI/SearchManagement" legacyBehavior>
                   <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/RecipeManagement' 
+                    router.pathname === '/adminUI/SearchManagement' 
                       ? 'text-white' 
                       : 'text-green-100 hover:text-white'
                   }`} style={{ backgroundColor: router.pathname === '/adminUI/SearchManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                     <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    Recipes
+                    Search Management
                   </a>
                 </Link>
                 <Link href="/adminUI/NutritionData" legacyBehavior>
@@ -76,7 +76,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                       : 'text-green-100 hover:text-white'
                   }`} style={{ backgroundColor: router.pathname === '/adminUI/NutritionData' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                     <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zm8-1v16M8 9h8m-8 4h8" />
                     </svg>
                     Nutrition
                   </a>
@@ -126,7 +126,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                     : 'text-green-100 hover:text-white'
                 }`} style={{ backgroundColor: router.pathname === '/adminUI' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                   <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
                   </svg>
                   Dashboard
                 </a>
@@ -138,21 +138,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                     : 'text-green-100 hover:text-white'
                 }`} style={{ backgroundColor: router.pathname === '/adminUI/UserManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                   <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                   Users
                 </a>
               </Link>
-              <Link href="/adminUI/RecipeManagement" legacyBehavior>
+              <Link href="/adminUI/SearchManagement" legacyBehavior>
                 <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/RecipeManagement' 
+                  router.pathname === '/adminUI/SearchManagement' 
                     ? 'text-white' 
                     : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/RecipeManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
+                }`} style={{ backgroundColor: router.pathname === '/adminUI/SearchManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                   <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
-                  Recipes
+                  Search Management
                 </a>
               </Link>
               <Link href="/adminUI/NutritionData" legacyBehavior>
@@ -162,7 +162,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                     : 'text-green-100 hover:text-white'
                 }`} style={{ backgroundColor: router.pathname === '/adminUI/NutritionData' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
                   <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zm8-1v16M8 9h8m-8 4h8" />
                   </svg>
                   Nutrition
                 </a>
@@ -205,11 +205,52 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
         </header>
 
         {/* Main content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none">
+        <main className="flex-1 relative overflow-y-auto focus:outline-none pb-16 md:pb-0">
           <div className="py-6">
             {children}
           </div>
         </main>
+        
+        {/* Bottom Navigation for Mobile */}
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-40">
+          <div className="flex justify-around">
+            <Link href="/adminUI" legacyBehavior>
+              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI' ? 'text-green-600' : 'text-gray-600'}`}>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
+                </svg>
+                <span className="text-xs mt-1">Dashboard</span>
+              </a>
+            </Link>
+            
+            <Link href="/adminUI/UserManagement" legacyBehavior>
+              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/UserManagement' ? 'text-green-600' : 'text-gray-600'}`}>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="text-xs mt-1">Users</span>
+              </a>
+            </Link>
+            
+            <Link href="/adminUI/SearchManagement" legacyBehavior>
+              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/SearchManagement' ? 'text-green-600' : 'text-gray-600'}`}>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <span className="text-xs mt-1">Search</span>
+              </a>
+            </Link>
+            
+            <Link href="/adminUI/NutritionData" legacyBehavior>
+              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/NutritionData' ? 'text-green-600' : 'text-gray-600'}`}>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2 1 3 3 3h10c2 0 3-1 3-3V7c0-2-1-3-3-3H7c-2 0-3 1-3 3zm8-1v16M8 9h8m-8 4h8" />
+                </svg>
+                <span className="text-xs mt-1">Nutrition</span>
+              </a>
+            </Link>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -134,7 +134,10 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
       cell: ({ row }) => {
         const role = row.original.role || 'user';
         return (
-          <Badge variant={role === 'admin' ? 'destructive' : 'secondary'} className="text-xs">
+          <Badge 
+            variant={role === 'admin' ? 'outline' : 'secondary'} 
+            className={`text-xs ${role === 'admin' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
+          >
             {role}
           </Badge>
         );

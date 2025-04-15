@@ -55,6 +55,7 @@ NutriGen_Bot/
 │   │   │   │   ├── adminAPI.js
 │   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
+│   │   │   │   ├── searchManagement.js
 │   │   │   │   ├── UserDetailsService.js
 │   │   │   │   ├── UserManagement.js
 │   │   │   ├── authService.js
@@ -79,6 +80,10 @@ NutriGen_Bot/
 │   │   │   │   ├── components
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
+│   │   │   │   │   ├── DateRangePicker.tsx
+│   │   │   │   │   ├── SearchAnalyticsDashboard.tsx
+│   │   │   │   │   ├── SearchHistoryTable.tsx
+│   │   │   │   │   ├── SearchStatCards.tsx
 │   │   │   │   │   ├── StatCard.tsx
 │   │   │   │   │   ├── UserBasicInfo.tsx
 │   │   │   │   │   ├── UserDataTable.tsx

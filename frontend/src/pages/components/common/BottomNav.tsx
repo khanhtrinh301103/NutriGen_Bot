@@ -9,6 +9,14 @@ import {
 
 const BottomNav = () => {
   const router = useRouter();
+  
+  // Kiểm tra xem đường dẫn hiện tại có phải là trang admin không
+  const isAdminPage = router.pathname.startsWith('/adminUI');
+  
+  // Nếu đang ở trang admin, không hiển thị thanh điều hướng này
+  if (isAdminPage) {
+    return null;
+  }
 
   const navItems = [
     { name: "Home", path: "/", icon: <HomeIcon className="h-6 w-6" /> },
