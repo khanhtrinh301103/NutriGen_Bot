@@ -1,6 +1,5 @@
-import { 
-  getAuth, 
-  signOut, 
+import {
+  signOut,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -10,15 +9,15 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider
 } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "./firebaseConfig";
+
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db, auth } from "./firebaseConfig"; // ✅ Dùng đúng auth instance
 
 /**
  * Check if user is currently authenticated
  */
 export const getCurrentUser = () => {
   return new Promise((resolve, reject) => {
-    const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       unsubscribe();
       resolve(user);
@@ -38,14 +37,14 @@ export const getUserRole = async (uid) => {
     if (userSnap.exists()) {
       const userData = userSnap.data();
       console.log("✅ [Auth] User role found:", userData.role || "user");
-      return userData.role || "user"; // Default to "user" if no role specified
+      return userData.role || "user";
     } else {
       console.log("⚠️ [Auth] User document not found, defaulting to role: user");
-      return "user"; // Default role
+      return "user";
     }
   } catch (error) {
     console.error("❌ [Auth] Error fetching user role:", error);
-    return "user"; // Default to user role on error
+    return "user";
   }
 };
 
@@ -53,14 +52,11 @@ export const getUserRole = async (uid) => {
  * Sign in an existing user
  */
 export const signInUser = async (email, password) => {
-  const auth = getAuth();
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     console.log("🔐 [Auth] User signed in:", email);
     
-    // Fetch user role
     const role = await getUserRole(userCredential.user.uid);
-    
     return { ...userCredential, role };
   } catch (error) {
     console.error("❌ [Auth] Sign in error:", error.code, error.message);
@@ -76,9 +72,8 @@ export const isAdminUser = async (user) => {
     console.log("❌ [Auth] No user provided to check admin status");
     return false;
   }
-  
+
   try {
-    // Get user document to check role
     const userRef = doc(db, "user", user.uid);
     const userDoc = await getDoc(userRef);
     
@@ -95,21 +90,29 @@ export const isAdminUser = async (user) => {
     console.error("❌ [Auth] Error checking admin status:", error);
     return false;
   }
-}
+};
 
 /**
  * Register a new user
  */
 export const registerUser = async (email, password, displayName, role = "user") => {
-  const auth = getAuth();
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    
-    // Set the user's display name
+
     if (displayName) {
       await updateProfile(userCredential.user, { displayName });
     }
-    
+
+    // Optional: Create Firestore document here if needed
+    const userRef = doc(db, "user", userCredential.user.uid);
+    await setDoc(userRef, {
+      email,
+      displayName,
+      role,
+      provider: "password",
+      createdAt: new Date().toISOString()
+    });
+
     console.log("🔐 [Auth] User registered:", email, "with role:", role);
     return { ...userCredential, role };
   } catch (error) {
@@ -122,7 +125,6 @@ export const registerUser = async (email, password, displayName, role = "user") 
  * Send password reset email
  */
 export const sendPasswordReset = async (email) => {
-  const auth = getAuth();
   try {
     await sendPasswordResetEmail(auth, email);
     console.log("📧 [Auth] Password reset email sent to:", email);
@@ -134,24 +136,20 @@ export const sendPasswordReset = async (email) => {
 
 /**
  * Change password for current user
- * Requires reauthentication with current password before changing
+ * Requires reauthentication
  */
 export const changePassword = async (currentPassword, newPassword) => {
-  const auth = getAuth();
   const user = auth.currentUser;
-  
+
   if (!user) {
     console.error("❌ [Auth] No user is currently logged in");
     throw new Error("No user is currently logged in");
   }
-  
+
   try {
-    // Re-authenticate user before changing password
     console.log("🔄 [Auth] Re-authenticating user before password change");
     const credential = EmailAuthProvider.credential(user.email, currentPassword);
     await reauthenticateWithCredential(user, credential);
-    
-    // Update password
     await updatePassword(user, newPassword);
     console.log("✅ [Auth] Password changed successfully");
     return true;
@@ -165,12 +163,10 @@ export const changePassword = async (currentPassword, newPassword) => {
  * Sign out the current user
  */
 export const signOutUser = async () => {
-  const auth = getAuth();
   try {
-    // Clear any user-specific data from localStorage
     localStorage.removeItem('recipeSearchState');
     console.log("🧹 [Auth] Cleared user-specific data from localStorage");
-    
+
     await signOut(auth);
     console.log("🔓 [Auth] User signed out successfully");
   } catch (error) {

@@ -1,5 +1,6 @@
 // frontend/src/api/adminAPI/adminAPI.js
-import { getAuth } from "firebase/auth";
+
+import { auth } from "../firebaseConfig"; // ✅ dùng auth đã khởi tạo sẵn
 import { isAdminUser } from "../authService";
 
 /**
@@ -7,14 +8,13 @@ import { isAdminUser } from "../authService";
  * @returns {boolean} True if user is admin, false otherwise.
  */
 export const checkAdminAccess = async () => {
-  const auth = getAuth();
   const user = auth.currentUser;
-  
+
   if (!user) {
     console.log("❌ [Admin] No user logged in");
     return false;
   }
-  
+
   const isAdmin = isAdminUser(user);
   console.log(`🔑 [Admin] User ${user.email} admin status: ${isAdmin}`);
   return isAdmin;

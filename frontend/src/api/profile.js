@@ -1,18 +1,18 @@
-// frontend/src/api/profile.js
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
-import { db, auth } from "./firebaseConfig";
-import { 
-  calculateBMR, 
-  calculateTDEE, 
-  calculateTarget, 
-  calculateCaloriesPerMeal,
-  calculateDailyProtein,
-  calculateDailyCarbs,
-  calculateDailyFat,
-  calculateProteinPerMeal,
-  calculateCarbsPerMeal,
-  calculateFatPerMeal
-} from "../utils/nutritionCalculator";
+  // frontend/src/api/profile.js
+  import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "firebase/firestore";
+  import { db, auth } from "./firebaseConfig";
+  import { 
+    calculateBMR, 
+    calculateTDEE, 
+    calculateTarget, 
+    calculateCaloriesPerMeal,
+    calculateDailyProtein,
+    calculateDailyCarbs,
+    calculateDailyFat,
+    calculateProteinPerMeal,
+    calculateCarbsPerMeal,
+    calculateFatPerMeal
+  } from "../utils/nutritionCalculator";
 
 // Get user profile data
 export const getUserProfile = async (userId) => {
