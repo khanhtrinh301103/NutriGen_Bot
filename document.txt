@@ -12,7 +12,7 @@ NutriGen_Bot/
 │   │   │   ├── schema.gql
 │   │   │   ├── dataconnect.yaml
 │   ├── functions/ (backend workspace here)
-│   │   ├── admin
+│   │   ├── admin/
 │   │   │   ├── adminStats.js
 │   │   │   ├── adminUtils.js
 │   │   │   ├── index.js
@@ -51,7 +51,7 @@ NutriGen_Bot/
 │   │   ├── window.svg
 │   ├── src/ (frontend workspace here)
 │   │   ├── api/
-│   │   │   ├── adminAPI
+│   │   │   ├── adminAPI/
 │   │   │   │   ├── adminAPI.js
 │   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
@@ -73,14 +73,27 @@ NutriGen_Bot/
 │   │   │   ├── suggestionService.js
 │   │   │   ├── useAuth.js
 │   │   ├── components\ui (shadcn UI files)
-│   │   ├── lib
+│   │   ├── lib/
 │   │   │   ├── utils.ts
 │   │   ├── pages/
-│   │   │   ├── adminUI
+│   │   │   ├── adminUI/
 │   │   │   │   ├── components
+│   │   │   │   │   ├── ChatManagement
+│   │   │   │   │   │   ├── ActiveChatCard.tsx
+│   │   │   │   │   │   ├── ActiveChatsTab.tsx
+│   │   │   │   │   │   ├── AllChatsTab.tsx
+│   │   │   │   │   │   ├── AnalyticsSummaryCards.tsx
+│   │   │   │   │   │   ├── AnalyticsTab.tsx
+│   │   │   │   │   │   ├── ChatDetailDialog.tsx
+│   │   │   │   │   │   ├── ChatDetailMessage.tsx
+│   │   │   │   │   │   ├── ChatTableRow.tsx
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
+│   │   │   │   │   ├── ChatArea.tsx
+│   │   │   │   │   ├── ChatMessage.tsx
 │   │   │   │   │   ├── DateRangePicker.tsx
+│   │   │   │   │   ├── EmptyChatState.tsx
+│   │   │   │   │   ├── ImageUploader.tsx
 │   │   │   │   │   ├── SearchAnalyticsDashboard.tsx
 │   │   │   │   │   ├── SearchHistoryTable.tsx
 │   │   │   │   │   ├── SearchStatCards.tsx
@@ -93,7 +106,10 @@ NutriGen_Bot/
 │   │   │   │   │   ├── UserHealthProfile.tsx
 │   │   │   │   │   ├── UserNutritionInfo.tsx
 │   │   │   │   │   ├── UserSavedRecipes.tsx
+│   │   │   │   │   ├── UserSidebar.tsx
 │   │   │   │   │   ├── UserTable.tsx
+│   │   │   │   ├── AssistantChat.tsx
+│   │   │   │   ├── ChatManagement.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
 │   │   │   │   ├── SearchManagement.tsx
@@ -137,7 +153,7 @@ NutriGen_Bot/
 │   │   │   ├── terms.tsx
 │   │   ├── styles/
 │   │   │   ├── globals.css
-│   │   ├── utils
+│   │   ├── utils/
 │   │   │   ├── nutritionCalculator.ts
 │   │   │   ├── ingredientSuggestions.ts
 │   │   │   ├── dietaryConflicts.ts

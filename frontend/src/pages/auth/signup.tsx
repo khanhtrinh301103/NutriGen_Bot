@@ -41,7 +41,12 @@ const Signup = () => {
       router.push('/auth/login');
     } catch (err) {
       console.error('Signup error:', err);
-      setError(err.message || 'Failed to create account. Please try again.');
+      // Kiểm tra lỗi "email-already-in-use"
+      if (err.code === 'auth/email-already-in-use') {
+        setError('Email address is already in use. Please use a different email or try logging in.');
+      } else {
+        setError(err.message || 'Failed to create account. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
