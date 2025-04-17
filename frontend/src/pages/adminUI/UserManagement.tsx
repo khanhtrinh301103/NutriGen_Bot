@@ -5,7 +5,7 @@ import AdminLayout from './components/AdminLayout';
 import { getAllUsers } from '../../api/adminAPI/UserManagement';
 import UserFilters from './components/UserFilters';
 import UserDataTable from './components/UserDataTable';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, UsersRound } from "lucide-react";
 
@@ -20,6 +20,7 @@ const UserManagement = () => {
   const [dietaryFilter, setDietaryFilter] = useState<string>('all');
   const [genderFilter, setGenderFilter] = useState<string>('all');
   const [allergyFilter, setAllergyFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   useEffect(() => {
@@ -49,6 +50,7 @@ const UserManagement = () => {
     setDietaryFilter('all');
     setGenderFilter('all');
     setAllergyFilter('all');
+    setStatusFilter('all');
     setSearchTerm('');
   };
 
@@ -58,15 +60,17 @@ const UserManagement = () => {
     const hp = user.healthProfile || {};
     const userGoal = (hp.goal || '').toLowerCase();
     const userActivity = (hp.activityLevel || '').toLowerCase();
-    const userGender = hp.gender || 'none';
+    const userGender = (hp.gender || 'none').toLowerCase();
     const userDietary = (hp.dietaryRestrictions || []).map((item: string) => item.toLowerCase());
     const userAllergies = (hp.allergies || []).map((item: string) => item.toLowerCase());
+    const userStatus = (user.status || 'active').toLowerCase();
 
     if (goalFilter !== 'all' && userGoal !== goalFilter.toLowerCase()) pass = false;
     if (activityFilter !== 'all' && userActivity !== activityFilter.toLowerCase()) pass = false;
     if (genderFilter !== 'all' && userGender !== genderFilter.toLowerCase()) pass = false;
     if (dietaryFilter !== 'all' && !userDietary.includes(dietaryFilter.toLowerCase())) pass = false;
     if (allergyFilter !== 'all' && !userAllergies.includes(allergyFilter.toLowerCase())) pass = false;
+    if (statusFilter !== 'all' && userStatus !== statusFilter.toLowerCase()) pass = false;
 
     if (searchTerm.trim() !== '') {
       const term = searchTerm.toLowerCase();
@@ -109,6 +113,8 @@ const UserManagement = () => {
                 setAllergyFilter={setAllergyFilter}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
+                statusFilter={statusFilter}
+                setStatusFilter={setStatusFilter}
                 resetFilters={resetFilters}
               />
 
@@ -126,7 +132,7 @@ const UserManagement = () => {
                   </div>
                 </div>
               ) : (
-                <UserDataTable data={filteredUsers} />
+                <UserDataTable data={filteredUsers} refreshData={fetchUsers} />
               )}
             </CardContent>
           </Card>

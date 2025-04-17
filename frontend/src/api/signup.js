@@ -15,12 +15,13 @@ export const registerUser = async ({ email, password, displayName }) => {
     const user = userCredential.user;
     await updateProfile(user, { displayName });
     
-    // Create user document with empty health profile and role
+    // Create user document with empty health profile, role, and status active
     await setDoc(doc(db, "user", user.uid), { 
       email, 
       fullName: displayName,
       provider: "password",
       role: role, // Add role field
+      status: "active", // Add status field with value "active"
       healthProfile: {
         height: '',
         weight: '',
@@ -36,8 +37,8 @@ export const registerUser = async ({ email, password, displayName }) => {
       updatedAt: new Date().toISOString()
     });
     
-    console.log("✅ [Auth] User registered successfully with role:", role);
-    return { uid: user.uid, email, displayName, role };
+    console.log("✅ [Auth] User registered successfully with role:", role, "and status: active");
+    return { uid: user.uid, email, displayName, role, status: "active" };
   } catch (error) {
     console.error("❌ [Auth] Registration error:", error);
     throw error;
@@ -56,13 +57,14 @@ export const signUpWithGoogle = async () => {
     const userSnap = await getDoc(userRef);
     
     if (!userSnap.exists()) {
-      // New user - create document with role
-      console.log("✅ [Auth] New Google user, creating profile with role: user");
+      // New user - create document with role and status active
+      console.log("✅ [Auth] New Google user, creating profile with role: user and status: active");
       await setDoc(userRef, { 
         email: user.email, 
         fullName: user.displayName,
         provider: "google",
         role: "user", // Default role for Google sign-ups
+        status: "active", // Add status field with value "active"
         healthProfile: {
           height: '',
           weight: '',

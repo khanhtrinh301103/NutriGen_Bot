@@ -26,6 +26,8 @@ interface UserFiltersProps {
   setAllergyFilter: (value: string) => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  statusFilter: string;
+  setStatusFilter: (value: string) => void;
   resetFilters: () => void;
 }
 
@@ -42,6 +44,8 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   setAllergyFilter,
   searchTerm,
   setSearchTerm,
+  statusFilter,
+  setStatusFilter,
   resetFilters
 }) => {
   const [isResetting, setIsResetting] = useState(false);
@@ -52,6 +56,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   const dietaryOptions = ['all', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Keto', 'Paleo', 'Pescatarian', 'Mediterranean'];
   const genderOptions = ['all', 'Male', 'Female', 'Other'];
   const allergyOptions = ['all', 'Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood', 'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'];
+  const statusOptions = ['all', 'active', 'suspended'];
 
   const handleReset = () => {
     console.log("🔄 [Admin] Starting filter reset process");
@@ -117,7 +122,26 @@ const UserFilters: React.FC<UserFiltersProps> = ({
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3">
+            {/* Status Filter */}
+            <div>
+              <Label htmlFor="status-filter" className="text-xs mb-1 text-gray-600">Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status-filter" className="w-full h-9 text-xs">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {statusOptions.map(s => (
+                      <SelectItem key={s} value={s} className="text-xs">
+                        {s === 'all' ? 'All Statuses' : s.charAt(0).toUpperCase() + s.slice(1)}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            
             {/* Gender Filter */}
             <div>
               <Label htmlFor="gender-filter" className="text-xs mb-1 text-gray-600">Gender</Label>

@@ -233,6 +233,7 @@ Collection: user
 │   │   │   ├── savedAt: "2025-04-13T16:12:46.091Z"
 │   │   │   ├── servings: 4
 │   │   │   └── title: "Tuna Mexi Melts"
+│   └── status: "active"
 │   └── updatedAt: "2025-04-13T16:12:17.943Z"
 """
 

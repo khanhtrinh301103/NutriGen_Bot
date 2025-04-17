@@ -11,6 +11,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [accountSuspended, setAccountSuspended] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +24,7 @@ const Login = () => {
     try {
       setError('');
       setLoading(true);
+      setAccountSuspended(false);
       
       const userCredential = await signInUser({ email, password });
       
@@ -36,7 +38,12 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err.message || 'Failed to sign in. Please try again.');
+      
+      if (err.message === "ACCOUNT_SUSPENDED") {
+        setAccountSuspended(true);
+      } else {
+        setError(err.message || 'Failed to sign in. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -46,6 +53,8 @@ const Login = () => {
     try {
       setError('');
       setLoading(true);
+      setAccountSuspended(false);
+      
       const userCredential = await signInWithGoogle();
       
       // Redirect based on user role
@@ -58,7 +67,12 @@ const Login = () => {
       }
     } catch (err) {
       console.error('Google Login error:', err);
-      setError(err.message || 'Google login failed.');
+      
+      if (err.message === "ACCOUNT_SUSPENDED") {
+        setAccountSuspended(true);
+      } else {
+        setError(err.message || 'Google login failed.');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,7 +99,28 @@ const Login = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
-          {error && (
+          {/* Thông báo tài khoản bị khóa */}
+          {accountSuspended && (
+            <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-9v4a1 1 0 11-2 0v-4a1 1 0 112 0zm0-4a1 1 0 11-2 0 1 1 0 012 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm font-medium text-red-800">Account Suspended</p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Your account has been suspended due to violation of our terms. 
+                    Please contact admin at <a href="mailto:support@nutrigen-bot.com" className="underline">support@nutrigen-bot.com</a> for assistance.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Thông báo lỗi thông thường */}
+          {error && !accountSuspended && (
             <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-4">
               <div className="flex">
                 <div className="flex-shrink-0">

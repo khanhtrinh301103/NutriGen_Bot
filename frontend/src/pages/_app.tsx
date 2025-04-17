@@ -3,8 +3,9 @@ import type { AppProps } from "next/app";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/router";
 import BottomNav from "./components/common/BottomNav";
+import ChatPopup from "./components/common/ChatPopup"; // Thêm import
 import { AuthProvider, useAuth } from "../api/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react"; // Thêm useState
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../api/firebaseConfig";
 
@@ -28,33 +29,37 @@ const checkAdminRole = async (uid) => {
 // Custom App component to handle auth logic
 function AppContent({ Component, pageProps, router }) {
   const { user, loading } = useAuth();
+  const [isAdmin, setIsAdmin] = useState(false); // Thêm state để lưu trạng thái admin
 
   useEffect(() => {
     const handleAuthRedirects = async () => {
-      if (!loading) {
+      if (!loading && user) {
+        const path = router.pathname;
+        
+        // Kiểm tra vai trò của người dùng
+        const adminCheck = await checkAdminRole(user.uid);
+        setIsAdmin(adminCheck); // Lưu trạng thái vào state
+        
+        // Nếu có người dùng và đang ở trang chủ (root path), kiểm tra xem họ có phải admin không
+        if (path === '/') {
+          if (adminCheck) {
+            console.log("🔀 [Redirect] Admin user detected at homepage, redirecting to admin dashboard");
+            router.push('/adminUI');
+          } else {
+            console.log("✅ [Auth] Regular user at homepage, staying here");
+          }
+        }
+      } else if (!loading && !user) {
         const path = router.pathname;
         
         // Nếu người dùng không đăng nhập và không ở trang auth hoặc trang public
-        if (!user && 
-            !path.includes('/auth/') && 
+        if (!path.includes('/auth/') && 
             path !== '/about' && 
             path !== '/privacy' && 
             path !== '/terms') {
           console.log("🔀 [Redirect] No user detected on protected page, redirecting to login");
           router.push('/auth/login');
           return;
-        }
-        
-        // Nếu có người dùng và đang ở trang chủ (root path), kiểm tra xem họ có phải admin không
-        if (user && path === '/') {
-          const isAdmin = await checkAdminRole(user.uid);
-          
-          if (isAdmin) {
-            console.log("🔀 [Redirect] Admin user detected at homepage, redirecting to admin dashboard");
-            router.push('/adminUI');
-          } else {
-            console.log("✅ [Auth] Regular user at homepage, staying here");
-          }
         }
       }
     };
@@ -83,6 +88,9 @@ function AppContent({ Component, pageProps, router }) {
 
   // Only show bottom nav on certain pages (exclude auth pages)
   const showBottomNav = !router.pathname.includes('/auth/');
+  
+  // Chỉ hiển thị chat popup cho người dùng thường (không phải admin) và khi đã đăng nhập và không ở trang auth
+  const showChatPopup = user && !isAdmin && !router.pathname.includes('/auth/');
 
   return (
     <AnimatePresence mode="wait">
@@ -95,6 +103,7 @@ function AppContent({ Component, pageProps, router }) {
       >
         <Component {...pageProps} />
         {showBottomNav && <BottomNav />} {/* Only show bottom nav on non-auth pages */}
+        {showChatPopup && <ChatPopup />} {/* Only show chat popup for regular users */}
       </motion.div>
     </AnimatePresence>
   );

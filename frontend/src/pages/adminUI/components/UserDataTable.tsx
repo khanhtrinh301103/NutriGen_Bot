@@ -27,15 +27,17 @@ import {
 } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, ArrowUpDown, Download } from "lucide-react";
+import { Eye, ArrowUpDown, Download, Lock, Unlock } from "lucide-react";
 import Link from 'next/link';
 import * as XLSX from 'xlsx';
+import { changeUserStatus } from "../../../api/adminAPI/UserManagement";
 
 interface User {
   id: string;
   name: string;
   email: string;
   role?: string;
+  status?: string;
   createdAt?: string;
   healthProfile?: {
     gender?: string;
@@ -47,10 +49,12 @@ interface User {
 
 interface UserDataTableProps {
   data: User[];
+  refreshData: () => void;
 }
 
-const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
+const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
 
   const handleExport = () => {
     console.log("📊 [Admin] Exporting user data to Excel");
@@ -58,6 +62,7 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
       const exportData = data.map(user => ({
         Name: user.name || '',
         Email: user.email || '',
+        Status: user.status || 'active',
         Gender: user.healthProfile?.gender || '',
         Age: user.healthProfile?.age || '',
         Goal: user.healthProfile?.goal || '',
@@ -73,6 +78,23 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
       console.log("✅ [Admin] Successfully exported user data");
     } catch (error) {
       console.error("❌ [Admin] Error exporting user data:", error);
+    }
+  };
+
+  const handleToggleStatus = async (userId: string, currentStatus: string) => {
+    try {
+      setIsLoading(prev => ({ ...prev, [userId]: true }));
+      console.log(`🔄 [Admin] Toggling user status for user ${userId}`);
+      
+      const newStatus = currentStatus === "active" ? "suspended" : "active";
+      await changeUserStatus(userId, newStatus);
+      
+      console.log(`✅ [Admin] Successfully changed status for user ${userId} to ${newStatus}`);
+      refreshData();
+    } catch (error) {
+      console.error(`❌ [Admin] Error toggling status for user ${userId}:`, error);
+    } finally {
+      setIsLoading(prev => ({ ...prev, [userId]: false }));
     }
   };
 
@@ -105,6 +127,32 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
             Email
             <ArrowUpDown className="ml-2 h-3 w-3" />
           </Button>
+        );
+      },
+    },
+    {
+      accessorKey: 'status',
+      header: ({ column }) => {
+        return (
+          <Button
+            variant="ghost"
+            className="p-0 hover:bg-transparent"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
+            Status
+            <ArrowUpDown className="ml-2 h-3 w-3" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        const status = row.original.status || 'active';
+        return (
+          <Badge 
+            variant={status === 'active' ? 'outline' : 'destructive'} 
+            className={`text-xs ${status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200 border-green-400' : ''}`}
+          >
+            {status}
+          </Badge>
         );
       },
     },
@@ -163,9 +211,38 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data }) => {
       id: 'actions',
       header: "",
       cell: ({ row }) => {
+        const user = row.original;
+        const userId = user.id;
+        const userStatus = user.status || 'active';
+        const userRole = user.role || 'user';
+        
+        // Không cho phép disable tài khoản admin
+        const isDisabled = userRole === 'admin';
+        const isLoading_ = isLoading[userId] || false;
+        
         return (
-          <div className="text-right">
-            <Link href={`/adminUI/UserDetails?userId=${row.original.id}`}>
+          <div className="flex justify-end gap-2">
+            <Button 
+              size="sm" 
+              variant={userStatus === 'active' ? 'destructive' : 'default'}
+              className="h-8 w-8 p-0"
+              onClick={() => handleToggleStatus(userId, userStatus)}
+              disabled={isDisabled || isLoading_}
+              title={userStatus === 'active' ? 'Disable account' : 'Enable account'}
+            >
+              {isLoading_  ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-opacity-20 border-t-white" />
+              ) : userStatus === 'active' ? (
+                <Lock className="h-4 w-4" />
+              ) : (
+                <Unlock className="h-4 w-4" />
+              )}
+              <span className="sr-only">
+                {userStatus === 'active' ? 'Disable account' : 'Enable account'}
+              </span>
+            </Button>
+            
+            <Link href={`/adminUI/UserDetails?userId=${userId}`}>
               <Button size="sm" variant="outline" className="h-8 w-8 p-0">
                 <Eye className="h-4 w-4" />
                 <span className="sr-only">View details</span>
