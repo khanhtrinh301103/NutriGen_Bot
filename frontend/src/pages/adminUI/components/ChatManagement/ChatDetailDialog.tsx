@@ -1,5 +1,5 @@
-// frontend/src/pages/adminUI/components/chatManagement/ChatDetailDialog.tsx
-import React, { useState } from 'react';
+// frontend/src/pages/adminUI/components/ChatManagement/ChatDetailDialog.tsx
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -8,60 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import ChatDetailMessage from './ChatDetailMessage';
-
-// Dữ liệu mẫu cho tin nhắn - sau này sẽ được lấy từ API dựa trên chatId
-const MOCK_MESSAGES = [
-  {
-    id: '1',
-    senderId: 'user123',
-    text: 'Hello, I need help with planning a diet for diabetes.',
-    timestamp: new Date(2025, 3, 15, 9, 30),
-    isAdmin: false
-  },
-  {
-    id: '2',
-    senderId: 'admin',
-    text: 'Hello! I\'d be happy to help you with a diet plan for diabetes. Could you tell me a bit more about your current diet and any specific dietary restrictions you have?',
-    timestamp: new Date(2025, 3, 15, 9, 32),
-    isAdmin: true
-  },
-  {
-    id: '3',
-    senderId: 'user123',
-    text: 'I\'m currently trying to avoid high carb foods, but I\'m not sure what else I should be avoiding. I also have a dairy allergy.',
-    timestamp: new Date(2025, 3, 15, 9, 35),
-    isAdmin: false
-  },
-  {
-    id: '4',
-    senderId: 'admin',
-    text: 'Thanks for sharing. For diabetes management with a dairy allergy, you\'ll want to focus on low-glycemic foods while avoiding dairy products. Here are some recommendations:\n\n1. Lean proteins like chicken, fish, and tofu\n2. Non-starchy vegetables\n3. Limited whole grains\n4. Healthy fats like avocados and nuts\n5. Plant-based milk alternatives\n\nWould you like a sample meal plan based on these guidelines?',
-    timestamp: new Date(2025, 3, 15, 9, 40),
-    isAdmin: true
-  },
-  {
-    id: '5',
-    senderId: 'user123',
-    text: 'Yes, that would be very helpful! I\'d like a 3-day meal plan if possible.',
-    timestamp: new Date(2025, 3, 15, 9, 42),
-    isAdmin: false
-  }
-];
+import { getChatDetails, updateChatStatus, exportChatData } from '../../../../api/adminAPI/adminChatManagementService';
 
 interface ChatDetailDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  chat: {
-    id: string;
-    userId: string;
-    userName: string;
-    userEmail: string;
-    startDate: Date;
-    lastMessageDate: Date;
-    messagesCount: number;
-    status: string;
-    topic: string;
-  } | null;
+  chat: any;
 }
 
 const ChatDetailDialog: React.FC<ChatDetailDialogProps> = ({ 
@@ -70,17 +22,73 @@ const ChatDetailDialog: React.FC<ChatDetailDialogProps> = ({
   chat
 }) => {
   const [activeTab, setActiveTab] = useState('chat');
+  const [chatDetails, setChatDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Fetch chat details when dialog opens
+  useEffect(() => {
+    const fetchChatDetails = async () => {
+      if (open && chat) {
+        try {
+          setLoading(true);
+          setError(null);
+          const details = await getChatDetails(chat.id);
+          setChatDetails(details);
+          setLoading(false);
+        } catch (err) {
+          console.error('❌ [ChatDetailDialog] Error fetching chat details:', err);
+          setError('Failed to load chat details. Please try again.');
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchChatDetails();
+  }, [open, chat]);
   
   if (!chat) return null;
   
-  const handleExportChat = () => {
-    console.log(`📤 [ChatDetailDialog] Exporting chat: ${chat.id}`);
-    // Implement chat export functionality
+  const handleExportChat = async () => {
+    try {
+      console.log(`📤 [ChatDetailDialog] Exporting chat: ${chat.id}`);
+      const exportData = await exportChatData(chat.id);
+      
+      // Create JSON file and download
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `chat_${chat.id}_export.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    } catch (err) {
+      console.error('❌ [ChatDetailDialog] Error exporting chat:', err);
+      alert('Failed to export chat. Please try again.');
+    }
   };
 
-  const handleCloseChat = () => {
-    console.log(`🔒 [ChatDetailDialog] Closing chat: ${chat.id}`);
-    // Implement close chat functionality
+  const handleCloseChat = async () => {
+    try {
+      console.log(`🔒 [ChatDetailDialog] Closing chat: ${chat.id}`);
+      await updateChatStatus(chat.id, 'closed');
+      
+      // Update local state
+      setChatDetails({
+        ...chatDetails,
+        status: 'closed'
+      });
+      
+      // Inform parent component about status change
+      if (chat && typeof chat.onStatusChange === 'function') {
+        chat.onStatusChange(chat.id, 'closed');
+      }
+    } catch (err) {
+      console.error('❌ [ChatDetailDialog] Error closing chat:', err);
+      alert('Failed to close chat. Please try again.');
+    }
   };
 
   return (
@@ -109,190 +117,299 @@ const ChatDetailDialog: React.FC<ChatDetailDialogProps> = ({
           </div>
         </DialogHeader>
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
-          <div className="border-b mb-4">
-            <div className="flex">
-              <button 
-                className={`px-4 py-2 ${activeTab === 'chat' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
-                onClick={() => setActiveTab('chat')}
-              >
-                Chat History
-              </button>
-              <button 
-                className={`px-4 py-2 ${activeTab === 'info' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
-                onClick={() => setActiveTab('info')}
-              >
-                User Info
-              </button>
-              <button 
-                className={`px-4 py-2 ${activeTab === 'analytics' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
-                onClick={() => setActiveTab('analytics')}
-              >
-                Chat Analytics
-              </button>
-            </div>
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
           </div>
-          
-          {/* Chat History Tab */}
-          <TabsContent value="chat" className="flex-1 overflow-auto flex flex-col space-y-4">
-            <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
-              <div>
-                <span className="text-sm text-gray-500">Topic:</span>
-                <span className="ml-2 font-medium">{chat.topic}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-500">Started:</span>
-                <span className="ml-2 font-medium">{format(chat.startDate, 'MMM d, yyyy h:mm a')}</span>
-              </div>
-              <div>
-                <span className="text-sm text-gray-500">Messages:</span>
-                <span className="ml-2 font-medium">{chat.messagesCount}</span>
-              </div>
-              <div className="text-right">
-                <span className="text-sm text-gray-500">Last Active:</span>
-                <span className="ml-2 font-medium">{format(chat.lastMessageDate, 'MMM d, yyyy h:mm a')}</span>
+        ) : error ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-red-500">{error}</div>
+          </div>
+        ) : (
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
+            <div className="border-b mb-4">
+              <div className="flex">
+                <button 
+                  className={`px-4 py-2 ${activeTab === 'chat' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
+                  onClick={() => setActiveTab('chat')}
+                >
+                  Chat History
+                </button>
+                <button 
+                  className={`px-4 py-2 ${activeTab === 'info' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
+                  onClick={() => setActiveTab('info')}
+                >
+                  User Info
+                </button>
+                <button 
+                  className={`px-4 py-2 ${activeTab === 'analytics' ? 'border-b-2 border-green-500 font-medium' : 'text-gray-500'}`}
+                  onClick={() => setActiveTab('analytics')}
+                >
+                  Chat Analytics
+                </button>
               </div>
             </div>
             
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto border rounded-lg bg-white">
-              <div className="p-4 space-y-6">
-                {MOCK_MESSAGES.map(message => (
-                  <ChatDetailMessage 
-                    key={message.id}
-                    message={message}
-                    userName={chat.userName}
-                  />
-                ))}
-              </div>
-            </div>
-          </TabsContent>
-          
-          {/* User Info Tab */}
-          <TabsContent value="info" className="flex-1 overflow-auto">
-            <div className="bg-white p-6 rounded-lg border h-full">
-              <h3 className="text-lg font-medium mb-4">User Information</h3>
-              
-              <div className="space-y-6">
+            {/* Chat History Tab */}
+            <TabsContent value="chat" className="flex-1 overflow-auto flex flex-col space-y-4">
+              <div className="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Personal Details</h4>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Name</p>
-                      <p className="font-medium">{chat.userName}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Email</p>
-                      <p className="font-medium">{chat.userEmail}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">User ID</p>
-                      <p className="font-medium">{chat.userId}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Member Since</p>
-                      <p className="font-medium">April 10, 2025</p>
-                    </div>
-                  </div>
+                  <span className="text-sm text-gray-500">Topic:</span>
+                  <span className="ml-2 font-medium">{chat.topic}</span>
                 </div>
-                
+                <div className="text-right">
+                  <span className="text-sm text-gray-500">Started:</span>
+                  <span className="ml-2 font-medium">{format(chat.startDate, 'MMM d, yyyy h:mm a')}</span>
+                </div>
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500">Health Profile</h4>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Diet Preferences</p>
-                      <p className="font-medium">Low-carb, Dairy-free</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Allergies</p>
-                      <p className="font-medium">Dairy</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Health Conditions</p>
-                      <p className="font-medium">Diabetes</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Fitness Goals</p>
-                      <p className="font-medium">Weight maintenance</p>
-                    </div>
-                  </div>
+                  <span className="text-sm text-gray-500">Messages:</span>
+                  <span className="ml-2 font-medium">{chat.messagesCount}</span>
                 </div>
-                
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500">Interaction History</h4>
-                  <Separator className="my-2" />
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Total Chats</p>
-                      <p className="font-medium">5</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Saved Recipes</p>
-                      <p className="font-medium">12</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Last Login</p>
-                      <p className="font-medium">April 15, 2025</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Average Response Time</p>
-                      <p className="font-medium">3 minutes</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          
-          {/* Chat Analytics Tab */}
-          <TabsContent value="analytics" className="flex-1 overflow-auto">
-            <div className="bg-white p-6 rounded-lg border h-full">
-              <h3 className="text-lg font-medium mb-4">Chat Analytics</h3>
-              
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">Messages</p>
-                  <p className="text-xl font-bold">{chat.messagesCount}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">Duration</p>
-                  <p className="text-xl font-bold">75 min</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">Response Time</p>
-                  <p className="text-xl font-bold">2.5 min</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">Sentiment</p>
-                  <p className="text-xl font-bold text-green-600">Positive</p>
+                <div className="text-right">
+                  <span className="text-sm text-gray-500">Last Active:</span>
+                  <span className="ml-2 font-medium">{format(chat.lastMessageDate, 'MMM d, yyyy h:mm a')}</span>
                 </div>
               </div>
               
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Message Distribution</h4>
-                  <div className="bg-gray-50 p-4 rounded-lg h-40 flex items-center justify-center">
-                    <p className="text-sm text-gray-500">Message distribution chart would be displayed here</p>
-                  </div>
+              {/* Messages Container */}
+              <div className="flex-1 overflow-y-auto border rounded-lg bg-white">
+                <div className="p-4 space-y-6">
+                  {chatDetails?.messages && chatDetails.messages.length > 0 ? (
+                    chatDetails.messages.map(message => (
+                      <ChatDetailMessage 
+                        key={message.id}
+                        message={message}
+                        userName={chat.userName}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-6">
+                      No messages in this chat.
+                    </div>
+                  )}
                 </div>
+              </div>
+            </TabsContent>
+            
+            {/* User Info Tab */}
+            <TabsContent value="info" className="flex-1 overflow-auto">
+              <div className="bg-white p-6 rounded-lg border h-full">
+                <h3 className="text-lg font-medium mb-4">User Information</h3>
                 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Keywords</h4>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline" className="bg-gray-100">diabetes</Badge>
-                    <Badge variant="outline" className="bg-gray-100">diet</Badge>
-                    <Badge variant="outline" className="bg-gray-100">dairy-free</Badge>
-                    <Badge variant="outline" className="bg-gray-100">meal plan</Badge>
-                    <Badge variant="outline" className="bg-gray-100">carbs</Badge>
-                    <Badge variant="outline" className="bg-gray-100">recipes</Badge>
+                <div className="space-y-6">
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Personal Details</h4>
+                    <Separator className="my-2" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Name</p>
+                        <p className="font-medium">{chat.userName || 'Not available'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Email</p>
+                        <p className="font-medium">{chat.userEmail || 'Not available'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">User ID</p>
+                        <p className="font-medium">{chat.userId || 'Not available'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Member Since</p>
+                        <p className="font-medium">
+                          {chatDetails?.userDetails?.createdAt 
+                            ? typeof chatDetails.userDetails.createdAt.toDate === 'function'
+                              ? format(chatDetails.userDetails.createdAt.toDate(), 'MMM d, yyyy')
+                              : chatDetails.userDetails.createdAt instanceof Date 
+                                ? format(chatDetails.userDetails.createdAt, 'MMM d, yyyy')
+                                : typeof chatDetails.userDetails.createdAt === 'string'
+                                  ? format(new Date(chatDetails.userDetails.createdAt), 'MMM d, yyyy')
+                                  : 'Not available'
+                            : 'Not available'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {chatDetails?.userDetails?.healthProfile && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Health Profile</h4>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Diet Preferences</p>
+                          <p className="font-medium">
+                            {chatDetails.userDetails.healthProfile.dietaryRestrictions?.join(', ') || 'None specified'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Allergies</p>
+                          <p className="font-medium">
+                            {chatDetails.userDetails.healthProfile.allergies?.join(', ') || 'None specified'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Activity Level</p>
+                          <p className="font-medium">
+                            {chatDetails.userDetails.healthProfile.activityLevel || 'Not specified'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Health Goal</p>
+                          <p className="font-medium">
+                            {chatDetails.userDetails.healthProfile.goal || 'Not specified'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {chatDetails?.userDetails?.savedRecipes && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500">Saved Recipes</h4>
+                      <Separator className="my-2" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">Number of Saved Recipes</p>
+                          <p className="font-medium">
+                            {Object.keys(chatDetails.userDetails.savedRecipes).length || 0}
+                          </p>
+                        </div>
+                        {Object.keys(chatDetails.userDetails.savedRecipes).length > 0 && (
+                          <div>
+                            <p className="text-sm text-gray-500">Recent Recipe</p>
+                            <p className="font-medium">
+                              {chatDetails.userDetails.savedRecipes[0]?.title || 'N/A'}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-500">Interaction History</h4>
+                    <Separator className="my-2" />
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Total Messages</p>
+                        <p className="font-medium">{chat.messagesCount || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Last Activity</p>
+                        <p className="font-medium">{format(chat.lastMessageDate, 'MMM d, yyyy h:mm a')}</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+            </TabsContent>
+            
+            {/* Chat Analytics Tab */}
+            <TabsContent value="analytics" className="flex-1 overflow-auto">
+              <div className="bg-white p-6 rounded-lg border h-full">
+                <h3 className="text-lg font-medium mb-4">Chat Analytics</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Messages</p>
+                    <p className="text-xl font-bold">{chat.messagesCount}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Duration</p>
+                    <p className="text-xl font-bold">
+                      {(() => {
+                        const start = new Date(chat.startDate);
+                        const end = new Date(chat.lastMessageDate);
+                        const diffMs = end.getTime() - start.getTime();
+                        const diffMins = Math.round(diffMs / 60000);
+                        return `${diffMins} min`;
+                      })()}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">Status</p>
+                    <p className="text-xl font-bold" style={{ color: chat.status === 'active' ? '#16a34a' : '#4b5563' }}>
+                      {chat.status === 'active' ? 'Active' : 'Closed'}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <p className="text-sm text-gray-500">User</p>
+                    <p className="text-xl font-bold truncate">{chat.userName}</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  {chatDetails?.messages && chatDetails.messages.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Message Distribution</h4>
+                      <div className="bg-gray-50 p-4 rounded-lg h-40">
+                        <div className="flex h-full">
+                          {/* User messages */}
+                          <div 
+                            className="bg-blue-500 h-full flex items-end justify-center"
+                            style={{ 
+                              width: `${chatDetails.messages.filter(m => !m.isAdmin).length / chatDetails.messages.length * 100}%` 
+                            }}
+                          >
+                            <div className="text-white font-bold">
+                              {chatDetails.messages.filter(m => !m.isAdmin).length}
+                            </div>
+                          </div>
+                          {/* Admin messages */}
+                          <div 
+                            className="bg-green-500 h-full flex items-end justify-center"
+                            style={{ 
+                              width: `${chatDetails.messages.filter(m => m.isAdmin).length / chatDetails.messages.length * 100}%` 
+                            }}
+                          >
+                            <div className="text-white font-bold">
+                              {chatDetails.messages.filter(m => m.isAdmin).length}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex text-xs mt-2">
+                          <div className="flex items-center">
+                            <div className="w-3 h-3 bg-blue-500 mr-1"></div>
+                            <span>User</span>
+                          </div>
+                          <div className="flex items-center ml-4">
+                            <div className="w-3 h-3 bg-green-500 mr-1"></div>
+                            <span>Admin</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {chatDetails?.messages && chatDetails.messages.length > 0 && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-500 mb-2">Keywords</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {(() => {
+                          // Extract common keywords from messages
+                          const text = chatDetails.messages
+                            .map(msg => msg.text)
+                            .join(' ')
+                            .toLowerCase();
+                          
+                          // Very simple keyword extraction
+                          const commonWords = ['diet', 'food', 'meal', 'recipe', 'nutrition', 'health', 'weight', 'protein', 'carbs', 'fat'];
+                          return commonWords
+                            .filter(word => text.includes(word))
+                            .map(word => (
+                              <Badge key={word} variant="outline" className="bg-gray-100">
+                                {word}
+                              </Badge>
+                            ));
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        )}
         
         <DialogFooter className="flex justify-between">
           <div>

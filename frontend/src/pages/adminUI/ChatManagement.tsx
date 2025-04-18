@@ -1,127 +1,192 @@
 // frontend/src/pages/adminUI/ChatManagement.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from './components/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import AllChatsTab from '../adminUI/components/ChatManagement/AllChatsTab';
-import ActiveChatsTab from '../adminUI/components/ChatManagement/ActiveChatsTab';
-import AnalyticsTab from '../adminUI/components/ChatManagement/AnalyticsTab';
-
-// Dữ liệu mẫu - sẽ thay thế bằng dữ liệu thực sau này
-const chatHistory = [
-  {
-    id: '1',
-    userId: 'user123',
-    userName: 'Jane Cooper',
-    userEmail: 'jane.cooper@example.com',
-    startDate: new Date(2025, 3, 15, 9, 30),
-    lastMessageDate: new Date(2025, 3, 15, 10, 45),
-    messagesCount: 12,
-    status: 'closed',
-    topic: 'Diet plan for diabetes'
-  },
-  {
-    id: '2',
-    userId: 'user456',
-    userName: 'Wade Warren',
-    userEmail: 'wade.warren@example.com',
-    startDate: new Date(2025, 3, 16, 14, 23),
-    lastMessageDate: new Date(2025, 3, 16, 14, 55),
-    messagesCount: 8,
-    status: 'closed',
-    topic: 'Vegetarian recipes'
-  },
-  {
-    id: '3',
-    userId: 'user789',
-    userName: 'Esther Howard',
-    userEmail: 'esther.howard@example.com',
-    startDate: new Date(2025, 3, 17, 11, 10),
-    lastMessageDate: new Date(2025, 3, 17, 11, 45),
-    messagesCount: 15,
-    status: 'active',
-    topic: 'Gluten-free options'
-  },
-  {
-    id: '4',
-    userId: 'user101',
-    userName: 'Brooklyn Simmons',
-    userEmail: 'brooklyn.simmons@example.com',
-    startDate: new Date(2025, 3, 17, 16, 30),
-    lastMessageDate: new Date(),
-    messagesCount: 5,
-    status: 'active',
-    topic: 'Low-carb meal plans'
-  }
-];
+import AllChatsTab from './components/ChatManagement/AllChatsTab';
+import ActiveChatsTab from './components/ChatManagement/ActiveChatsTab';
+import AnalyticsTab from './components/ChatManagement/AnalyticsTab';
+import { useRouter } from 'next/router';
+import { useAuth } from '../../api/useAuth';
+import { 
+  getAllChatsForManagement, 
+  updateChatStatus, 
+  deleteChat, 
+  exportChatData,
+  getChatAnalytics
+} from '../../api/adminAPI/adminChatManagementService';
 
 const ChatManagement = () => {
+  const router = useRouter();
+  const { user, userRole, loading } = useAuth();
+  const [chatHistory, setChatHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [analytics, setAnalytics] = useState({
+    totalChats: 0,
+    activeChats: 0,
+    totalMessages: 0,
+    avgMessagesPerChat: 0
+  });
+  
+  // Kiểm tra quyền admin
+  useEffect(() => {
+    if (!loading && (user === null || userRole !== 'admin')) {
+      console.log('❌ [ChatManagement] Unauthorized access, redirecting to home');
+      router.push('/');
+    }
+  }, [user, userRole, loading, router]);
+  
+  // Fetch dữ liệu chat khi component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      if (user && userRole === 'admin') {
+        try {
+          setIsLoading(true);
+          setError(null);
+          
+          // Fetch danh sách chat
+          const chats = await getAllChatsForManagement();
+          setChatHistory(chats);
+          
+          // Fetch phân tích
+          const analyticsData = await getChatAnalytics();
+          setAnalytics(analyticsData);
+          
+          setIsLoading(false);
+        } catch (err) {
+          console.error('❌ [ChatManagement] Error fetching data:', err);
+          setError('Failed to load chat history. Please try again.');
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    fetchData();
+  }, [user, userRole]);
+  
   console.log('🔄 [ChatManagement] Rendering Chat Management page');
   
-  // Handlers - trong tương lai có thể được chuyển vào một custom hook
+  // Handlers
   const handleViewChat = (chatId) => {
     console.log(`👁️ [ChatManagement] Viewing chat details: ${chatId}`);
-    // Implement navigation to chat detail page
+    // Chuyển tới đối thoại chi tiết
   };
 
-  const handleDeleteChat = (chatId) => {
-    console.log(`🗑️ [ChatManagement] Deleting chat: ${chatId}`);
-    // Implement chat deletion
+  const handleDeleteChat = async (chatId) => {
+    try {
+      console.log(`🗑️ [ChatManagement] Deleting chat: ${chatId}`);
+      await deleteChat(chatId);
+      
+      // Cập nhật lại danh sách sau khi xóa
+      setChatHistory(prevChats => prevChats.filter(chat => chat.id !== chatId));
+    } catch (err) {
+      console.error('❌ [ChatManagement] Error deleting chat:', err);
+      alert('Failed to delete chat. Please try again.');
+    }
   };
 
-  const handleExportChat = (chatId) => {
-    console.log(`📤 [ChatManagement] Exporting chat: ${chatId}`);
-    // Implement chat export functionality
+  const handleExportChat = async (chatId) => {
+    try {
+      console.log(`📤 [ChatManagement] Exporting chat: ${chatId}`);
+      const exportData = await exportChatData(chatId);
+      
+      // Tạo file JSON và tải xuống
+      const dataStr = JSON.stringify(exportData, null, 2);
+      const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+      
+      const exportFileDefaultName = `chat_${chatId}_export.json`;
+      
+      const linkElement = document.createElement('a');
+      linkElement.setAttribute('href', dataUri);
+      linkElement.setAttribute('download', exportFileDefaultName);
+      linkElement.click();
+    } catch (err) {
+      console.error('❌ [ChatManagement] Error exporting chat:', err);
+      alert('Failed to export chat. Please try again.');
+    }
   };
 
   const handleResumeChat = (chatId) => {
     console.log(`📱 [ChatManagement] Resuming chat: ${chatId}`);
-    // Implement resume chat functionality
+    router.push(`/adminUI/AssistantChat?chatId=${chatId}`);
+  };
+  
+  const handleCloseChat = async (chatId) => {
+    try {
+      console.log(`🔒 [ChatManagement] Closing chat: ${chatId}`);
+      await updateChatStatus(chatId, 'closed');
+      
+      // Cập nhật lại danh sách sau khi đóng chat
+      setChatHistory(prevChats => 
+        prevChats.map(chat => 
+          chat.id === chatId ? { ...chat, status: 'closed' } : chat
+        )
+      );
+    } catch (err) {
+      console.error('❌ [ChatManagement] Error closing chat:', err);
+      alert('Failed to close chat. Please try again.');
+    }
   };
 
-  // Tính toán số liệu thống kê
-  const chatAnalytics = {
-    totalChats: chatHistory.length,
-    activeChats: chatHistory.filter(chat => chat.status === 'active').length,
-    totalMessages: chatHistory.reduce((sum, chat) => sum + chat.messagesCount, 0),
-    avgMessagesPerChat: chatHistory.length > 0 
-      ? Math.round(chatHistory.reduce((sum, chat) => sum + chat.messagesCount, 0) / chatHistory.length) 
-      : 0
-  };
+  // Hiển thị màn hình loading
+  if (loading || isLoading) {
+    return (
+      <AdminLayout title="Chat History Management">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout title="Chat History Management">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6">
-            <TabsTrigger value="all">All Chats</TabsTrigger>
-            <TabsTrigger value="active">Active Chats</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          </TabsList>
-          
-          {/* All Chats Tab */}
-          <TabsContent value="all">
-            <AllChatsTab 
-              chatHistory={chatHistory} 
-              onView={handleViewChat}
-              onDelete={handleDeleteChat}
-              onExport={handleExportChat}
-            />
-          </TabsContent>
-          
-          {/* Active Chats Tab */}
-          <TabsContent value="active">
-            <ActiveChatsTab 
-              chatHistory={chatHistory} 
-              onView={handleViewChat}
-              onResume={handleResumeChat}
-            />
-          </TabsContent>
-          
-          {/* Analytics Tab */}
-          <TabsContent value="analytics">
-            <AnalyticsTab analytics={chatAnalytics} />
-          </TabsContent>
-        </Tabs>
+        {error ? (
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+            <p>{error}</p>
+            <button 
+              className="underline mt-2"
+              onClick={() => window.location.reload()}
+            >
+              Try again
+            </button>
+          </div>
+        ) : (
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="all">All Chats</TabsTrigger>
+              <TabsTrigger value="active">Active Chats</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            </TabsList>
+            
+            {/* All Chats Tab */}
+            <TabsContent value="all">
+              <AllChatsTab 
+                chatHistory={chatHistory} 
+                onView={handleViewChat}
+                onDelete={handleDeleteChat}
+                onExport={handleExportChat}
+              />
+            </TabsContent>
+            
+            {/* Active Chats Tab */}
+            <TabsContent value="active">
+              <ActiveChatsTab 
+                chatHistory={chatHistory} 
+                onView={handleViewChat}
+                onResume={handleResumeChat}
+              />
+            </TabsContent>
+            
+            {/* Analytics Tab */}
+            <TabsContent value="analytics">
+              <AnalyticsTab analytics={analytics} />
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </AdminLayout>
   );

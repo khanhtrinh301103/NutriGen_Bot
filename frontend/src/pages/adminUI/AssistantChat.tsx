@@ -10,6 +10,7 @@ const AssistantChat = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const { user, userRole, loading } = useAuth();
   const router = useRouter();
+  const { chatId } = router.query;
   
   // Kiểm tra quyền admin
   useEffect(() => {
@@ -18,6 +19,20 @@ const AssistantChat = () => {
       router.push('/');
     }
   }, [user, userRole, loading, router]);
+  
+  // Nếu có chatId trong URL, tự động chọn chat đó
+  useEffect(() => {
+    if (chatId && typeof chatId === 'string') {
+      // Fetch chat info và chọn chat
+      console.log(`🔄 [AdminChat] Auto-selecting chat from URL: ${chatId}`);
+      
+      // Nếu bạn đã implementation getAllChats thì có thể sử dụng nó để lấy thông tin chat
+      // Tạm thời giả định trực tiếp
+      setSelectedUser({
+        id: chatId
+      });
+    }
+  }, [chatId]);
   
   // Log khi người dùng được chọn
   const handleUserSelect = (user) => {
