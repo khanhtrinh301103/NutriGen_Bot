@@ -8,63 +8,8 @@ import { TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui
 import ChatMessage from './ChatMessage';
 import EmptyChatState from './EmptyChatState';
 import ImageUploader from './ImageUploader';
-
-// Dữ liệu mẫu tin nhắn - sẽ được thay thế bằng dữ liệu thực khi tích hợp
-const MOCK_MESSAGES = {
-  '1': [
-    {
-      id: '1',
-      senderId: '1',
-      text: 'Hello, can you help me with my diet plan?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
-      isAdmin: false
-    },
-    {
-      id: '2',
-      senderId: 'admin',
-      text: 'Hi there! I\'d be happy to help with your diet plan. What specific aspects are you looking to improve?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 59).toISOString(),
-      isAdmin: true
-    },
-    {
-      id: '3',
-      senderId: '1',
-      text: 'I want to lose weight but I have dairy allergies. What kind of diet should I follow?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 55).toISOString(),
-      isAdmin: false
-    },
-    {
-      id: '4',
-      senderId: 'admin',
-      text: 'For weight loss with dairy allergies, I recommend focusing on lean proteins, plenty of vegetables, and dairy alternatives like almond or oat milk. Would you like me to suggest some specific meal ideas?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 50).toISOString(),
-      isAdmin: true
-    },
-    {
-      id: '5',
-      senderId: '1',
-      text: 'Yes, please! That would be very helpful.',
-      timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
-      isAdmin: false
-    },
-  ],
-  '3': [
-    {
-      id: '1',
-      senderId: '3',
-      text: 'I have a question about allergies',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      isAdmin: false
-    },
-    {
-      id: '2',
-      senderId: 'admin',
-      text: 'Hi! I\'d be happy to help with your allergy questions. What would you like to know?',
-      timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 + 1000 * 60 * 5).toISOString(),
-      isAdmin: true
-    },
-  ]
-};
+import { getChatMessages, sendAdminMessage, uploadAdminChatImage } from '../../../api/adminAPI/adminChatService';
+import { useAuth } from '../../../api/useAuth';
 
 interface ChatAreaProps {
   selectedUser: any;
@@ -75,8 +20,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
   const [messages, setMessages] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const { user } = useAuth();
   
   // Cuộn xuống tin nhắn mới nhất khi tin nhắn thay đổi
   useEffect(() => {
@@ -88,36 +36,52 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
   // Cập nhật tin nhắn khi người dùng được chọn thay đổi
   useEffect(() => {
     if (selectedUser) {
+      setIsLoading(true);
+      setError(null);
       console.log(`📩 [ChatArea] Loading messages for user: ${selectedUser.id}`);
-      // Lấy tin nhắn từ dữ liệu mẫu
-      const userMessages = MOCK_MESSAGES[selectedUser.id] || [];
-      setMessages(userMessages);
+      
+      const unsubscribe = getChatMessages(selectedUser.id, (chatMessages) => {
+        setMessages(chatMessages);
+        setIsLoading(false);
+      });
+      
+      return () => unsubscribe();
     } else {
       setMessages([]);
     }
   }, [selectedUser]);
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if ((!message.trim() && !selectedImage) || !selectedUser) return;
     
-    console.log(`✉️ [ChatArea] Sending message to user: ${selectedUser.id}`, message, selectedImage ? 'with image' : '');
-    
-    // Tạo tin nhắn mới
-    const newMessage = {
-      id: Date.now().toString(),
-      senderId: 'admin',
-      text: message,
-      timestamp: new Date().toISOString(),
-      isAdmin: true,
-      image: selectedImage
-    };
-    
-    // Thêm tin nhắn mới vào danh sách
-    setMessages(prevMessages => [...prevMessages, newMessage]);
-    
-    // Xóa nội dung tin nhắn và ảnh đã chọn
-    setMessage('');
-    setSelectedImage(null);
+    try {
+      let imageUrl = null;
+      
+      if (selectedImage) {
+        imageUrl = await uploadAdminChatImage(selectedImage.file, selectedUser.id, user?.uid);
+      }
+      
+      // Tạo tin nhắn mới
+      const adminMessage = {
+        text: message,
+        senderId: user?.uid || "admin",
+        senderName: user?.displayName || "Admin",
+        senderRole: "admin",
+        imageUrl: imageUrl
+      };
+      
+      // Gửi tin nhắn
+      await sendAdminMessage(selectedUser.id, adminMessage);
+      
+      console.log(`✉️ [ChatArea] Sent admin message to user: ${selectedUser.id}`);
+      
+      // Xóa nội dung tin nhắn và ảnh đã chọn
+      setMessage('');
+      setSelectedImage(null);
+    } catch (err) {
+      console.error(`❌ [ChatArea] Error sending message:`, err);
+      setError("Failed to send message");
+    }
   };
   
   const handleImageUpload = (file) => {
@@ -141,14 +105,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
           src: imageUrl,
           originalWidth: img.width,
           originalHeight: img.height,
-          // Kích thước chuẩn sẽ được áp dụng trong component
+          file: file
         });
         
         setIsUploading(false);
       };
       img.src = imageUrl;
     };
-    reader.readAsDataURL(file); // Đảm bảo đọc dưới dạng DataURL để có string
+    reader.readAsDataURL(file);
   };
   
   const handleRemoveImage = () => {
@@ -174,9 +138,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       <div className="border-b border-gray-200 p-4 bg-white flex items-center">
         <div className="relative">
           <Avatar className="h-10 w-10 border-2 border-white">
-            <div className="flex h-full w-full items-center justify-center bg-green-100 text-green-800 font-medium">
-              {selectedUser.fullName.charAt(0)}
-            </div>
+            {selectedUser.avatarUrl ? (
+              <img 
+                src={selectedUser.avatarUrl} 
+                alt={selectedUser.fullName}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-green-100 text-green-800 font-medium">
+                {selectedUser.fullName.charAt(0)}
+              </div>
+            )}
           </Avatar>
           {selectedUser.online && (
             <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-white" />
@@ -190,16 +162,36 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-        <div className="space-y-4">
-          {messages.map(msg => (
-            <ChatMessage 
-              key={msg.id} 
-              message={msg} 
-              user={selectedUser}
-            />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full text-red-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-center">{error}</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+            </svg>
+            <p className="text-center">No messages yet. Start a conversation!</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {messages.map(msg => (
+              <ChatMessage 
+                key={msg.id} 
+                message={msg} 
+                user={selectedUser}
+              />
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        )}
       </div>
       
       {/* Selected Image Preview */}

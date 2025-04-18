@@ -22,6 +22,7 @@ NutriGen_Bot/
 │   │   ├── getNutritionProfile.js
 │   │   ├── getRecipeDetails.js
 │   │   ├── index.js
+│   │   ├── uploadChatPhoto.js
 │   │   ├── uploadPhoto.js
 │   │   ├── searchRecipe.js
 │   │   ├── firestore-debug.log
@@ -53,6 +54,7 @@ NutriGen_Bot/
 │   │   ├── api/
 │   │   │   ├── adminAPI/
 │   │   │   │   ├── adminAPI.js
+│   │   │   │   ├── adminChatService.js
 │   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
 │   │   │   │   ├── searchManagement.js
@@ -60,6 +62,7 @@ NutriGen_Bot/
 │   │   │   │   ├── UserManagement.js
 │   │   │   ├── authService.js
 │   │   │   ├── blogService.js
+│   │   │   ├── chatService.js
 │   │   │   ├── firebaseConfig.js
 │   │   │   ├── getRecipe.js
 │   │   │   ├── getUserHealthProfile.js

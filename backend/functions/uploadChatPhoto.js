@@ -1,3 +1,4 @@
+// backend/functions/uploadChatPhoto.js
 const express = require('express');
 const multer = require('multer');
 const { getStorage, ref, uploadBytes, getDownloadURL } = require('firebase/storage');

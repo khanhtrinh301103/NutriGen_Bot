@@ -1,63 +1,9 @@
 // frontend/src/pages/adminUI/components/chat/UserSidebar.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-
-// Dữ liệu mẫu người dùng - sẽ được thay thế bằng dữ liệu thực khi tích hợp
-const MOCK_USERS = [
-  {
-    id: '1',
-    fullName: 'Jane Cooper',
-    email: 'jane.cooper@example.com',
-    lastMessage: 'Hello, can you help me with my diet plan?',
-    timestamp: '10:23 AM',
-    unread: 3,
-    online: true,
-    avatarUrl: null
-  },
-  {
-    id: '2',
-    fullName: 'Wade Warren',
-    email: 'wade.warren@example.com',
-    lastMessage: 'Thanks for your help!',
-    timestamp: 'Yesterday',
-    unread: 0,
-    online: false,
-    avatarUrl: null
-  },
-  {
-    id: '3',
-    fullName: 'Esther Howard',
-    email: 'esther.howard@example.com',
-    lastMessage: 'I have a question about allergies',
-    timestamp: 'Apr 12',
-    unread: 1,
-    online: true, 
-    avatarUrl: null
-  },
-  {
-    id: '4',
-    fullName: 'Cameron Williamson',
-    email: 'cameron.williamson@example.com',
-    lastMessage: 'Looking for low-carb recipes',
-    timestamp: 'Mar 28',
-    unread: 0,
-    online: false,
-    avatarUrl: null
-  },
-  {
-    id: '5',
-    fullName: 'Brooklyn Simmons',
-    email: 'brooklyn.simmons@example.com',
-    lastMessage: 'How do I track my calories?',
-    timestamp: 'Mar 24',
-    unread: 0,
-    online: false,
-    avatarUrl: null
-  }
-];
+import { getAllChats } from '../../../api/adminAPI/adminChatService';
 
 interface UserSidebarProps {
   onSelectUser: (user: any) => void;
@@ -66,6 +12,17 @@ interface UserSidebarProps {
 
 const UserSidebar: React.FC<UserSidebarProps> = ({ onSelectUser, selectedUser }) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    const unsubscribe = getAllChats((chats) => {
+      setUsers(chats);
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
+  }, []);
   
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('🔍 [UserSidebar] Searching for:', e.target.value);
@@ -73,10 +30,29 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onSelectUser, selectedUser })
   };
   
   // Lọc danh sách người dùng theo cụm từ tìm kiếm
-  const filteredUsers = MOCK_USERS.filter(user => 
+  const filteredUsers = users.filter(user => 
     user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
     user.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  
+  // Format thời gian hiển thị
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return '';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffDays === 1) {
+      return 'Yesterday';
+    } else if (diffDays < 7) {
+      return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
   
   return (
     <div className="w-1/3 border-r border-gray-200 bg-gray-50">
@@ -91,7 +67,11 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onSelectUser, selectedUser })
       </div>
       
       <div className="overflow-y-auto h-full">
-        {filteredUsers.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+          </div>
+        ) : filteredUsers.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             No users found
           </div>
@@ -108,9 +88,17 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onSelectUser, selectedUser })
                 <div className="flex items-center p-4">
                   <div className="relative">
                     <Avatar className="h-12 w-12 border-2 border-white">
-                      <div className="flex h-full w-full items-center justify-center bg-green-100 text-green-800 font-medium text-lg">
-                        {user.fullName.charAt(0)}
-                      </div>
+                      {user.avatarUrl ? (
+                        <img 
+                          src={user.avatarUrl} 
+                          alt={user.fullName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-green-100 text-green-800 font-medium text-lg">
+                          {user.fullName.charAt(0)}
+                        </div>
+                      )}
                     </Avatar>
                     {user.online && (
                       <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-white" />
@@ -120,7 +108,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ onSelectUser, selectedUser })
                   <div className="ml-3 flex-1 overflow-hidden">
                     <div className="flex items-center justify-between">
                       <p className="font-medium text-gray-900 truncate">{user.fullName}</p>
-                      <p className="text-xs text-gray-500">{user.timestamp}</p>
+                      <p className="text-xs text-gray-500">{formatTimestamp(user.timestamp)}</p>
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="text-sm text-gray-500 truncate">{user.lastMessage}</p>

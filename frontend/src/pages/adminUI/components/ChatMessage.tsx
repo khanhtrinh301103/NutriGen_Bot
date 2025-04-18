@@ -10,11 +10,7 @@ interface ChatMessageProps {
     text: string;
     timestamp: string;
     isAdmin: boolean;
-    image?: {
-      src: string;
-      originalWidth: number;
-      originalHeight: number;
-    };
+    imageUrl?: string;
   };
   user: any;
 }
@@ -34,42 +30,6 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
   };
 
   const isAdmin = message.isAdmin;
-  
-  // Xử lý kích thước ảnh để hiển thị thống nhất
-  const getImageDimensions = () => {
-    if (!message.image) return { width: 0, height: 0 };
-    
-    const MAX_WIDTH = 240; // Chiều rộng tối đa trong khung chat
-    const MAX_HEIGHT = 180; // Chiều cao tối đa trong khung chat
-    
-    const { originalWidth, originalHeight } = message.image;
-    
-    // Tính toán tỷ lệ khung hình
-    const aspectRatio = originalWidth / originalHeight;
-    
-    // Tính toán kích thước phù hợp trong giới hạn
-    let width, height;
-    
-    if (aspectRatio > 1) { // Ảnh ngang
-      width = Math.min(MAX_WIDTH, originalWidth);
-      height = width / aspectRatio;
-      
-      if (height > MAX_HEIGHT) {
-        height = MAX_HEIGHT;
-        width = height * aspectRatio;
-      }
-    } else { // Ảnh dọc
-      height = Math.min(MAX_HEIGHT, originalHeight);
-      width = height * aspectRatio;
-      
-      if (width > MAX_WIDTH) {
-        width = MAX_WIDTH;
-        height = width / aspectRatio;
-      }
-    }
-    
-    return { width, height };
-  };
   
   return (
     <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
@@ -94,21 +54,21 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
               ? 'bg-green-500 text-white rounded-tr-none' 
               : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none'
           }`}>
-            {message.text && (
+{message.text && (
               <p className="whitespace-pre-wrap break-words mb-2">{message.text}</p>
             )}
             
-            {message.image && (
+            {message.imageUrl && (
               <div className="mt-1">
                 <div 
                   className={`relative overflow-hidden rounded-md ${!message.text ? 'mt-0' : 'mt-2'}`}
                   style={{ opacity: imageLoaded ? 1 : 0.5 }}
                 >
                   <img
-                    src={message.image.src}
+                    src={message.imageUrl}
                     alt="Message attachment"
                     className={`cursor-pointer object-cover ${imageLoaded ? '' : 'blur-sm'}`}
-                    style={getImageDimensions()}
+                    style={{ maxWidth: '240px', maxHeight: '180px' }}
                     onClick={() => setIsImageModalOpen(true)}
                     onLoad={() => {
                       console.log(`🖼️ [ChatMessage] Image loaded in message: ${message.id}`);
@@ -133,14 +93,14 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
           </span>
           
           {/* Modal hiển thị ảnh đầy đủ khi click */}
-          {isImageModalOpen && message.image && (
+          {isImageModalOpen && message.imageUrl && (
             <div 
               className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
               onClick={() => setIsImageModalOpen(false)}
             >
               <div className="relative max-w-4xl max-h-screen p-4">
                 <img
-                  src={message.image.src}
+                  src={message.imageUrl}
                   alt="Full size image"
                   className="max-w-full max-h-[80vh] object-contain"
                 />
