@@ -1,49 +1,95 @@
-import React, { useState, useRef } from 'react';
-import Image from 'next/image';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../../../api/useAuth';
+import { initializeChat, sendMessage, getChatMessages, uploadChatImage } from '../../../api/chatService';
 
 const ChatPopup = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ text: string; isUser: boolean; imageUrl?: string }[]>([]);
+  const [messages, setMessages] = useState<{ id?: string; text: string; isUser: boolean; imageUrl?: string; timestamp?: Date }[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isProcessingSubmit, setIsProcessingSubmit] = useState(false);
 
   const toggleChat = () => {
     setIsOpen(!isOpen);
     console.log("🔄 [Chat] Chat popup toggled:", !isOpen);
+    
+    // Initialize chat when opening the popup
+    if (!isOpen && user && !chatId) {
+      initializeChatSession();
+    }
+  };
+  
+  // Initialize chat session
+  const initializeChatSession = async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      setError(null);
+      const chatSession = await initializeChat(user.uid);
+      setChatId(chatSession.id);
+      console.log("✅ [Chat] Chat session initialized:", chatSession.id);
+    } catch (err) {
+      console.error("❌ [Chat] Error initializing chat:", err);
+      setError("Could not initialize chat. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user || !chatId) {
+      console.error("❌ [Chat] No user or chat session");
+      return;
+    }
     
     // Xử lý tin nhắn không trống hoặc có ảnh
     if ((inputMessage.trim() !== '' || previewUrl) && !isProcessingSubmit) {
       setIsProcessingSubmit(true);
       
-      // Tạo tin nhắn mới
-      const newMessage = {
-        text: inputMessage,
-        isUser: true,
-        imageUrl: previewUrl || undefined
-      };
-      
-      // Thêm tin nhắn vào danh sách
-      setMessages([...messages, newMessage]);
-      
-      // Reset các state
-      setInputMessage('');
-      setSelectedImage(null);
-      setPreviewUrl(null);
-      
-      console.log("✉️ [Chat] Message sent:", newMessage);
-      
-      // Đánh dấu đã xử lý xong
-      setTimeout(() => {
+      try {
+        let imageUrl = undefined;
+        
+        // Upload image if selected
+        if (selectedImage) {
+          imageUrl = await uploadChatImage(selectedImage, chatId, user.uid);
+        }
+        
+        // Create message object
+        const newMessage = {
+          text: inputMessage.trim(),
+          isUser: true,
+          imageUrl: imageUrl || null,
+          senderId: user.uid,
+          senderName: user.displayName || user.email || "User",
+          senderRole: 'user'
+        };
+        
+        // Add message to Firestore
+        await sendMessage(chatId, newMessage);
+        
+        // Reset input states
+        setInputMessage('');
+        setSelectedImage(null);
+        setPreviewUrl(null);
+        
+        console.log("✉️ [Chat] Message sent successfully");
+      } catch (err) {
+        console.error("❌ [Chat] Error sending message:", err);
+        setError("Failed to send message. Please try again.");
+      } finally {
         setIsProcessingSubmit(false);
-      }, 100);
+      }
     }
   };
 
@@ -69,10 +115,32 @@ const ChatPopup = () => {
     console.log("🗑️ [Chat] Selected image removed");
   };
 
-  const [isProcessingSubmit, setIsProcessingSubmit] = useState(false);
+  // Load chat messages when chatId changes
+  useEffect(() => {
+    if (!chatId) return;
+    
+    console.log(`🔄 [Chat] Setting up message listener for chat: ${chatId}`);
+    
+    const unsubscribe = getChatMessages(chatId, (chatMessages) => {
+      setMessages(chatMessages);
+    });
+    
+    // Cleanup listener on unmount
+    return () => {
+      console.log(`🔄 [Chat] Cleaning up message listener for chat: ${chatId}`);
+      unsubscribe();
+    };
+  }, [chatId]);
+  
+  // Initialize chat when user logs in
+  useEffect(() => {
+    if (user && isOpen && !chatId) {
+      initializeChatSession();
+    }
+  }, [user, isOpen]);
 
   // Scroll to bottom khi có tin nhắn mới
-  React.useEffect(() => {
+  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
@@ -110,7 +178,19 @@ const ChatPopup = () => {
             
             {/* Chat messages */}
             <div className="flex-1 overflow-y-auto p-4 min-h-[250px] max-h-[350px]">
-              {messages.length === 0 ? (
+              {isLoading ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-green-500"></div>
+                  <p className="mt-2 text-gray-500">Loading chat...</p>
+                </div>
+              ) : error ? (
+                <div className="flex flex-col items-center justify-center h-full text-red-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-center">{error}</p>
+                </div>
+              ) : messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-gray-500">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
@@ -120,7 +200,7 @@ const ChatPopup = () => {
               ) : (
                 messages.map((msg, index) => (
                   <div 
-                    key={index} 
+                    key={msg.id || index} 
                     className={`mb-3 max-w-[80%] ${msg.isUser ? 'ml-auto' : 'mr-auto'}`}
                   >
                     <div 
@@ -140,6 +220,11 @@ const ChatPopup = () => {
                         </div>
                       )}
                       {msg.text && <p>{msg.text}</p>}
+                      {msg.timestamp && (
+                        <p className={`text-xs mt-1 text-right ${msg.isUser ? 'text-green-200' : 'text-gray-500'}`}>
+                          {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))
@@ -173,6 +258,7 @@ const ChatPopup = () => {
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   className="text-gray-500 hover:text-green-600 mr-2"
+                  disabled={!user || isLoading}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -191,21 +277,33 @@ const ChatPopup = () => {
                   onChange={(e) => setInputMessage(e.target.value)}
                   placeholder="Type a message..."
                   className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+                  disabled={!user || isLoading}
                 />
                 <button
                   type="submit"
-                  disabled={isProcessingSubmit || (inputMessage.trim() === '' && !previewUrl)}
+                  disabled={!user || isLoading || isProcessingSubmit || (inputMessage.trim() === '' && !previewUrl)}
                   className={`ml-2 p-2 rounded-full ${
-                    (inputMessage.trim() === '' && !previewUrl) || isProcessingSubmit
+                    !user || isLoading || (inputMessage.trim() === '' && !previewUrl) || isProcessingSubmit
                       ? 'bg-gray-300 text-gray-500'
                       : 'bg-green-600 text-white hover:bg-green-700'
                   }`}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-                  </svg>
+                  {isProcessingSubmit ? (
+                    <div className="h-5 w-5 border-t-2 border-b-2 border-white rounded-full animate-spin" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+                    </svg>
+                  )}
                 </button>
               </div>
+              
+              {/* Not signed in message */}
+              {!user && (
+                <p className="text-center text-xs text-red-500 mt-2">
+                  Please sign in to use the chat support
+                </p>
+              )}
             </form>
           </motion.div>
         )}
