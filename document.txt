@@ -256,3 +256,26 @@ Collection: search_history
 │           ├── term: "beef"
 │           └── timestamp: "2025-04-13T16:12:40.189Z"
 """
+
+Collection: chats
+├── Document ID: r016Aj13RaTsZJbxYhY1
+│   ├── admins:
+│   │   └── 0: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
+│   ├── createdAt: "2025-04-19T12:01:10.000Z"
+│   ├── lastMessage:
+│   │   ├── text: "Hi"
+│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
+│   ├── status: "closed"
+│   ├── updatedAt: "2025-04-19T12:57:27.000Z"
+│   └── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│
+│   Subcollection: messages
+│   ├── Document ID: 1pvwmWy8iRBmHmyfMADa
+│   │   ├── imageUrl: null
+│   │   ├── isUser: false
+│   │   ├── senderId: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
+│   │   ├── senderName: "Khanh Trinh"
+│   │   ├── senderRole: "admin"
+│   │   ├── text: "Hi"
+│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
+"""
