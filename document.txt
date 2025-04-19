@@ -124,6 +124,10 @@ NutriGen_Bot/
 │   │   │   │   ├── signup.tsx
 │   │   │   │   ├── onboarding.tsx
 │   │   │   ├── components/
+│   │   │   │   ├── blog/
+│   │   │   │   │   ├── BlogPost.tsx
+│   │   │   │   │   ├── CreatePostModal.tsx
+│   │   │   │   │   ├── PostDetailModal.tsx
 │   │   │   │   ├── common/
 │   │   │   │   │   ├── BottomNav.tsx
 │   │   │   │   │   ├── footer.tsx
@@ -150,6 +154,7 @@ NutriGen_Bot/
 │   │   │   ├── _document.tsx
 │   │   │   ├── index.tsx
 │   │   │   ├── about.tsx
+│   │   │   ├── blog.tsx
 │   │   │   ├── privacy.tsx
 │   │   │   ├── profile.tsx
 │   │   │   ├── recipes.tsx
