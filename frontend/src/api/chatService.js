@@ -200,3 +200,94 @@ export const uploadChatImage = async (file, chatId, userId) => {
     throw error;
   }
 };
+
+// Thêm hàm mới để lấy chat đang hoạt động của người dùng
+export const getUserActiveChat = async (userId) => {
+  try {
+    console.log("🔄 [Chat] Getting user's active chat:", userId);
+    
+    // Tìm kiếm chat có trạng thái 'active' của người dùng
+    const userChatsRef = collection(db, 'chats');
+    const q = query(
+      userChatsRef,
+      where('userId', '==', userId),
+      where('status', '==', 'active')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    
+    // Nếu tìm thấy chat active, trả về ID của chat đó
+    if (!querySnapshot.empty) {
+      const chatDoc = querySnapshot.docs[0];
+      console.log("✅ [Chat] Found active chat:", chatDoc.id);
+      return chatDoc.id;
+    }
+    
+    // Nếu không tìm thấy, trả về null
+    console.log("ℹ️ [Chat] No active chat found for user:", userId);
+    return null;
+  } catch (error) {
+    console.error("❌ [Chat] Error getting active chat:", error);
+    throw error;
+  }
+};
+
+// Tạo một chat mới cho người dùng ẩn danh
+export const initializeAnonymousChat = async (name, email, issue) => {
+  try {
+    console.log("🔄 [Chat] Initializing anonymous chat for:", name, email);
+    
+    // Lấy tất cả admin
+    const usersRef = collection(db, 'user');
+    const adminQuery = query(usersRef, where('role', '==', 'admin'));
+    const adminSnapshot = await getDocs(adminQuery);
+    
+    let adminIds = [];
+    adminSnapshot.forEach(doc => {
+      adminIds.push(doc.id);
+    });
+    
+    if (adminIds.length === 0) {
+      console.log("⚠️ [Chat] No admin users found");
+    }
+    
+    const now = Timestamp.now();
+    
+    // Tạo metadata cho người dùng ẩn danh
+    const anonymousUser = {
+      name: name,
+      email: email,
+      issue: issue
+    };
+    
+    // Tạo document chat mới
+    const newChatRef = await addDoc(collection(db, 'chats'), {
+      userId: 'anonymous',  // Sử dụng ID đặc biệt cho người dùng ẩn danh
+      anonymousUser: anonymousUser,  // Thêm thông tin người dùng ẩn danh
+      createdAt: now,
+      updatedAt: now,
+      status: 'active',
+      admins: adminIds,
+      lastMessage: null,
+      topic: `Anonymous Chat - ${issue}`  // Đặt chủ đề để admin dễ nhận biết
+    });
+    
+    console.log("✅ [Chat] Created new anonymous chat:", newChatRef.id);
+    
+    // Thêm tin nhắn hệ thống để thông báo về người dùng ẩn danh
+    const systemMessage = {
+      text: `Anonymous user ${name} (${email}) has started a chat regarding: ${issue}`,
+      isUser: false,
+      senderId: 'system',
+      senderName: 'System',
+      senderRole: 'system'
+    };
+    
+    await sendMessage(newChatRef.id, systemMessage);
+    
+    return newChatRef.id;
+  } catch (error) {
+    console.error("❌ [Chat] Error initializing anonymous chat:", error);
+    throw error;
+  }
+};

@@ -10,6 +10,7 @@ interface ChatDetailMessageProps {
     text: string;
     timestamp: Date;
     isAdmin: boolean;
+    imageUrl?: string | null; // Thêm thuộc tính imageUrl
   };
   userName: string;
 }
@@ -38,7 +39,26 @@ const ChatDetailMessage: React.FC<ChatDetailMessageProps> = ({ message, userName
               ? 'bg-green-500 text-white rounded-tr-none' 
               : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none'
           }`}>
-            <p className="whitespace-pre-wrap break-words">{message.text}</p>
+            {/* Hiển thị hình ảnh nếu có */}
+            {message.imageUrl && (
+              <div className="mb-2">
+                <img 
+                  src={message.imageUrl} 
+                  alt="Chat image" 
+                  className="rounded max-w-full max-h-[200px] object-contain"
+                  onError={(e) => {
+                    console.error('❌ [ChatDetailMessage] Error loading image:', message.imageUrl);
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              </div>
+            )}
+            {/* Hiển thị văn bản tin nhắn nếu có */}
+            {message.text && <p className="whitespace-pre-wrap break-words">{message.text}</p>}
+            {/* Hiển thị thông báo nếu không có văn bản và cũng không có hình ảnh */}
+            {!message.text && !message.imageUrl && (
+              <p className="italic text-gray-500">Empty message</p>
+            )}
           </div>
           <span className={`text-xs text-gray-500 mt-1 ${message.isAdmin ? 'text-right' : 'text-left'}`}>
             {format(message.timestamp, 'h:mm a')}

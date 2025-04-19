@@ -34,7 +34,40 @@ export const getAllChatsForManagement = async () => {
     for (const chatDoc of querySnapshot.docs) {
       const chatData = chatDoc.data();
       
-      // Lấy thông tin chi tiết người dùng
+      // Xử lý trường hợp người dùng ẩn danh
+      if (chatData.userId === 'anonymous') {
+        const anonymousUser = chatData.anonymousUser || {};
+        
+        chats.push({
+          id: chatDoc.id,
+          userId: 'anonymous',
+          userName: anonymousUser.name || 'Anonymous User',
+          userEmail: anonymousUser.email || 'anonymous@example.com',
+          startDate: chatData.createdAt ? chatData.createdAt.toDate() : new Date(),
+          lastMessageDate: chatData.updatedAt ? chatData.updatedAt.toDate() : chatData.createdAt ? chatData.createdAt.toDate() : new Date(),
+          messagesCount: 0, // Sẽ được cập nhật sau
+          status: chatData.status || 'active',
+          topic: chatData.topic || 'Anonymous Support',
+          isAnonymous: true,
+          issue: anonymousUser.issue || 'General Issue'
+        });
+        
+        // Đếm số tin nhắn cho chat ẩn danh
+        try {
+          const messagesRef = collection(db, 'chats', chatDoc.id, 'messages');
+          const messagesQuery = query(messagesRef);
+          const messagesSnapshot = await getDocs(messagesQuery);
+          
+          // Cập nhật số lượng tin nhắn
+          chats[chats.length - 1].messagesCount = messagesSnapshot.size;
+        } catch (error) {
+          console.error(`❌ [AdminChatManagement] Error counting messages for anonymous chat: ${error}`);
+        }
+        
+        continue; // Tiếp tục với chat tiếp theo
+      }
+      
+      // Lấy thông tin chi tiết người dùng (cho người dùng không ẩn danh)
       let userData = null;
       try {
         const userDoc = await getDoc(doc(db, 'user', chatData.userId));
@@ -67,7 +100,8 @@ export const getAllChatsForManagement = async () => {
         lastMessageDate: lastMessageDate,
         messagesCount: messagesCount,
         status: chatData.status || 'closed',
-        topic: chatData.topic || 'General Support'
+        topic: chatData.topic || 'General Support',
+        isAnonymous: false
       });
     }
     
@@ -94,11 +128,29 @@ export const getChatDetails = async (chatId) => {
     
     // Lấy thông tin người dùng
     let userData = null;
-    try {
-      const userDoc = await getDoc(doc(db, 'user', chatData.userId));
-      userData = userDoc.exists() ? userDoc.data() : null;
-    } catch (error) {
-      console.error(`❌ [AdminChatManagement] Error getting user data: ${error}`);
+    let isAnonymous = false;
+    let anonymousUserDetails = null;
+    
+    if (chatData.userId === 'anonymous') {
+      // Xử lý trường hợp người dùng ẩn danh
+      isAnonymous = true;
+      anonymousUserDetails = chatData.anonymousUser || {};
+      
+      userData = {
+        fullName: anonymousUserDetails.name || 'Anonymous User',
+        email: anonymousUserDetails.email || 'anonymous@example.com',
+        issue: anonymousUserDetails.issue || 'General Issue'
+      };
+      
+      console.log(`ℹ️ [AdminChatManagement] Anonymous user data:`, userData);
+    } else {
+      // Xử lý trường hợp người dùng đã đăng nhập
+      try {
+        const userDoc = await getDoc(doc(db, 'user', chatData.userId));
+        userData = userDoc.exists() ? userDoc.data() : null;
+      } catch (error) {
+        console.error(`❌ [AdminChatManagement] Error getting user data: ${error}`);
+      }
     }
     
     // Lấy số tin nhắn trong chat
@@ -119,13 +171,20 @@ export const getChatDetails = async (chatId) => {
     
     const messages = messagesSnapshot.docs.map(doc => {
       const data = doc.data();
+      console.log(`🔍 [AdminChatManagement] Message data:`, {
+        id: doc.id,
+        text: data.text || '',
+        imageUrl: data.imageUrl || null,
+        hasImage: !!data.imageUrl
+      });
+      
       return {
         id: doc.id,
         senderId: data.senderId,
         text: data.text || '',
         timestamp: data.timestamp ? data.timestamp.toDate() : new Date(),
         isAdmin: data.senderRole === 'admin',
-        imageUrl: data.imageUrl || null
+        imageUrl: data.imageUrl || null // Đảm bảo lấy imageUrl từ dữ liệu tin nhắn
       };
     });
     
@@ -136,8 +195,10 @@ export const getChatDetails = async (chatId) => {
     const chatDetails = {
       id: chatDoc.id,
       userId: chatData.userId,
-      userName: userData?.fullName || 'Unknown User',
+      userName: userData?.fullName || (isAnonymous ? 'Anonymous User' : 'Unknown User'),
       userEmail: userData?.email || '',
+      isAnonymous: isAnonymous,
+      anonymousUserDetails: isAnonymous ? anonymousUserDetails : null,
       startDate: startDate,
       lastMessageDate: lastMessageDate,
       messagesCount: messagesCount,
@@ -147,7 +208,9 @@ export const getChatDetails = async (chatId) => {
       userDetails: userData || null
     };
     
-    console.log(`✅ [AdminChatManagement] Retrieved details for chat: ${chatId}`);
+    console.log(`✅ [AdminChatManagement] Retrieved details for chat: ${chatId} with ${messages.length} messages`);
+    console.log(`📊 [AdminChatManagement] Messages with images: ${messages.filter(m => m.imageUrl).length}`);
+    
     return chatDetails;
   } catch (error) {
     console.error(`❌ [AdminChatManagement] Error getting chat details: ${error}`);
@@ -207,6 +270,8 @@ export const getChatAnalytics = async () => {
     let totalChats = 0;
     let activeChats = 0;
     let closedChats = 0;
+    let archivedChats = 0;
+    let anonymousChats = 0;
     let totalMessages = 0;
     
     // Xử lý từng chat để thu thập thống kê
@@ -214,10 +279,18 @@ export const getChatAnalytics = async () => {
       const chatData = chatDoc.data();
       totalChats++;
       
+      // Đếm theo trạng thái
       if (chatData.status === 'active') {
         activeChats++;
       } else if (chatData.status === 'closed') {
         closedChats++;
+      } else if (chatData.status === 'archived') {
+        archivedChats++;
+      }
+      
+      // Đếm chat ẩn danh
+      if (chatData.userId === 'anonymous') {
+        anonymousChats++;
       }
       
       // Đếm số tin nhắn
@@ -237,6 +310,8 @@ export const getChatAnalytics = async () => {
       totalChats,
       activeChats,
       closedChats,
+      archivedChats,
+      anonymousChats,
       totalMessages,
       avgMessagesPerChat
     };
@@ -264,6 +339,8 @@ export const exportChatData = async (chatId) => {
         userId: chatDetails.userId,
         userName: chatDetails.userName,
         userEmail: chatDetails.userEmail,
+        isAnonymous: chatDetails.isAnonymous,
+        anonymousUserDetails: chatDetails.anonymousUserDetails,
         startDate: chatDetails.startDate.toISOString(),
         lastMessageDate: chatDetails.lastMessageDate.toISOString(),
         status: chatDetails.status,

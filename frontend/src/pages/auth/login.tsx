@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { signInUser, signInWithGoogle } from '../../api/login';
-// Bỏ import Layout vì chúng ta không muốn có header
+import ChatPopup from '../../pages/components/common/ChatPopup'; // Import ChatPopup
 
 const Login = () => {
   const router = useRouter();
@@ -12,6 +12,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [accountSuspended, setAccountSuspended] = useState(false);
+  const [showAnonymousChat, setShowAnonymousChat] = useState(false); // State mới để hiển thị chat ẩn danh
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -82,8 +83,16 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleContactAdmin = () => {
+    setShowAnonymousChat(true);
+  };
+
+  // Đóng chat popup ẩn danh
+  const handleCloseAnonymousChat = () => {
+    setShowAnonymousChat(false);
+  };
+
   return (
-    // Bỏ Layout component và thay bằng div
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
@@ -111,9 +120,17 @@ const Login = () => {
                 <div className="ml-3">
                   <p className="text-sm font-medium text-red-800">Account Suspended</p>
                   <p className="text-sm text-red-700 mt-1">
-                    Your account has been suspended due to violation of our terms. 
-                    Please contact admin at <a href="mailto:support@nutrigen-bot.com" className="underline">support@nutrigen-bot.com</a> for assistance.
+                    Your account has been suspended. Please contact admin for assistance.
                   </p>
+                  <button
+                    onClick={handleContactAdmin}
+                    className="mt-2 inline-flex items-center px-3 py-1 border border-transparent text-xs leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-500 focus:outline-none focus:border-green-700 focus:shadow-outline-green active:bg-green-700 transition ease-in-out duration-150"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+                    </svg>
+                    Contact Admin via Chat
+                  </button>
                 </div>
               </div>
             </div>
@@ -238,6 +255,15 @@ const Login = () => {
           </div>
         </div>
       </div>
+      
+      {/* Hiển thị chat popup khi cần thiết */}
+      {showAnonymousChat && (
+        <ChatPopup 
+          isAnonymous={true} 
+          anonymousIssue="Account Suspended" 
+          onClose={handleCloseAnonymousChat}
+        />
+      )}
     </div>
   );
 };

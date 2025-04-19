@@ -111,10 +111,64 @@ export const getChatMessages = (chatId, callback) => {
   }
 };
 
-// Gửi tin nhắn từ admin
+// Thêm hàm này vào file để lấy thông tin chi tiết về chat
+export const getChatDetails = async (chatId) => {
+  try {
+    console.log(`🔄 [AdminChat] Getting chat details for: ${chatId}`);
+    
+    const chatDoc = await getDoc(doc(db, 'chats', chatId));
+    
+    if (!chatDoc.exists()) {
+      throw new Error(`Chat with ID ${chatId} not found`);
+    }
+    
+    const chatData = chatDoc.data();
+    
+    // Lấy thông tin người dùng
+    let userData = null;
+    try {
+      const userDoc = await getDoc(doc(db, 'user', chatData.userId));
+      userData = userDoc.exists() ? userDoc.data() : null;
+    } catch (error) {
+      console.error(`❌ [AdminChat] Error getting user data: ${error}`);
+    }
+    
+    // Chuyển đổi timestamp sang Date
+    const startDate = chatData.createdAt ? chatData.createdAt.toDate() : new Date();
+    const lastMessageDate = chatData.updatedAt ? chatData.updatedAt.toDate() : startDate;
+    
+    const chatDetails = {
+      id: chatDoc.id,
+      userId: chatData.userId,
+      status: chatData.status || 'active',
+      createdAt: startDate,
+      updatedAt: lastMessageDate,
+      userDetails: userData
+    };
+    
+    console.log(`✅ [AdminChat] Retrieved details for chat: ${chatId}`);
+    return chatDetails;
+  } catch (error) {
+    console.error(`❌ [AdminChat] Error getting chat details: ${error}`);
+    throw error;
+  }
+};
+
+// Sửa hàm sendAdminMessage để kiểm tra trạng thái chat trước khi gửi
 export const sendAdminMessage = async (chatId, message) => {
   try {
     console.log(`🔄 [AdminChat] Sending admin message to chat ${chatId}:`, message);
+    
+    // Kiểm tra trạng thái chat trước khi gửi
+    const chatDoc = await getDoc(doc(db, 'chats', chatId));
+    if (!chatDoc.exists()) {
+      throw new Error(`Chat with ID ${chatId} not found`);
+    }
+    
+    const chatData = chatDoc.data();
+    if (chatData.status !== 'active') {
+      throw new Error(`Cannot send message to a ${chatData.status} chat`);
+    }
     
     // Create basic message object
     const messageToSave = {
@@ -153,7 +207,6 @@ export const sendAdminMessage = async (chatId, message) => {
     throw error;
   }
 };
-
 // Upload hình ảnh chat từ admin
 export const uploadAdminChatImage = async (file, chatId, adminId) => {
   try {
@@ -179,6 +232,42 @@ export const uploadAdminChatImage = async (file, chatId, adminId) => {
     return data.imageUrl;
   } catch (error) {
     console.error("❌ [AdminChat] Error uploading admin chat image:", error);
+    throw error;
+  }
+};
+
+// Thêm hàm để ẩn/lưu trữ một cuộc trò chuyện
+export const archiveChat = async (chatId) => {
+  try {
+    console.log(`🔄 [AdminChat] Archiving chat: ${chatId}`);
+    
+    await updateDoc(doc(db, 'chats', chatId), {
+      status: 'archived',
+      updatedAt: Timestamp.now()
+    });
+    
+    console.log(`✅ [AdminChat] Archived chat: ${chatId}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [AdminChat] Error archiving chat: ${error}`);
+    throw error;
+  }
+};
+
+// Thêm hàm để khôi phục một cuộc trò chuyện đã ẩn
+export const restoreChat = async (chatId) => {
+  try {
+    console.log(`🔄 [AdminChat] Restoring chat: ${chatId}`);
+    
+    await updateDoc(doc(db, 'chats', chatId), {
+      status: 'closed', // Khôi phục về trạng thái đóng
+      updatedAt: Timestamp.now()
+    });
+    
+    console.log(`✅ [AdminChat] Restored chat: ${chatId}`);
+    return true;
+  } catch (error) {
+    console.error(`❌ [AdminChat] Error restoring chat: ${error}`);
     throw error;
   }
 };
