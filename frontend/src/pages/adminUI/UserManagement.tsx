@@ -1,4 +1,3 @@
-// frontend/src/pages/adminUI/UserManagement.tsx
 import React, { useState, useEffect } from 'react';
 import AdminRoute from '../../api/adminAPI/AdminRoute';
 import AdminLayout from './components/AdminLayout';
@@ -8,13 +7,14 @@ import UserDataTable from './components/UserDataTable';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, UsersRound } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { exportUsersToExcel } from '../../utils/exportToExcel';
 
 const UserManagement = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter and search states
   const [goalFilter, setGoalFilter] = useState<string>('all');
   const [activityFilter, setActivityFilter] = useState<string>('all');
   const [dietaryFilter, setDietaryFilter] = useState<string>('all');
@@ -54,7 +54,6 @@ const UserManagement = () => {
     setSearchTerm('');
   };
 
-  // Client-side filtering
   const filteredUsers = users.filter(user => {
     let pass = true;
     const hp = user.healthProfile || {};
@@ -97,6 +96,9 @@ const UserManagement = () => {
                     View and manage registered users and their health profiles
                   </CardTitle>
                 </div>
+                <Button onClick={() => exportUsersToExcel(filteredUsers)} className="text-sm">
+                  Export to Excel
+                </Button>
               </div>
             </CardHeader>
             <CardContent>

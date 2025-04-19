@@ -159,6 +159,7 @@ NutriGen_Bot/
 │   │   ├── utils/
 │   │   │   ├── nutritionCalculator.ts
 │   │   │   ├── ingredientSuggestions.ts
+│   │   │   ├── exportToExcel.ts
 │   │   │   ├── dietaryConflicts.ts
 │   │   │   ├── searchConflictDetector.ts
 │   │   │   ├── useScrollReveal.ts

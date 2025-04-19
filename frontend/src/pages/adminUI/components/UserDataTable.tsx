@@ -1,4 +1,3 @@
-// frontend/src/pages/adminUI/components/UserDataTable.tsx
 import React, { useState } from 'react';
 import {
   flexRender,
@@ -29,8 +28,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Eye, ArrowUpDown, Download, Lock, Unlock } from "lucide-react";
 import Link from 'next/link';
-import * as XLSX from 'xlsx';
 import { changeUserStatus } from "../../../api/adminAPI/UserManagement";
+import ExcelJS from 'exceljs';
 
 interface User {
   id: string;
@@ -56,31 +55,6 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [isLoading, setIsLoading] = useState<{[key: string]: boolean}>({});
 
-  const handleExport = () => {
-    console.log("📊 [Admin] Exporting user data to Excel");
-    try {
-      const exportData = data.map(user => ({
-        Name: user.name || '',
-        Email: user.email || '',
-        Status: user.status || 'active',
-        Gender: user.healthProfile?.gender || '',
-        Age: user.healthProfile?.age || '',
-        Goal: user.healthProfile?.goal || '',
-        Activity: user.healthProfile?.activityLevel || '',
-        Role: user.role || 'user',
-        Registered: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : ''
-      }));
-
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Users');
-      XLSX.writeFile(workbook, 'users.xlsx');
-      console.log("✅ [Admin] Successfully exported user data");
-    } catch (error) {
-      console.error("❌ [Admin] Error exporting user data:", error);
-    }
-  };
-
   const handleToggleStatus = async (userId: string, currentStatus: string) => {
     try {
       setIsLoading(prev => ({ ...prev, [userId]: true }));
@@ -97,60 +71,88 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
       setIsLoading(prev => ({ ...prev, [userId]: false }));
     }
   };
+  
+
+  const handleExport = async () => {
+    console.log("📊 [Admin] Exporting user data to Excel");
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Users");
+
+      worksheet.columns = [
+        { header: "Name", key: "name", width: 25 },
+        { header: "Email", key: "email", width: 30 },
+        { header: "Status", key: "status", width: 15 },
+        { header: "Gender", key: "gender", width: 10 },
+        { header: "Age", key: "age", width: 10 },
+        { header: "Goal", key: "goal", width: 20 },
+        { header: "Activity", key: "activity", width: 20 },
+        { header: "Role", key: "role", width: 15 },
+        { header: "Registered", key: "registered", width: 20 },
+      ];
+
+      data.forEach(user => {
+        worksheet.addRow({
+          name: user.name || '',
+          email: user.email || '',
+          status: user.status || 'active',
+          gender: user.healthProfile?.gender || '',
+          age: user.healthProfile?.age || '',
+          goal: user.healthProfile?.goal || '',
+          activity: user.healthProfile?.activityLevel || '',
+          role: user.role || 'user',
+          registered: user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '',
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'users.xlsx';
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+
+      console.log("✅ [Admin] Successfully exported user data");
+    } catch (error) {
+      console.error("❌ [Admin] Error exporting user data:", error);
+    }
+  };
 
   const columns: ColumnDef<User>[] = [
     {
       accessorKey: 'name',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Name
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        );
-      },
+      header: ({ column }) => (
+        <Button variant="ghost" className="p-0 hover:bg-transparent" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Name <ArrowUpDown className="ml-2 h-3 w-3" />
+        </Button>
+      ),
       cell: ({ row }) => <div className="font-medium">{row.getValue('name')}</div>,
     },
     {
       accessorKey: 'email',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Email
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        );
-      },
+      header: ({ column }) => (
+        <Button variant="ghost" className="p-0 hover:bg-transparent" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Email <ArrowUpDown className="ml-2 h-3 w-3" />
+        </Button>
+      ),
     },
     {
       accessorKey: 'status',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Status
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        );
-      },
+      header: ({ column }) => (
+        <Button variant="ghost" className="p-0 hover:bg-transparent" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Status <ArrowUpDown className="ml-2 h-3 w-3" />
+        </Button>
+      ),
       cell: ({ row }) => {
         const status = row.original.status || 'active';
         return (
-          <Badge 
-            variant={status === 'active' ? 'outline' : 'destructive'} 
-            className={`text-xs ${status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200 border-green-400' : ''}`}
-          >
+          <Badge variant={status === 'active' ? 'outline' : 'destructive'}
+            className={`text-xs ${status === 'active' ? 'bg-green-100 text-green-800 hover:bg-green-200 border-green-400' : ''}`}>
             {status}
           </Badge>
         );
@@ -182,10 +184,8 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
       cell: ({ row }) => {
         const role = row.original.role || 'user';
         return (
-          <Badge 
-            variant={role === 'admin' ? 'outline' : 'secondary'} 
-            className={`text-xs ${role === 'admin' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}
-          >
+          <Badge variant={role === 'admin' ? 'outline' : 'secondary'}
+            className={`text-xs ${role === 'admin' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}`}>
             {role}
           </Badge>
         );
@@ -193,18 +193,11 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            className="p-0 hover:bg-transparent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          >
-            Registered
-            <ArrowUpDown className="ml-2 h-3 w-3" />
-          </Button>
-        );
-      },
+      header: ({ column }) => (
+        <Button variant="ghost" className="p-0 hover:bg-transparent" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Registered <ArrowUpDown className="ml-2 h-3 w-3" />
+        </Button>
+      ),
       accessorFn: row => row.createdAt ? new Date(row.createdAt).toLocaleDateString() : 'none',
     },
     {
@@ -215,22 +208,19 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
         const userId = user.id;
         const userStatus = user.status || 'active';
         const userRole = user.role || 'user';
-        
-        // Không cho phép disable tài khoản admin
         const isDisabled = userRole === 'admin';
         const isLoading_ = isLoading[userId] || false;
-        
+
         return (
           <div className="flex justify-end gap-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant={userStatus === 'active' ? 'destructive' : 'default'}
               className="h-8 w-8 p-0"
               onClick={() => handleToggleStatus(userId, userStatus)}
               disabled={isDisabled || isLoading_}
-              title={userStatus === 'active' ? 'Disable account' : 'Enable account'}
-            >
-              {isLoading_  ? (
+              title={userStatus === 'active' ? 'Disable account' : 'Enable account'}>
+              {isLoading_ ? (
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-opacity-20 border-t-white" />
               ) : userStatus === 'active' ? (
                 <Lock className="h-4 w-4" />
@@ -241,7 +231,7 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
                 {userStatus === 'active' ? 'Disable account' : 'Enable account'}
               </span>
             </Button>
-            
+
             <Link href={`/adminUI/UserDetails?userId=${userId}`}>
               <Button size="sm" variant="outline" className="h-8 w-8 p-0">
                 <Eye className="h-4 w-4" />
@@ -275,9 +265,9 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
         <div className="text-sm text-muted-foreground">
           Showing {table.getRowModel().rows.length} of {data.length} users
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={handleExport}
           className="flex items-center text-xs"
         >
@@ -295,10 +285,7 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
                   <TableHead key={header.id} className="font-medium">
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
               </TableRow>
@@ -307,27 +294,17 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                  className="hover:bg-muted/50"
-                >
+                <TableRow key={row.id}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
+                <TableCell colSpan={columns.length} className="h-24 text-center">
                   No users found.
                 </TableCell>
               </TableRow>
@@ -340,8 +317,8 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
         <Pagination>
           <PaginationContent>
             <PaginationItem>
-              <PaginationPrevious 
-                href="#" 
+              <PaginationPrevious
+                href="#"
                 onClick={(e) => {
                   e.preventDefault();
                   table.previousPage();
@@ -350,10 +327,10 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
                 className={!table.getCanPreviousPage() ? "pointer-events-none opacity-50" : ""}
               />
             </PaginationItem>
-            {Array.from({length: table.getPageCount()}, (_, i) => i + 1).map((page) => (
+            {Array.from({ length: table.getPageCount() }, (_, i) => i + 1).map((page) => (
               <PaginationItem key={page}>
-                <PaginationLink 
-                  href="#" 
+                <PaginationLink
+                  href="#"
                   onClick={(e) => {
                     e.preventDefault();
                     table.setPageIndex(page - 1);
@@ -365,8 +342,8 @@ const UserDataTable: React.FC<UserDataTableProps> = ({ data, refreshData }) => {
               </PaginationItem>
             ))}
             <PaginationItem>
-              <PaginationNext 
-                href="#" 
+              <PaginationNext
+                href="#"
                 onClick={(e) => {
                   e.preventDefault();
                   table.nextPage();
