@@ -1,9 +1,10 @@
 const express = require('express');
 const cors = require('cors');
 const uploadPhotoRoute = require('./uploadPhoto');
-const uploadChatPhotoRoute = require('./uploadChatPhoto'); // Thêm route mới
+const uploadChatPhotoRoute = require('./uploadChatPhoto');
+const uploadPostImageRoute = require('./uploadPostImage'); // Thêm route mới cho upload ảnh blog
 // const searchRecipeRoute = require('./searchRecipe'); // Giữ lại nhưng comment để tham chiếu
-const enhancedSearchRecipeRoute = require('./enhanceSearchRecipe'); // Thay thế bằng phiên bản nâng cao
+const enhancedSearchRecipeRoute = require('./enhanceSearchRecipe');
 const getRecipeDetailsRoute = require('./getRecipeDetails');
 const getNutritionProfileRoute = require('./getNutritionProfile');
 
@@ -12,9 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/api', uploadPhotoRoute);
-app.use('/api', uploadChatPhotoRoute); // Thêm route mới
-// app.use('/api', searchRecipeRoute); // Thay thế bằng phiên bản nâng cao
-app.use('/api', enhancedSearchRecipeRoute); // Sử dụng endpoint tìm kiếm nâng cao
+app.use('/api', uploadChatPhotoRoute);
+app.use('/api', uploadPostImageRoute); // Thêm route mới
+// app.use('/api', searchRecipeRoute);
+app.use('/api', enhancedSearchRecipeRoute);
 app.use('/api', getRecipeDetailsRoute);
 app.use('/api', getNutritionProfileRoute);
 

@@ -1,79 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import Layout from './components/common/layout';
 import BlogPost from '../pages/components/blog/BlogPost';
 import CreatePostModal from '../pages/components/blog/CreatePostModal';
 import PostDetailModal from '../pages/components/blog/PostDetailModal';
-
-// Sample blog posts data
-const sampleBlogPosts = [
-  {
-    id: '1',
-    userId: 'user1',
-    userName: 'Khanh Trinh',
-    userAvatar: 'https://i.pravatar.cc/150?img=1',
-    caption: 'Just finished cooking this amazing Mediterranean dish! It\'s dairy-free and perfect for my diet restrictions. The combination of fresh vegetables, olive oil, and herbs creates a burst of flavors that\'s both healthy and delicious.',
-    images: [
-      'https://images.unsplash.com/photo-1546069901-ba9599a7e63c',
-      'https://images.unsplash.com/photo-1512621776951-a57141f2eefd',
-    ],
-    likes: 42,
-    comments: [
-      { id: 'c1', userId: 'user2', userName: 'Minh Nguyen', text: 'Looks delicious! Can you share the recipe?', timestamp: '2025-04-18T15:30:00Z' },
-      { id: 'c2', userId: 'user3', userName: 'Linh Pham', text: 'I need to try this!', timestamp: '2025-04-18T16:45:00Z' }
-    ],
-    saved: false,
-    timestamp: '2025-04-18T14:20:00Z'
-  },
-  {
-    id: '2',
-    userId: 'user2',
-    userName: 'Minh Nguyen',
-    userAvatar: 'https://i.pravatar.cc/150?img=2',
-    caption: 'Today I discovered this amazing vegetarian recipe that\'s high in protein and perfect for my fitness goals. I\'ve been trying to incorporate more plant-based meals into my diet, and this one definitely hits the spot. The texture is amazing and the flavor profile is complex yet balanced.',
-    images: [
-      'https://images.unsplash.com/photo-1540914124281-342587941389',
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999',
-      'https://images.unsplash.com/photo-1540420828642-fca2c5c18abe',
-      'https://images.unsplash.com/photo-1540420781687-147599739aab',
-      'https://images.unsplash.com/photo-1540420808789-8a82e63fae50',
-      'https://images.unsplash.com/photo-1540420773420-3366772f4999',
-    ],
-    likes: 78,
-    comments: [
-      { id: 'c3', userId: 'user1', userName: 'Khanh Trinh', text: 'This looks amazing!', timestamp: '2025-04-17T10:20:00Z' },
-      { id: 'c4', userId: 'user4', userName: 'Nam Le', text: 'I need the recipe too!', timestamp: '2025-04-17T11:15:00Z' }
-    ],
-    saved: true,
-    timestamp: '2025-04-17T09:45:00Z'
-  },
-  {
-    id: '3',
-    userId: 'user3',
-    userName: 'Linh Pham',
-    userAvatar: 'https://i.pravatar.cc/150?img=3',
-    caption: 'My weekly meal prep is done! These containers have saved me so much time and helped me stick to my nutrition goals. Each meal is balanced with protein, healthy fats, and complex carbs.',
-    images: [
-      'https://images.unsplash.com/photo-1547592180-85f173990554',
-      'https://images.unsplash.com/photo-1543362906-acfc16c67564',
-      'https://images.unsplash.com/photo-1512058564366-18510be2db19',
-    ],
-    likes: 56,
-    comments: [
-      { id: 'c5', userId: 'user2', userName: 'Minh Nguyen', text: 'Great organization!', timestamp: '2025-04-16T18:30:00Z' }
-    ],
-    saved: false,
-    timestamp: '2025-04-16T16:20:00Z'
-  }
-];
+import { getAllPosts, addComment, toggleLikePost, toggleSavePost, getPostComments, isPostLiked, isPostSaved } from '../api/blogService';
+import { auth } from '../api/firebaseConfig';
 
 const BlogPage = () => {
+  const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
-  const [blogPosts, setBlogPosts] = useState(sampleBlogPosts);
+  const [blogPosts, setBlogPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [comments, setComments] = useState([]);
+  const [isPostLikedByUser, setIsPostLikedByUser] = useState(false);
+  const [isPostSavedByUser, setIsPostSavedByUser] = useState(false);
   
-  console.log('Rendering BlogPage with', blogPosts.length, 'posts');
+  // Load all blog posts on component mount
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        console.log('Fetching posts...');
+        const posts = await getAllPosts();
+        setBlogPosts(posts);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error fetching posts:', err);
+        // Hiển thị thông báo lỗi cụ thể hơn
+        if (err.message && err.message.includes('requires an index')) {
+          setError('Đang thiết lập cơ sở dữ liệu. Vui lòng thử lại sau vài phút.');
+        } else {
+          setError('Không thể tải bài viết. Vui lòng thử lại sau.');
+        }
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
+  
+  // Check authentication status
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(user => {
+      if (!user && showCreateModal) {
+        // If user is not logged in and tries to create a post, redirect to login
+        setShowCreateModal(false);
+        router.push('/auth/login');
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [showCreateModal, router]);
+  
+  // Load comments when a post is selected
+  useEffect(() => {
+    const fetchPostDetails = async () => {
+      if (selectedPost && showDetailModal) {
+        try {
+          console.log(`Fetching comments for post: ${selectedPost.id}`);
+          
+          // Fetch comments
+          const fetchedComments = await getPostComments(selectedPost.id);
+          setComments(fetchedComments);
+          
+          // Check if post is liked/saved by current user
+          const liked = await isPostLiked(selectedPost.id);
+          const saved = await isPostSaved(selectedPost.id);
+          
+          setIsPostLikedByUser(liked);
+          setIsPostSavedByUser(saved);
+        } catch (err) {
+          console.error('Error fetching post details:', err);
+        }
+      }
+    };
+    
+    fetchPostDetails();
+  }, [selectedPost, showDetailModal]);
   
   const handlePostClick = (post) => {
     console.log('Post clicked:', post.id);
@@ -81,62 +89,147 @@ const BlogPage = () => {
     setShowDetailModal(true);
   };
   
-  const handleCreatePost = (newPost) => {
-    console.log('Creating new post:', newPost);
-    const postWithId = {
-      ...newPost,
-      id: Date.now().toString(),
-      userId: 'currentUser', // In a real app, get this from auth
-      userName: 'Current User',
-      userAvatar: 'https://i.pravatar.cc/150?img=8',
-      likes: 0,
-      comments: [],
-      saved: false,
-      timestamp: new Date().toISOString()
-    };
-    
-    setBlogPosts([postWithId, ...blogPosts]);
-    setShowCreateModal(false);
+  const handleCreatePost = async (newPost) => {
+    try {
+      console.log('Creating new post:', newPost);
+      
+      // Refresh posts after creation to include the new post
+      const refreshedPosts = await getAllPosts();
+      setBlogPosts(refreshedPosts);
+      
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post. Please try again.');
+    }
   };
   
-  const handleLikePost = (postId) => {
-    console.log('Liking post:', postId);
-    setBlogPosts(
-      blogPosts.map(post => 
-        post.id === postId ? { ...post, likes: post.likes + 1 } : post
-      )
-    );
+  const handleLikePost = async (postId) => {
+    try {
+      console.log('Liking post:', postId);
+      
+      // Check if user is logged in
+      if (!auth.currentUser) {
+        router.push('/auth/login');
+        return;
+      }
+      
+      // Toggle like status
+      const isNowLiked = await toggleLikePost(postId);
+      
+      // Update UI based on result
+      if (selectedPost && selectedPost.id === postId) {
+        setIsPostLikedByUser(isNowLiked);
+        setSelectedPost({
+          ...selectedPost,
+          likesCount: isNowLiked 
+            ? (selectedPost.likesCount || 0) + 1 
+            : (selectedPost.likesCount || 1) - 1
+        });
+      }
+      
+      // Update the post in the blogPosts list
+      setBlogPosts(
+        blogPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              likesCount: isNowLiked 
+                ? (post.likesCount || 0) + 1 
+                : (post.likesCount || 1) - 1
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error('Error liking post:', error);
+    }
   };
   
-  const handleSavePost = (postId) => {
-    console.log('Saving post:', postId);
-    setBlogPosts(
-      blogPosts.map(post => 
-        post.id === postId ? { ...post, saved: !post.saved } : post
-      )
-    );
+  const handleSavePost = async (postId) => {
+    try {
+      console.log('Saving post:', postId);
+      
+      // Check if user is logged in
+      if (!auth.currentUser) {
+        router.push('/auth/login');
+        return;
+      }
+      
+      // Toggle save status
+      const isNowSaved = await toggleSavePost(postId);
+      
+      // Update UI based on result
+      if (selectedPost && selectedPost.id === postId) {
+        setIsPostSavedByUser(isNowSaved);
+      }
+      
+      // Update the post in the blogPosts list
+      setBlogPosts(
+        blogPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              saved: isNowSaved
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error('Error saving post:', error);
+    }
   };
   
-  const handleAddComment = (postId, comment) => {
-    console.log('Adding comment to post:', postId, comment);
-    setBlogPosts(
-      blogPosts.map(post => {
-        if (post.id === postId) {
-          const newComment = {
-            id: `c${Date.now()}`,
-            userId: 'currentUser',
-            userName: 'Current User',
-            text: comment,
-            timestamp: new Date().toISOString()
-          };
-          return {
-            ...post,
-            comments: [...post.comments, newComment]
-          };
-        }
-        return post;
-      })
-    );
+  const handleAddComment = async (postId, comment) => {
+    try {
+      console.log('Adding comment to post:', postId, comment);
+      
+      // Check if user is logged in
+      if (!auth.currentUser) {
+        router.push('/auth/login');
+        return;
+      }
+      
+      // Add comment to Firestore
+      const commentId = await addComment(postId, comment);
+      
+      // Create a new comment object for UI update
+      const newComment = {
+        id: commentId,
+        userId: auth.currentUser.uid,
+        userName: auth.currentUser.displayName || 'Anonymous User',
+        text: comment,
+        timestamp: new Date().toISOString()
+      };
+      
+      // Update comments list for the detail view
+      setComments([...comments, newComment]);
+      
+      // Update comment count in the selected post
+      if (selectedPost && selectedPost.id === postId) {
+        setSelectedPost({
+          ...selectedPost,
+          commentsCount: (selectedPost.commentsCount || 0) + 1
+        });
+      }
+      
+      // Update the post in the blogPosts list
+      setBlogPosts(
+        blogPosts.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              commentsCount: (post.commentsCount || 0) + 1
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error('Error adding comment:', error);
+    }
   };
 
   return (
@@ -151,26 +244,86 @@ const BlogPage = () => {
             <h1 className="text-3xl font-bold">NutriGen Community</h1>
             <button 
               className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                if (!auth.currentUser) {
+                  router.push('/auth/login');
+                } else {
+                  setShowCreateModal(true);
+                }
+              }}
             >
               Create Your Post
             </button>
           </div>
           
-          <div className="space-y-6">
-            {blogPosts.map(post => (
-              <BlogPost 
-                key={post.id} 
-                post={post} 
-                onPostClick={() => handlePostClick(post)}
-                onLike={() => handleLikePost(post.id)}
-                onSave={() => handleSavePost(post.id)}
-                onComment={(comment) => handleAddComment(post.id, comment)}
-              />
-            ))}
-          </div>
+          {/* Loading State */}
+          {loading && (
+            <div className="flex justify-center items-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+            </div>
+          )}
+          
+          {/* Error State */}
+          {error && (
+            <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
+              <p>{error}</p>
+              <button 
+                className="mt-2 text-red-600 underline"
+                onClick={() => window.location.reload()}
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+          
+          {/* Empty State */}
+          {!loading && !error && blogPosts.length === 0 && (
+            <div className="text-center py-12">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+              <h3 className="text-xl font-semibold mb-2">No Posts Yet</h3>
+              <p className="text-gray-600 mb-4">Be the first to share your nutrition journey!</p>
+              <button 
+                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                onClick={() => {
+                  if (!auth.currentUser) {
+                    router.push('/auth/login');
+                  } else {
+                    setShowCreateModal(true);
+                  }
+                }}
+              >
+                Create a Post
+              </button>
+            </div>
+          )}
+          
+          {/* Blog Posts */}
+          {!loading && !error && blogPosts.length > 0 && (
+            <div className="space-y-6">
+              {blogPosts.map(post => (
+                <BlogPost 
+                  key={post.id} 
+                  post={{
+                    ...post,
+                    likes: post.likesCount || 0,
+                    comments: comments.filter(c => c.postId === post.id) || [],
+                    saved: post.saved || false,
+                    // Ensure post has all properties expected by the component
+                    images: post.images || []
+                  }}
+                  onPostClick={() => handlePostClick(post)}
+                  onLike={() => handleLikePost(post.id)}
+                  onSave={() => handleSavePost(post.id)}
+                  onComment={(comment) => handleAddComment(post.id, comment)}
+                />
+              ))}
+            </div>
+          )}
         </div>
         
+        {/* Create Post Modal */}
         {showCreateModal && (
           <CreatePostModal 
             onClose={() => setShowCreateModal(false)} 
@@ -178,10 +331,20 @@ const BlogPage = () => {
           />
         )}
         
+        {/* Post Detail Modal */}
         {showDetailModal && selectedPost && (
           <PostDetailModal 
-            post={selectedPost} 
-            onClose={() => setShowDetailModal(false)}
+            post={{
+              ...selectedPost,
+              likes: selectedPost.likesCount || 0,
+              comments: comments || [],
+              saved: isPostSavedByUser
+            }}
+            onClose={() => {
+              setShowDetailModal(false);
+              setSelectedPost(null);
+              setComments([]);
+            }}
             onLike={() => handleLikePost(selectedPost.id)}
             onSave={() => handleSavePost(selectedPost.id)}
             onComment={(comment) => handleAddComment(selectedPost.id, comment)}

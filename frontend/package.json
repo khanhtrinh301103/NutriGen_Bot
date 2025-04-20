@@ -33,6 +33,7 @@
     "date-fns": "^3.6.0",
     "exceljs": "^4.4.0",
     "firebase": "^11.4.0",
+    "formidable": "^3.5.3",
     "framer-motion": "^12.6.3",
     "frontend": "file:",
     "lucide-react": "^0.488.0",

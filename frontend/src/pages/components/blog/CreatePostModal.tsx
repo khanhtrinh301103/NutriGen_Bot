@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
+import { uploadPostImages, createPost } from '../../../api/blogService';
+import { auth } from '../../../api/firebaseConfig';
 
 const CreatePostModal = ({ onClose, onCreatePost }) => {
   const [caption, setCaption] = useState('');
-  const [imageUrls, setImageUrls] = useState([]);
+  const [files, setFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
   const [error, setError] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [progress, setProgress] = useState(0);
   
   console.log('Rendering CreatePostModal');
   
@@ -12,44 +17,90 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
   };
   
   const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-    console.log('Selected files:', files.length);
+    const selectedFiles = Array.from(e.target.files || []) as File[];
+    console.log('Selected files:', selectedFiles.length);
     
-    if (files.length > 0) {
-      // For demo purposes, we're using placeholder URLs directly
-      // In a real app, you would upload these to storage
-      const newImageUrls = files.map(() => {
-        // Generate random placeholder image URL
-        const randomId = Math.floor(Math.random() * 1000);
-        return `https://picsum.photos/id/${randomId}/400/300`;
-      });
+    if (selectedFiles.length > 0) {
+      // Add selected files to files state
+      setFiles([...files, ...selectedFiles]);
       
-      setImageUrls([...imageUrls, ...newImageUrls]);
+      // Create preview URLs for the files
+      const newPreviewUrls = selectedFiles.map((file: File) => URL.createObjectURL(file));
+      setPreviewUrls([...previewUrls, ...newPreviewUrls]);
     }
   };
   
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting post with', imageUrls.length, 'images');
+    console.log('Submitting post with', files.length, 'images');
     
-    if (!caption.trim() && imageUrls.length === 0) {
+    // Validate input
+    if (!caption.trim() && files.length === 0) {
       setError('Please add a caption or at least one image');
       return;
     }
     
-    // In a real app, these would be uploaded image URLs from storage
-    onCreatePost({
-      caption,
-      images: imageUrls.length > 0 ? imageUrls : [
-        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c' // Placeholder if no images
-      ]
-    });
+    // Check if user is logged in
+    if (!auth.currentUser) {
+      setError('You must be logged in to create a post');
+      return;
+    }
+    
+    try {
+      setIsUploading(true);
+      setProgress(10);
+      
+      // Upload images if there are any
+      let imageUrls = [];
+      if (files.length > 0) {
+        setProgress(30);
+        imageUrls = await uploadPostImages(files);
+        setProgress(70);
+      }
+      
+      // Create post in Firestore
+      const postId = await createPost({
+        caption,
+        images: imageUrls.length > 0 ? imageUrls : []
+      });
+      
+      setProgress(100);
+      console.log('Post created with ID:', postId);
+      
+      // Call the parent component's callback
+      onCreatePost({
+        id: postId,
+        caption,
+        images: imageUrls
+      });
+      
+      // Reset state
+      setCaption('');
+      setFiles([]);
+      setPreviewUrls([]);
+      setError('');
+      
+    } catch (error) {
+      console.error('Error creating post:', error);
+      setError('Failed to create post. Please try again.');
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const removeImage = (index) => {
-    const newImageUrls = [...imageUrls];
-    newImageUrls.splice(index, 1);
-    setImageUrls(newImageUrls);
+    // Remove the file and preview URL at the specified index
+    const newFiles = [...files];
+    newFiles.splice(index, 1);
+    setFiles(newFiles);
+    
+    const newPreviewUrls = [...previewUrls];
+    
+    // Revoke the blob URL to prevent memory leaks
+    URL.revokeObjectURL(newPreviewUrls[index]);
+    
+    newPreviewUrls.splice(index, 1);
+    setPreviewUrls(newPreviewUrls);
   };
 
   return (
@@ -61,6 +112,7 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
             <button 
               className="text-gray-500 hover:text-gray-700"
               onClick={onClose}
+              disabled={isUploading}
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -78,14 +130,30 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
               value={caption}
               onChange={handleCaptionChange}
               maxLength={500}
+              disabled={isUploading}
             />
             
             {error && <p className="text-red-500 mb-4">{error}</p>}
             
+            {/* Upload Progress */}
+            {isUploading && (
+              <div className="mb-4">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-green-500 h-2.5 rounded-full" 
+                    style={{ width: `${progress}%` }}
+                  ></div>
+                </div>
+                <p className="text-sm text-gray-600 mt-1 text-center">
+                  {progress < 100 ? 'Uploading...' : 'Processing...'}
+                </p>
+              </div>
+            )}
+            
             {/* Image Preview */}
-            {imageUrls.length > 0 && (
+            {previewUrls.length > 0 && (
               <div className="mb-4 grid grid-cols-2 gap-2">
-                {imageUrls.map((url, index) => (
+                {previewUrls.map((url, index) => (
                   <div key={index} className="relative">
                     <img 
                       src={url} 
@@ -96,6 +164,7 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
                       type="button"
                       className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1"
                       onClick={() => removeImage(index)}
+                      disabled={isUploading}
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -108,7 +177,7 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
             
             {/* Image Upload */}
             <div className="mb-4">
-              <label className="block w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50">
+              <label className={`block w-full border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer ${isUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
@@ -119,6 +188,7 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
                   accept="image/*" 
                   multiple 
                   onChange={handleImageChange}
+                  disabled={isUploading}
                 />
               </label>
               <p className="text-xs text-gray-500 mt-1">Up to 5 images will be displayed in the post preview</p>
@@ -128,9 +198,14 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
           <div className="p-4 border-t">
             <button 
               type="submit"
-              className="bg-green-500 text-white font-semibold rounded-lg py-2 px-4 w-full hover:bg-green-600 transition-colors"
+              className={`w-full py-2 px-4 rounded-lg font-semibold ${
+                isUploading 
+                  ? 'bg-gray-400 cursor-not-allowed text-white' 
+                  : 'bg-green-500 hover:bg-green-600 text-white transition-colors'
+              }`}
+              disabled={isUploading}
             >
-              Post
+              {isUploading ? 'Creating Post...' : 'Post'}
             </button>
           </div>
         </form>
