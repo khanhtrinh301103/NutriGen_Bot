@@ -36,13 +36,13 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
     
     // Validate input
     if (!caption.trim() && files.length === 0) {
-      setError('Please add a caption or at least one image');
+      setError('Vui lòng thêm nội dung hoặc ít nhất một hình ảnh');
       return;
     }
     
     // Check if user is logged in
     if (!auth.currentUser) {
-      setError('You must be logged in to create a post');
+      setError('Bạn cần đăng nhập để tạo bài viết');
       return;
     }
     
@@ -82,7 +82,11 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
       
     } catch (error) {
       console.error('Error creating post:', error);
-      setError('Failed to create post. Please try again.');
+      if (error.message && error.message.includes('requires an index')) {
+        setError('Đang thiết lập cơ sở dữ liệu. Bài viết đã được lưu nhưng chưa thể hiển thị ngay.');
+      } else {
+        setError('Không thể tạo bài viết. Vui lòng thử lại sau.');
+      }
     } finally {
       setIsUploading(false);
     }
