@@ -1,5 +1,5 @@
 // frontend/src/api/blogService.js
-import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, orderBy, increment, arrayUnion, arrayRemove, serverTimestamp, Timestamp } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, addDoc, deleteDoc, query, where, orderBy, serverTimestamp, Timestamp, updateDoc } from "firebase/firestore";
 import { db, auth } from "./firebaseConfig";
 
 /**
@@ -15,16 +15,42 @@ export const getAllPosts = async () => {
       const q = query(postsRef, where("isDeleted", "==", false));
       
       const querySnapshot = await getDocs(q);
-      const posts = [];
-      
-      querySnapshot.forEach((doc) => {
-        posts.push({
-          id: doc.id,
-          ...doc.data(),
+      const postsPromises = querySnapshot.docs.map(async (docSnap) => {
+        const postData = docSnap.data();
+        const postId = docSnap.id;
+        
+        // Fetch likes count and check if current user liked
+        const likesRef = collection(db, "posts", postId, "likes");
+        const likesSnapshot = await getDocs(likesRef);
+        const likesCount = likesSnapshot.size;
+        
+        // Kiểm tra nếu người dùng hiện tại đã like bài viết này chưa
+        let liked = false;
+        if (auth.currentUser) {
+          // Chỉ kiểm tra like status khi user đã đăng nhập
+          const currentUserLikeQuery = query(likesRef, where("userId", "==", auth.currentUser.uid));
+          const currentUserLikeSnapshot = await getDocs(currentUserLikeQuery);
+          liked = !currentUserLikeSnapshot.empty;
+          console.log(`Post ${postId}: Like status = ${liked}`);
+        }
+        
+        // Fetch comments count
+        const commentsRef = collection(db, "posts", postId, "comments");
+        const commentsSnapshot = await getDocs(commentsRef);
+        const commentsCount = commentsSnapshot.size;
+        
+        return {
+          id: postId,
+          ...postData,
+          likesCount,
+          commentsCount,
+          liked, // Thêm trạng thái đã like vào dữ liệu post
           // Convert Firestore Timestamp to ISO string
-          createdAt: doc.data().createdAt?.toDate().toISOString() || new Date().toISOString()
-        });
+          createdAt: postData.createdAt?.toDate().toISOString() || new Date().toISOString()
+        };
       });
+      
+      const posts = await Promise.all(postsPromises);
       
       // Sắp xếp trên client thay vì trong database
       posts.sort((a, b) => {
@@ -54,9 +80,31 @@ export const getPostById = async (postId) => {
     
     if (postSnap.exists()) {
       const postData = postSnap.data();
+      
+      // Fetch likes count and check if current user liked
+      const likesRef = collection(db, "posts", postId, "likes");
+      const likesSnapshot = await getDocs(likesRef);
+      const likesCount = likesSnapshot.size;
+      
+      // Kiểm tra nếu người dùng hiện tại đã like bài viết này chưa
+      let liked = false;
+      if (auth.currentUser) {
+        const currentUserLikeQuery = query(likesRef, where("userId", "==", auth.currentUser.uid));
+        const currentUserLikeSnapshot = await getDocs(currentUserLikeQuery);
+        liked = !currentUserLikeSnapshot.empty;
+      }
+      
+      // Fetch comments count
+      const commentsRef = collection(db, "posts", postId, "comments");
+      const commentsSnapshot = await getDocs(commentsRef);
+      const commentsCount = commentsSnapshot.size;
+      
       return {
         id: postSnap.id,
         ...postData,
+        likesCount,
+        commentsCount,
+        liked,
         createdAt: postData.createdAt?.toDate().toISOString() || new Date().toISOString()
       };
     } else {
@@ -100,6 +148,36 @@ export const getPostComments = async (postId) => {
 };
 
 /**
+ * Get likes for a specific post
+ * @param {string} postId - The post ID
+ * @returns {Promise<Array>} Array of likes with user info
+ */
+export const getPostLikes = async (postId) => {
+  try {
+    console.log(`Fetching likes for post: ${postId}`);
+    const likesRef = collection(db, "posts", postId, "likes");
+    const q = query(likesRef, orderBy("timestamp", "desc"));
+    
+    const querySnapshot = await getDocs(q);
+    const likes = [];
+    
+    querySnapshot.forEach((doc) => {
+      likes.push({
+        id: doc.id,
+        ...doc.data(),
+        timestamp: doc.data().timestamp?.toDate().toISOString() || new Date().toISOString()
+      });
+    });
+    
+    console.log(`Retrieved ${likes.length} likes for post ${postId}`);
+    return likes;
+  } catch (error) {
+    console.error(`Error fetching likes for post ${postId}:`, error);
+    throw error;
+  }
+};
+
+/**
  * Create a new post in Firestore
  * @param {Object} postData - Post data with caption and imageUrls
  * @returns {Promise<string>} New post ID
@@ -119,12 +197,8 @@ export const createPost = async (postData) => {
       userAvatar: currentUser.photoURL || null,
       caption: postData.caption,
       images: postData.images,
-      likes: 0,
-      comments: [],
       saved: false,
       isDeleted: false,
-      likesCount: 0,
-      commentsCount: 0,
       createdAt: serverTimestamp()
     };
     
@@ -157,6 +231,7 @@ export const addComment = async (postId, commentText) => {
     const newComment = {
       userId: currentUser.uid,
       userName: currentUser.displayName || "Anonymous User",
+      userAvatar: currentUser.photoURL || null, // Thêm avatar người dùng
       text: commentText,
       timestamp: serverTimestamp()
     };
@@ -164,12 +239,6 @@ export const addComment = async (postId, commentText) => {
     // Add the comment to the comments subcollection
     const commentsRef = collection(db, "posts", postId, "comments");
     const commentRef = await addDoc(commentsRef, newComment);
-    
-    // Update the comment count in the post document
-    const postRef = doc(db, "posts", postId);
-    await updateDoc(postRef, {
-      commentsCount: increment(1)
-    });
     
     console.log(`Comment added with ID: ${commentRef.id}`);
     return commentRef.id;
@@ -193,45 +262,36 @@ export const toggleLikePost = async (postId) => {
     
     console.log(`Toggling like for post: ${postId}`);
     
-    // Get user's liked posts reference
-    const userLikesRef = doc(db, "user", currentUser.uid);
-    const userLikesSnap = await getDoc(userLikesRef);
+    // Check if user already liked the post
+    const likesRef = collection(db, "posts", postId, "likes");
+    const q = query(likesRef, where("userId", "==", currentUser.uid));
+    const querySnapshot = await getDocs(q);
     
-    // Get the post reference to update like count
-    const postRef = doc(db, "posts", postId);
-    
-    // Check if post was already liked
-    let userLikes = [];
-    if (userLikesSnap.exists() && userLikesSnap.data().likedPosts) {
-      userLikes = userLikesSnap.data().likedPosts;
-    }
-    
-    const alreadyLiked = userLikes.includes(postId);
-    
-    if (alreadyLiked) {
-      // Unlike the post
-      console.log(`Unliking post: ${postId}`);
-      await updateDoc(userLikesRef, {
-        likedPosts: arrayRemove(postId)
-      });
+    // If user already liked the post, remove the like
+    if (!querySnapshot.empty) {
+      const likeId = querySnapshot.docs[0].id;
+      console.log(`Unliking post: ${postId} (likeId: ${likeId})`);
       
-      await updateDoc(postRef, {
-        likesCount: increment(-1)
-      });
+      await deleteDoc(doc(db, "posts", postId, "likes", likeId));
       
-      return false; // Unliked
+      // Return false to indicate unlike
+      return false;
     } else {
       // Like the post
       console.log(`Liking post: ${postId}`);
-      await updateDoc(userLikesRef, {
-        likedPosts: arrayUnion(postId)
-      });
       
-      await updateDoc(postRef, {
-        likesCount: increment(1)
-      });
+      const newLike = {
+        userId: currentUser.uid,
+        userName: currentUser.displayName || "Anonymous User",
+        userAvatar: currentUser.photoURL || null,
+        timestamp: serverTimestamp()
+      };
       
-      return true; // Liked
+      const likeDocRef = await addDoc(likesRef, newLike);
+      console.log(`Like added with ID: ${likeDocRef.id}`);
+      
+      // Return true to indicate like
+      return true;
     }
   } catch (error) {
     console.error(`Error toggling like for post ${postId}:`, error);
@@ -267,16 +327,20 @@ export const toggleSavePost = async (postId) => {
     
     if (alreadySaved) {
       // Unsave the post
+      const updatedSavedPosts = savedPosts.filter(id => id !== postId);
       console.log(`Unsaving post: ${postId}`);
+      
       await updateDoc(userRef, {
-        savedPosts: arrayRemove(postId)
+        savedPosts: updatedSavedPosts
       });
       return false; // Unsaved
     } else {
       // Save the post
       console.log(`Saving post: ${postId}`);
+      
+      const updatedSavedPosts = [...savedPosts, postId];
       await updateDoc(userRef, {
-        savedPosts: arrayUnion(postId)
+        savedPosts: updatedSavedPosts
       });
       return true; // Saved
     }
@@ -298,14 +362,13 @@ export const isPostLiked = async (postId) => {
       return false;
     }
     
-    const userLikesRef = doc(db, "user", currentUser.uid);
-    const userLikesSnap = await getDoc(userLikesRef);
+    const likesRef = collection(db, "posts", postId, "likes");
+    const q = query(likesRef, where("userId", "==", currentUser.uid));
+    const querySnapshot = await getDocs(q);
     
-    if (userLikesSnap.exists() && userLikesSnap.data().likedPosts) {
-      return userLikesSnap.data().likedPosts.includes(postId);
-    }
-    
-    return false;
+    const result = !querySnapshot.empty;
+    console.log(`isPostLiked check for post ${postId}: ${result}`);
+    return result;
   } catch (error) {
     console.error(`Error checking if post ${postId} is liked:`, error);
     return false;

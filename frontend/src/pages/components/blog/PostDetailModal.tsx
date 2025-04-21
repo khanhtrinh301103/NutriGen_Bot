@@ -5,6 +5,7 @@ import { auth } from '../../../api/firebaseConfig';
 const PostDetailModal = ({ post, onClose, onLike, onSave, onComment }) => {
   const [comment, setComment] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showLikesList, setShowLikesList] = useState(false);
   const commentInputRef = useRef(null);
   
   console.log('Rendering PostDetailModal for post:', post.id);
@@ -42,6 +43,11 @@ const PostDetailModal = ({ post, onClose, onLike, onSave, onComment }) => {
     }
   };
   
+  const toggleLikesList = (e) => {
+    e.stopPropagation();
+    setShowLikesList(!showLikesList);
+  };
+  
   // Close modal when Escape key is pressed
   useEffect(() => {
     const handleEsc = (e) => {
@@ -56,6 +62,27 @@ const PostDetailModal = ({ post, onClose, onLike, onSave, onComment }) => {
 
   // Check if user is authenticated
   const isAuthenticated = !!auth.currentUser;
+
+  // Render avatar for user
+  const renderUserAvatar = (user) => {
+    if (user.userAvatar) {
+      return (
+        <img 
+          src={user.userAvatar} 
+          alt={user.userName || 'User'}
+          className="w-full h-full object-cover rounded-full"
+        />
+      );
+    } else {
+      return (
+        <div className="w-full h-full bg-gray-300 flex items-center justify-center rounded-full">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+      );
+    }
+  };
 
   return (
     <div 
@@ -139,34 +166,71 @@ const PostDetailModal = ({ post, onClose, onLike, onSave, onComment }) => {
             <p className="whitespace-pre-line">{post.caption}</p>
           </div>
           
-          {/* Comments */}
-          <div className="flex-grow overflow-y-auto p-4">
-            {post.comments && post.comments.length > 0 ? (
-              <div className="space-y-3">
-                {post.comments.map(comment => (
-                  <div key={comment.id} className="flex">
-                    <div className="h-8 w-8 rounded-full overflow-hidden relative flex-shrink-0">
-                      <div className="w-full h-full bg-gray-300 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
+          {/* Comments and Likes */}
+          <div className="flex-grow overflow-y-auto">
+            {/* Likes section */}
+            <div className="p-4 border-b">
+              <button 
+                className="flex items-center gap-1 text-sm font-medium text-gray-700 hover:text-gray-900 cursor-pointer"
+                onClick={toggleLikesList}
+              >
+                <span>{post.likes} {post.likes === 1 ? 'like' : 'likes'}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={showLikesList ? "M5 15l7-7 7 7" : "M19 9l-7 7-7-7"} />
+                </svg>
+              </button>
+              
+              {/* Likes list (collapsed by default) */}
+              {showLikesList && post.likesData && post.likesData.length > 0 && (
+                <div className="mt-2 max-h-40 overflow-y-auto">
+                  <ul className="space-y-2">
+                    {post.likesData.map(like => (
+                      <li key={like.id} className="flex items-center gap-2 p-1 hover:bg-gray-50 rounded">
+                        <div className="h-8 w-8 rounded-full overflow-hidden">
+                          {renderUserAvatar(like)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{like.userName || 'Anonymous User'}</p>
+                          <p className="text-xs text-gray-500">
+                            {like.timestamp ? format(new Date(like.timestamp), 'MMM d, h:mm a') : ''}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+            
+            {/* Comments section */}
+            <div className="p-4">
+              <h3 className="font-medium text-gray-900 mb-2">
+                {post.comments?.length || 0} {(post.comments?.length || 0) === 1 ? 'Comment' : 'Comments'}
+              </h3>
+              
+              {post.comments && post.comments.length > 0 ? (
+                <div className="space-y-3">
+                  {post.comments.map(comment => (
+                    <div key={comment.id} className="flex">
+                      <div className="h-8 w-8 rounded-full overflow-hidden relative flex-shrink-0">
+                        {renderUserAvatar(comment)}
+                      </div>
+                      <div className="ml-2">
+                        <div className="bg-gray-100 rounded-2xl px-3 py-2">
+                          <p className="font-semibold text-sm">{comment.userName || 'Anonymous User'}</p>
+                          <p className="text-sm">{comment.text}</p>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {comment.timestamp ? format(new Date(comment.timestamp), 'MMM d, h:mm a') : 'Just now'}
+                        </p>
                       </div>
                     </div>
-                    <div className="ml-2">
-                      <div className="bg-gray-100 rounded-2xl px-3 py-2">
-                        <p className="font-semibold text-sm">{comment.userName || 'Anonymous User'}</p>
-                        <p className="text-sm">{comment.text}</p>
-                      </div>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {comment.timestamp ? format(new Date(comment.timestamp), 'MMM d, h:mm a') : 'Just now'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500 text-center">No comments yet. Be the first to comment!</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center">No comments yet. Be the first to comment!</p>
+              )}
+            </div>
           </div>
           
           {/* Post Actions */}

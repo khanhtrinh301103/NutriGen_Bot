@@ -5,7 +5,7 @@ import Layout from './components/common/layout';
 import BlogPost from '../pages/components/blog/BlogPost';
 import CreatePostModal from '../pages/components/blog/CreatePostModal';
 import PostDetailModal from '../pages/components/blog/PostDetailModal';
-import { getAllPosts, addComment, toggleLikePost, toggleSavePost, getPostComments, isPostLiked, isPostSaved } from '../api/blogService';
+import { getAllPosts, addComment, toggleLikePost, toggleSavePost, getPostComments, getPostLikes, isPostLiked, isPostSaved } from '../api/blogService';
 import { auth } from '../api/firebaseConfig';
 
 const BlogPage = () => {
@@ -17,6 +17,7 @@ const BlogPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comments, setComments] = useState([]);
+  const [likes, setLikes] = useState([]);
   const [isPostLikedByUser, setIsPostLikedByUser] = useState(false);
   const [isPostSavedByUser, setIsPostSavedByUser] = useState(false);
   
@@ -57,16 +58,20 @@ const BlogPage = () => {
     return () => unsubscribe();
   }, [showCreateModal, router]);
   
-  // Load comments when a post is selected
+  // Load post details when a post is selected
   useEffect(() => {
     const fetchPostDetails = async () => {
       if (selectedPost && showDetailModal) {
         try {
-          console.log(`Fetching comments for post: ${selectedPost.id}`);
+          console.log(`Fetching details for post: ${selectedPost.id}`);
           
           // Fetch comments
           const fetchedComments = await getPostComments(selectedPost.id);
           setComments(fetchedComments);
+          
+          // Fetch likes
+          const fetchedLikes = await getPostLikes(selectedPost.id);
+          setLikes(fetchedLikes);
           
           // Check if post is liked/saved by current user
           const liked = await isPostLiked(selectedPost.id);
@@ -74,6 +79,12 @@ const BlogPage = () => {
           
           setIsPostLikedByUser(liked);
           setIsPostSavedByUser(saved);
+          
+          // Đồng bộ trạng thái liked giữa selectedPost và blogPosts
+          setSelectedPost(prev => ({
+            ...prev,
+            liked
+          }));
         } catch (err) {
           console.error('Error fetching post details:', err);
         }
@@ -106,7 +117,7 @@ const BlogPage = () => {
   
   const handleLikePost = async (postId) => {
     try {
-      console.log('Liking post:', postId);
+      console.log('Toggling like for post:', postId);
       
       // Check if user is logged in
       if (!auth.currentUser) {
@@ -117,33 +128,43 @@ const BlogPage = () => {
       // Toggle like status
       const isNowLiked = await toggleLikePost(postId);
       
-      // Update UI based on result
+      // Đồng bộ luôn trạng thái like của bài viết được chọn
       if (selectedPost && selectedPost.id === postId) {
+        // Update liked status for current user
         setIsPostLikedByUser(isNowLiked);
-        setSelectedPost({
-          ...selectedPost,
-          likesCount: isNowLiked 
-            ? (selectedPost.likesCount || 0) + 1 
-            : (selectedPost.likesCount || 1) - 1
-        });
+        
+        // Refresh likes list
+        const refreshedLikes = await getPostLikes(postId);
+        setLikes(refreshedLikes);
+        
+        // Update the selected post like count and liked status
+        setSelectedPost(prev => ({
+          ...prev,
+          likesCount: refreshedLikes.length,
+          liked: isNowLiked
+        }));
       }
       
       // Update the post in the blogPosts list
-      setBlogPosts(
-        blogPosts.map(post => {
+      setBlogPosts(prevPosts => 
+        prevPosts.map(post => {
           if (post.id === postId) {
+            // Adjust like count based on action
+            const newLikesCount = isNowLiked
+              ? post.likesCount + 1
+              : post.likesCount - 1;
+            
             return {
               ...post,
-              likesCount: isNowLiked 
-                ? (post.likesCount || 0) + 1 
-                : (post.likesCount || 1) - 1
+              likesCount: Math.max(0, newLikesCount),
+              liked: isNowLiked // Đồng bộ trạng thái liked
             };
           }
           return post;
         })
       );
     } catch (error) {
-      console.error('Error liking post:', error);
+      console.error('Error toggling like for post:', error);
     }
   };
   
@@ -163,11 +184,15 @@ const BlogPage = () => {
       // Update UI based on result
       if (selectedPost && selectedPost.id === postId) {
         setIsPostSavedByUser(isNowSaved);
+        setSelectedPost(prev => ({
+          ...prev,
+          saved: isNowSaved
+        }));
       }
       
       // Update the post in the blogPosts list
-      setBlogPosts(
-        blogPosts.map(post => {
+      setBlogPosts(prevPosts =>
+        prevPosts.map(post => {
           if (post.id === postId) {
             return {
               ...post,
@@ -200,24 +225,25 @@ const BlogPage = () => {
         id: commentId,
         userId: auth.currentUser.uid,
         userName: auth.currentUser.displayName || 'Anonymous User',
+        userAvatar: auth.currentUser.photoURL || null,
         text: comment,
         timestamp: new Date().toISOString()
       };
       
       // Update comments list for the detail view
-      setComments([...comments, newComment]);
+      setComments(prevComments => [...prevComments, newComment]);
       
       // Update comment count in the selected post
       if (selectedPost && selectedPost.id === postId) {
-        setSelectedPost({
-          ...selectedPost,
-          commentsCount: (selectedPost.commentsCount || 0) + 1
-        });
+        setSelectedPost(prev => ({
+          ...prev,
+          commentsCount: (prev.commentsCount || 0) + 1
+        }));
       }
       
       // Update the post in the blogPosts list
-      setBlogPosts(
-        blogPosts.map(post => {
+      setBlogPosts(prevPosts =>
+        prevPosts.map(post => {
           if (post.id === postId) {
             return {
               ...post,
@@ -308,8 +334,9 @@ const BlogPage = () => {
                   post={{
                     ...post,
                     likes: post.likesCount || 0,
-                    comments: comments.filter(c => c.postId === post.id) || [],
+                    comments: post.commentsCount || 0,
                     saved: post.saved || false,
+                    liked: post.liked || false, // Thêm trạng thái liked từ server
                     // Ensure post has all properties expected by the component
                     images: post.images || []
                   }}
@@ -337,13 +364,16 @@ const BlogPage = () => {
             post={{
               ...selectedPost,
               likes: selectedPost.likesCount || 0,
+              likesData: likes || [],
               comments: comments || [],
-              saved: isPostSavedByUser
+              saved: isPostSavedByUser,
+              liked: isPostLikedByUser || selectedPost.liked // Sử dụng trạng thái từ selectedPost nếu cần
             }}
             onClose={() => {
               setShowDetailModal(false);
               setSelectedPost(null);
               setComments([]);
+              setLikes([]);
             }}
             onLike={() => handleLikePost(selectedPost.id)}
             onSave={() => handleSavePost(selectedPost.id)}

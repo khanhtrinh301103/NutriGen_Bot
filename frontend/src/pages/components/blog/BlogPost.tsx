@@ -8,7 +8,7 @@ const BlogPost = ({ post, onPostClick, onLike, onSave, onComment }) => {
   const [showAllCaption, setShowAllCaption] = useState(false);
   const router = useRouter();
   
-  console.log('Rendering BlogPost:', post.id);
+  console.log('Rendering BlogPost:', post.id, 'Liked status:', post.liked);
   
   // Format the timestamp
   const formattedDate = post.createdAt 
@@ -23,7 +23,7 @@ const BlogPost = ({ post, onPostClick, onLike, onSave, onComment }) => {
     : (post.caption ? post.caption.slice(0, maxCaptionLength) : '');
   
   // Image display logic
-  const maxVisibleImages = 5;
+  const maxVisibleImages = 4;
   const images = post.images || [];
   const hasMoreImages = images.length > maxVisibleImages;
   const visibleImages = images.slice(0, maxVisibleImages);
@@ -172,7 +172,7 @@ const BlogPost = ({ post, onPostClick, onLike, onSave, onComment }) => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
-              <span>{post.comments?.length || 0}</span>
+              <span>{post.comments || 0}</span>
             </button>
           </div>
           <button 
@@ -185,24 +185,18 @@ const BlogPost = ({ post, onPostClick, onLike, onSave, onComment }) => {
           </button>
         </div>
         
-        {/* Latest Comments Preview */}
-        {post.comments && post.comments.length > 0 && (
+        {/* Comment Preview */}
+        {post.comments > 0 && (
           <div className="mb-2">
-            <div className="text-sm text-gray-700">
-              <span className="font-semibold">{post.comments[post.comments.length - 1].userName || 'Anonymous User'}</span>{" "}
-              {post.comments[post.comments.length - 1].text}
-            </div>
-            {post.comments.length > 1 && (
-              <button 
-                className="text-gray-500 text-sm hover:text-gray-700"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onPostClick();
-                }}
-              >
-                View all {post.comments.length} comments
-              </button>
-            )}
+            <button 
+              className="text-gray-500 text-sm hover:text-gray-700"
+              onClick={(e) => {
+                e.stopPropagation();
+                onPostClick();
+              }}
+            >
+              View all {post.comments} comments
+            </button>
           </div>
         )}
         
