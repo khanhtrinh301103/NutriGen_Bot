@@ -8,6 +8,21 @@ body {
   background-color: #f8f3e7;
   color: #333; /* 기본 글자색 */
 }
+.primary-bg {
+  background-color: #4b7e53;
+}
+
+.secondary-bg {
+  background-color: #f8f3e7;
+}
+
+.primary-text-color {
+  color: #4b7e53;
+}
+
+.secondary-text-color {
+  color: #f8f3e7;
+}
 
 /* ✅ 버튼 스타일 */
 .btn-primary {

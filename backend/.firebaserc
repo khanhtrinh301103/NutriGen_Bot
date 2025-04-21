@@ -1,5 +1,8 @@
 {
   "projects": {
-    "default": "nutrigen-bot-dd79d"
-  }
+    "default": "nutrigen-bot-dd79d",
+    "staging": "nutrigen-bot-dd79d"
+  },
+  "targets": {},
+  "etags": {}
 }
