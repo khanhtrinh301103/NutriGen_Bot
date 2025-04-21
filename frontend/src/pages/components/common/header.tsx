@@ -20,10 +20,10 @@ const Header = () => {
   };
 
   const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Recipes", path: "/recipes" },
-    { name: "Blog", path: "/blog" },
-    { name: "About", path: "/about" },
+    { name: "Home", path: "/", icon: "🏠" },
+    { name: "Recipes", path: "/recipes", icon: "🍽️" },
+    { name: "Blog", path: "/blog", icon: "✍️" },
+    { name: "About", path: "/about", icon: "ℹ️" },
   ];
 
   return (
@@ -41,13 +41,13 @@ const Header = () => {
             <Link
               key={link.path}
               href={link.path}
-              className={`text-sm font-semibold pb-1 transition-all duration-200 ${
+              className={`text-base font-semibold pb-1 flex items-center gap-1 transition-all duration-300 transform hover:translate-y-[-2px] hover:scale-105 hover:text-yellow-200 ${
                 router.pathname === link.path
                   ? "text-yellow-300 border-b-2 border-yellow-300"
-                  : "text-white hover:text-yellow-200"
+                  : "text-white"
               }`}
             >
-              {link.name}
+              <span className="text-lg">{link.icon}</span> {link.name}
             </Link>
           ))}
         </nav>
@@ -57,7 +57,7 @@ const Header = () => {
           {user ? (
             <button
               onClick={goToProfile}
-              className="flex items-center space-x-2 bg-white px-3 py-2 rounded-full transition-all hover:bg-gray-100"
+              className="flex items-center space-x-2 bg-white px-3 py-2 rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-lg hover:ring-2 ring-emerald-200"
             >
               {user.photoURL ? (
                 <img
@@ -80,13 +80,13 @@ const Header = () => {
             <>
               <Link
                 href="/auth/login"
-                className="btn-primary bg-white text-[#4b7e53]"
+                className="btn-primary bg-white text-[#4b7e53] transition-all duration-300 hover:scale-105 hover:shadow-md"
               >
                 Log In
               </Link>
               <Link
                 href="/auth/signup"
-                className="btn-primary bg-white text-[#4b7e53]"
+                className="btn-primary bg-white text-[#4b7e53] transition-all duration-300 hover:scale-105 hover:shadow-md"
               >
                 Sign Up
               </Link>

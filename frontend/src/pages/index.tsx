@@ -1,6 +1,39 @@
 import Layout from "./components/common/layout";
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuth } from "../api/useAuth";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "../api/firebaseConfig";
 
 export default function Home() {
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && user) {
+      const checkUserRole = async () => {
+        try {
+          const userRef = doc(db, "user", user.uid);
+          const userSnap = await getDoc(userRef);
+          
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            // Nếu người dùng là admin, chuyển hướng đến trang admin
+            if (userData.role === "admin") {
+              console.log("🔀 [Home] Admin user detected, redirecting to admin dashboard");
+              router.push('/adminUI');
+            }
+          }
+        } catch (error) {
+          console.error("❌ [Home] Error checking user role:", error);
+        }
+      };
+      
+      checkUserRole();
+    }
+  }, [user, loading, router]);
+
+  
   return (
     <Layout>
       {/* Hero Section */}

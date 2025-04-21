@@ -204,7 +204,7 @@ const AboutPage: React.FC = () => {
             </p>
             <p className="text-gray-600 mt-4">
               For more information about how we handle your data, please review our{' '}
-              <Link href="/privacy-policy" className="text-emerald-600 hover:text-emerald-700">
+              <Link href="/privacy" className="text-emerald-600 hover:text-emerald-700">
                 Privacy Policy
               </Link>.
             </p>

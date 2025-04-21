@@ -3,9 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from './components/common/layout';
 import { auth } from '../api/firebaseConfig';
-import { getUserProfile, updateUserProfile } from '../api/profile';
-import { signOutUser } from '../api/authService';
+import { getUserProfile } from '../api/profile';
+import { signOutUser, changePassword } from '../api/authService';
 import { updateProfile } from "firebase/auth";
+
+// Import component modules
+import ProfileTabs from './components/profile/ProfileTabs';
+import HealthProfileSection from './components/profile/HealthProfileSection';
+import NutritionDashboard from './components/profile/NutritionDashboard';
+import SavedRecipes from './components/profile/SavedRecipes';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -13,17 +19,181 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [profileData, setProfileData] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({
-    height: '',
-    weight: '',
-    age: '',
-    gender: 'Male',
-    activityLevel: 'Sedentary',
-    goal: 'Weight Maintenance',
-    allergies: [],
-    dietaryRestrictions: []
-  });
+  
+  // Password change modal states
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  
+  // Password visibility states
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Define all handler functions at the beginning of the component
+  const handleTabChange = (tab) => {
+    console.log(`Changed tab to: ${tab}`);
+    setActiveTab(tab);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      console.log("Signing out user...");
+      await signOutUser();
+      router.push('/');
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
+  };
+  
+  // Password change handlers
+  const handleOpenPasswordModal = () => {
+    // Check if user account is from Google
+    if (profileData?.provider === "google") {
+      setPasswordError("Your account is registered with Google, so you cannot change the password.");
+      setShowPasswordModal(true);
+      return;
+    }
+    
+    setShowPasswordModal(true);
+    // Reset fields when opening modal
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Reset password visibility
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
+  };
+  
+  const handleClosePasswordModal = () => {
+    setShowPasswordModal(false);
+  };
+  
+  // Toggle password visibility handlers
+  const toggleCurrentPasswordVisibility = () => {
+    setShowCurrentPassword(!showCurrentPassword);
+  };
+  
+  const toggleNewPasswordVisibility = () => {
+    setShowNewPassword(!showNewPassword);
+  };
+  
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+  
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    
+    // If Google account, don't proceed
+    if (profileData?.provider === "google") {
+      return;
+    }
+    
+    // Reset messages
+    setPasswordError('');
+    setPasswordSuccess('');
+    
+    // Validate inputs
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('All fields are required');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match');
+      return;
+    }
+    
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters long');
+      return;
+    }
+    
+    setPasswordLoading(true);
+    
+    try {
+      console.log("Changing password...");
+      await changePassword(currentPassword, newPassword);
+      setPasswordSuccess('Password changed successfully');
+      
+      // Clear fields after successful change
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      
+      // Close modal after a delay
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordSuccess('');
+      }, 2000);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      
+      // Display friendly error messages
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+        setPasswordError('Current password is incorrect');
+      } else if (error.code === 'auth/requires-recent-login') {
+        setPasswordError('Please sign out and sign in again before changing your password');
+      } else {
+        setPasswordError('An error occurred while changing your password. Please try again.');
+      }
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+  
+  const handleUploadPhoto = async (event) => {
+    const file = event.target.files[0];
+    if (!file || !user) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("uid", user.uid); // Gửi UID lên backend
+
+    try {
+      console.log("Uploading photo to backend...");
+      const response = await fetch("http://localhost:5000/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Upload failed");
+
+      const data = await response.json();
+      console.log("Uploaded photo URL:", data.photoUrl);
+
+      // Cập nhật ảnh lên Firebase Auth
+      await updateProfile(auth.currentUser, { photoURL: data.photoUrl });
+
+      // Cập nhật UI
+      setUser({ ...user, photoURL: data.photoUrl });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+    }
+  };
+  
+  // Function to reload profile data
+  const handleProfileUpdated = async () => {
+    try {
+      setLoading(true);
+      console.log("Reloading profile data...");
+      const userData = await getUserProfile(user.uid);
+      setProfileData(userData);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error reloading profile:", error);
+      setLoading(false);
+    }
+  };
   
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
@@ -60,141 +230,7 @@ const ProfilePage: React.FC = () => {
 
     return () => unsubscribe();
   }, [router]);
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-        try {
-          const userData = await getUserProfile(currentUser.uid);
-          setProfileData(userData);
-        } catch (error) {
-          console.error("Error loading profile:", error);
-        }
-        setLoading(false);
-      } else {
-        router.push('/auth/login');
-      }
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  // Xử lý Upload Ảnh
-  const handleUploadPhoto = async (event) => {
-    const file = event.target.files[0];
-    if (!file || !user) return;
-
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("uid", user.uid); // Gửi UID lên backend
-
-    try {
-      const response = await fetch("http://localhost:5000/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) throw new Error("Upload failed");
-
-      const data = await response.json();
-      console.log("Uploaded photo URL:", data.photoUrl);
-
-      // Cập nhật ảnh lên Firebase Auth
-      await updateProfile(auth.currentUser, { photoURL: data.photoUrl });
-
-      // Cập nhật UI
-      setUser({ ...user, photoURL: data.photoUrl });
-    } catch (error) {
-      console.error("Error uploading photo:", error);
-    }
-  };
-
-  // Initialize edit data when profile data is loaded
-  useEffect(() => {
-    if (profileData && profileData.healthProfile) {
-      setEditData({
-        height: profileData.healthProfile.height || '',
-        weight: profileData.healthProfile.weight || '',
-        age: profileData.healthProfile.age || '',
-        gender: profileData.healthProfile.gender || 'Male',
-        activityLevel: profileData.healthProfile.activityLevel || 'Sedentary',
-        goal: profileData.healthProfile.goal || 'Weight Maintenance',
-        allergies: profileData.healthProfile.allergies || [],
-        dietaryRestrictions: profileData.healthProfile.dietaryRestrictions || []
-      });
-    }
-  }, [profileData]);
-
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOutUser();
-      router.push('/');
-    } catch (error) {
-      console.error("Error signing out:", error);
-    }
-  };
-
-  const handleEditDataChange = (e) => {
-    const { name, value } = e.target;
-    setEditData({
-      ...editData,
-      [name]: value
-    });
-  };
-
-  const handleAllergiesChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setEditData({
-        ...editData,
-        allergies: [...editData.allergies, value]
-      });
-    } else {
-      setEditData({
-        ...editData,
-        allergies: editData.allergies.filter(item => item !== value)
-      });
-    }
-  };
-
-  const handleDietaryRestrictionsChange = (e) => {
-    const { value, checked } = e.target;
-    if (checked) {
-      setEditData({
-        ...editData,
-        dietaryRestrictions: [...editData.dietaryRestrictions, value]
-      });
-    } else {
-      setEditData({
-        ...editData,
-        dietaryRestrictions: editData.dietaryRestrictions.filter(item => item !== value)
-      });
-    }
-  };
-
-  const handleSaveProfile = async () => {
-    if (!user) return;
-    
-    try {
-      setLoading(true);
-      await updateUserProfile(user.uid, editData);
-      
-      // Reload profile data
-      const userData = await getUserProfile(user.uid);
-      setProfileData(userData);
-      
-      setIsEditing(false);
-    } catch (error) {
-      console.error("Error saving profile:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  
   if (loading) {
     return (
       <Layout>
@@ -210,494 +246,252 @@ const ProfilePage: React.FC = () => {
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
+        {/* Profile Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-6 flex justify-between items-center rounded-xl">
-        <div className="flex items-center">
-          <div className="mr-4 relative">
-            {/* Input file ẩn, chỉ mở khi user click vào avatar */}
-            <input 
-              type="file" 
-              onChange={handleUploadPhoto} 
-              className="hidden" 
-              id="profile-image-input"
-            />
-            
-            {/* Khi user click vào ảnh, sẽ kích hoạt input file */}
-            {user?.photoURL ? (
-              <label htmlFor="profile-image-input" className="cursor-pointer">
-                <img 
-                  src={user.photoURL} 
-                  alt="Profile" 
-                  className="h-16 w-16 rounded-full object-cover border-2 border-white cursor-pointer"
-                />
-              </label>
-            ) : (
-              <label htmlFor="profile-image-input" className="cursor-pointer">
-                <div className="bg-white p-2 rounded-full flex items-center justify-center w-16 h-16 border-2 border-white">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              </label>
-            )}
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-white">My Profile</h1>
-            <p className="text-white">{user?.displayName || user?.email}</p>
-          </div>
-        </div>
+          <div className="flex items-center">
+            <div className="mr-4 relative">
+              {/* Input file ẩn, chỉ mở khi user click vào avatar */}
+              <input 
+                type="file" 
+                onChange={handleUploadPhoto} 
+                className="hidden" 
+                id="profile-image-input"
+                accept="image/*"
+              />
+              
+              {/* Khi user click vào ảnh, sẽ kích hoạt input file */}
+              {user?.photoURL ? (
+                <label htmlFor="profile-image-input" className="cursor-pointer group relative block h-16 w-16 rounded-full">
+                  <img 
+                    src={user.photoURL} 
+                    alt="Profile" 
+                    className="h-16 w-16 rounded-full object-cover border-2 border-white transition-all duration-300"
+                  />
+                  {/* Overlay mờ khi hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 rounded-full transition-all duration-300"></div>
+                  
+                  {/* Hiệu ứng viền sáng khi hover */}
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-emerald-400 group-hover:shadow-lg group-hover:shadow-emerald-400/30 transition-all duration-300"></div>
+                </label>
+              ) : (
+                <label htmlFor="profile-image-input" className="cursor-pointer group relative block h-16 w-16">
+                  <div className="bg-white p-2 rounded-full flex items-center justify-center w-16 h-16 border-2 border-white transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  
+                  {/* Overlay mờ khi hover */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-full transition-all duration-300"></div>
+                  
+                  {/* Hiệu ứng viền sáng khi hover */}
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent group-hover:border-emerald-400 group-hover:shadow-lg group-hover:shadow-emerald-400/30 transition-all duration-300"></div>
+                </label>
+              )}
+              
+              {/* Tooltip "Edit Photo" khi hover */}
+              <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs font-medium rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none whitespace-nowrap">
+                Edit Photo
+              </div>
+            </div>
 
+            <div>
+              <h1 className="text-2xl font-bold text-white">My Profile</h1>
+              <p className="text-white">{user?.displayName || user?.email}</p>
+            </div>
+          </div>
           
-          {/* Sign Out Button */}
-          <button 
-            onClick={handleSignOut}
-            className="px-4 py-2 bg-white text-red-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
-          >
-            Sign Out
-          </button>
+          {/* Account Actions */}
+          <div className="flex space-x-2">
+            {/* Change Password Button */}
+            <button 
+              onClick={handleOpenPasswordModal}
+              className="px-4 py-2 bg-white text-emerald-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            >
+              Change Password
+            </button>
+            
+            {/* Sign Out Button */}
+            <button 
+              onClick={handleSignOut}
+              className="px-4 py-2 bg-white text-red-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
 
         <div className="mt-8">
-          <div className="flex border-b">
-            <button
-              className={`py-3 px-6 font-medium ${
-                activeTab === 'profile' 
-                  ? 'text-emerald-600 border-b-2 border-emerald-500' 
-                  : 'text-gray-500 hover:text-emerald-600'
-              }`}
-              onClick={() => handleTabChange('profile')}
-            >
-              Health Profile
-            </button>
-            <button
-              className={`py-3 px-6 font-medium ${
-                activeTab === 'nutrition' 
-                  ? 'text-emerald-600 border-b-2 border-emerald-500' 
-                  : 'text-gray-500 hover:text-emerald-600'
-              }`}
-              onClick={() => handleTabChange('nutrition')}
-            >
-              Nutrition Dashboard
-            </button>
-            <button
-              className={`py-3 px-6 font-medium ${
-                activeTab === 'saved' 
-                  ? 'text-emerald-600 border-b-2 border-emerald-500' 
-                  : 'text-gray-500 hover:text-emerald-600'
-              }`}
-              onClick={() => handleTabChange('saved')}
-            >
-              Saved Recipes
-            </button>
-          </div>
+          {/* Tab Navigation */}
+          <ProfileTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
           <div className="mt-6">
+            {/* Tab Content */}
             {activeTab === 'profile' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold">{isEditing ? 'Edit Profile' : 'Your Health Profile'}</h2>
-                    {!isEditing && (
-                      <button 
-                        onClick={() => setIsEditing(true)}
-                        className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
-                      >
-                        Edit Profile
-                      </button>
-                    )}
-                  </div>
-                  
-                  {isEditing ? (
-                    <div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Basic Information Section */}
-                        <div>
-                          <h3 className="text-md font-medium text-gray-700 mb-4">Basic Information</h3>
-                          <div className="space-y-4">
-                            <div>
-                              <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">Height (cm)</label>
-                              <input
-                                type="number"
-                                id="height"
-                                name="height"
-                                value={editData.height}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">Weight (kg)</label>
-                              <input
-                                type="number"
-                                id="weight"
-                                name="weight"
-                                value={editData.weight}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">Age</label>
-                              <input
-                                type="number"
-                                id="age"
-                                name="age"
-                                value={editData.age}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              />
-                            </div>
-                            <div>
-                              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">Gender</label>
-                              <select
-                                id="gender"
-                                name="gender"
-                                value={editData.gender}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              >
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                                <option value="Other">Other</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Activity & Goals Section */}
-                        <div>
-                          <h3 className="text-md font-medium text-gray-700 mb-4">Activity & Goals</h3>
-                          <div className="space-y-4">
-                            <div>
-                              <label htmlFor="activityLevel" className="block text-sm font-medium text-gray-700 mb-1">Activity Level</label>
-                              <select
-                                id="activityLevel"
-                                name="activityLevel"
-                                value={editData.activityLevel}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              >
-                                <option value="Sedentary">Sedentary (little or no exercise)</option>
-                                <option value="Lightly Active">Lightly active (light exercise 1-3 days/week)</option>
-                                <option value="Moderately Active">Moderately active (moderate exercise 3-5 days/week)</option>
-                                <option value="Very Active">Very active (hard exercise 6-7 days/week)</option>
-                                <option value="Extremely Active">Extremely active (very hard exercise & physical job)</option>
-                              </select>
-                            </div>
-                            <div>
-                              <label htmlFor="goal" className="block text-sm font-medium text-gray-700 mb-1">Goal</label>
-                              <select
-                                id="goal"
-                                name="goal"
-                                value={editData.goal}
-                                onChange={handleEditDataChange}
-                                className="w-full p-2 border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500"
-                              >
-                                <option value="Weight Loss">Weight Loss</option>
-                                <option value="Weight Maintenance">Weight Maintenance</option>
-                                <option value="Weight Gain">Weight Gain</option>
-                                <option value="Muscle Gain">Muscle Gain</option>
-                                <option value="Improve Health">Improve Health</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Allergies Section */}
-                        <div className="md:col-span-2">
-                          <h3 className="text-md font-medium text-gray-700 mb-4">Allergies</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            {['Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood', 'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'].map((allergy) => (
-                              <div key={allergy} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  id={`allergy-${allergy}`}
-                                  name="allergies"
-                                  value={allergy}
-                                  checked={editData.allergies.includes(allergy)}
-                                  onChange={handleAllergiesChange}
-                                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                                />
-                                <label htmlFor={`allergy-${allergy}`} className="ml-2 text-sm text-gray-700">
-                                  {allergy}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Dietary Restrictions Section */}
-                        <div className="md:col-span-2">
-                          <h3 className="text-md font-medium text-gray-700 mb-4">Dietary Restrictions</h3>
-                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {['Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Keto', 'Paleo', 'Pescatarian', 'Mediterranean'].map((diet) => (
-                              <div key={diet} className="flex items-center">
-                                <input
-                                  type="checkbox"
-                                  id={`diet-${diet}`}
-                                  name="dietaryRestrictions"
-                                  value={diet}
-                                  checked={editData.dietaryRestrictions.includes(diet)}
-                                  onChange={handleDietaryRestrictionsChange}
-                                  className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
-                                />
-                                <label htmlFor={`diet-${diet}`} className="ml-2 text-sm text-gray-700">
-                                  {diet}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-8 flex justify-end space-x-4">
-                        <button
-                          onClick={() => setIsEditing(false)}
-                          className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          onClick={handleSaveProfile}
-                          disabled={loading}
-                          className="px-6 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors disabled:opacity-50"
-                        >
-                          {loading ? 'Saving...' : 'Save Profile'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    profileData && profileData.healthProfile && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
-                          <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            Basic Information
-                          </h3>
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Height:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.height || 'Not set'} cm</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Weight:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.weight || 'Not set'} kg</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Age:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.age || 'Not set'}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Gender:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.gender || 'Not set'}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
-                          <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                            </svg>
-                            Activity & Goals
-                          </h3>
-                          <div className="space-y-3">
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Activity Level:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.activityLevel || 'Not set'}</span>
-                            </div>
-                            <div className="flex justify-between items-center pb-2 border-b border-gray-100">
-                              <span className="text-gray-600">Goal:</span>
-                              <span className="font-medium text-gray-900">{profileData.healthProfile.goal || 'Not set'}</span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
-                          <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            Allergies
-                          </h3>
-                          {profileData.healthProfile.allergies && profileData.healthProfile.allergies.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {profileData.healthProfile.allergies.map((allergy, index) => (
-                                <span key={index} className="bg-red-50 text-red-700 text-xs px-3 py-1 rounded-full border border-red-100">
-                                  {allergy}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic">No allergies specified</p>
-                          )}
-                        </div>
-                        
-                        <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
-                          <h3 className="text-lg font-semibold text-emerald-700 mb-4 flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                            </svg>
-                            Dietary Restrictions
-                          </h3>
-                          {profileData.healthProfile.dietaryRestrictions && profileData.healthProfile.dietaryRestrictions.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {profileData.healthProfile.dietaryRestrictions.map((diet, index) => (
-                                <span key={index} className="bg-emerald-50 text-emerald-700 text-xs px-3 py-1 rounded-full border border-emerald-100">
-                                  {diet}
-                                </span>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-500 italic">No dietary restrictions specified</p>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
+              <HealthProfileSection 
+                user={user} 
+                profileData={profileData} 
+                loading={loading}
+                onProfileUpdated={handleProfileUpdated}
+              />
             )}
 
             {activeTab === 'nutrition' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="bg-white shadow rounded-lg overflow-hidden">
-                  <div className="px-4 py-5 sm:px-6 bg-emerald-50">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      Your Nutrition Summary
-                    </h3>
-                  </div>
-                  <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {profileData && profileData.healthProfile && profileData.healthProfile.weight && profileData.healthProfile.height && profileData.healthProfile.age ? (
-                        <>
-                          <div className="bg-emerald-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Basal Metabolic Rate</h4>
-                            <div className="text-2xl font-bold text-emerald-600 mt-2">
-                              {calculateBMR(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">Calories you burn at rest</p>
-                          </div>
-                          
-                          <div className="bg-blue-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Total Daily Energy</h4>
-                            <div className="text-2xl font-bold text-blue-600 mt-2">
-                              {calculateTDEE(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">Calories you burn daily with activity</p>
-                          </div>
-                          
-                          <div className="bg-purple-50 p-4 rounded-lg text-center">
-                            <h4 className="text-sm font-medium text-gray-500">Target Daily Calories</h4>
-                            <div className="text-2xl font-bold text-purple-600 mt-2">
-                              {calculateTarget(profileData.healthProfile)} calories
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {profileData.healthProfile.goal === 'Weight Loss' ? 'For weight loss' : 
-                               profileData.healthProfile.goal === 'Weight Gain' ? 'For weight gain' : 
-                               'For maintenance'}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="col-span-3 text-center py-8">
-                          <p className="text-gray-500">
-                            Please complete your health profile to see nutrition insights.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <NutritionDashboard 
+                user={user} 
+                profileData={profileData} 
+                loading={loading}
+                onProfileUpdated={handleProfileUpdated}
+              />
             )}
 
             {activeTab === 'saved' && (
-              <div className="max-w-4xl mx-auto">
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-gray-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                  <h3 className="text-lg font-medium text-gray-900">No saved recipes</h3>
-                  <p className="mt-2 text-sm text-gray-500">
-                    You have not saved any recipes yet. Start exploring recipes and save your favorites!
-                  </p>
-                  <div className="mt-6">
-                    <button 
-                      onClick={() => router.push('/recipes')}
-                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors"
-                    >
-                      Find Recipes
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <SavedRecipes user={user} />
             )}
           </div>
         </div>
+        
+        {/* Password Change Modal - Updated to match the design in the image */}
+        {showPasswordModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+              <h3 className="text-xl font-bold mb-6 text-center">Change Password</h3>
+              
+              {/* Show warning for Google accounts */}
+              {profileData?.provider === "google" ? (
+                <div>
+                  <div className="bg-amber-100 text-amber-800 p-4 rounded-md mb-4">
+                    <div className="flex items-center">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <p className="font-medium">Your account is registered with Google, so you cannot change the password here.</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      onClick={handleClosePasswordModal}
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors duration-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <form onSubmit={handlePasswordChange}>
+                  {/* Current Password */}
+                  <div className="mb-4">
+                    <label htmlFor="currentPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      Current Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showCurrentPassword ? "text" : "password"}
+                        id="currentPassword"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleCurrentPasswordVisibility}
+                      >
+                        {showCurrentPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* New Password */}
+                  <div className="mb-4">
+                    <label htmlFor="newPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        id="newPassword"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                        minLength={6}
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleNewPasswordVisibility}
+                      >
+                        {showNewPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Confirm New Password */}
+                  <div className="mb-4">
+                    <label htmlFor="confirmPassword" className="block text-gray-700 font-medium mb-2 text-center">
+                      Confirm New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        required
+                      />
+                      <button 
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-blue-500"
+                        onClick={toggleConfirmPasswordVisibility}
+                      >
+                        {showConfirmPassword ? "Hide" : "Show"}
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Error Message */}
+                  {passwordError && (
+                    <div className="mb-4 text-red-600 text-center">
+                      {passwordError}
+                    </div>
+                  )}
+                  
+                  {/* Success Message */}
+                  {passwordSuccess && (
+                    <div className="mb-4 text-green-600 text-center">
+                      {passwordSuccess}
+                    </div>
+                  )}
+                  
+                  {/* Buttons */}
+                  <div className="flex justify-center space-x-2 mt-6">
+                    <button
+                      type="button"
+                      onClick={handleClosePasswordModal}
+                      className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors duration-200"
+                      disabled={passwordLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors duration-200"
+                      disabled={passwordLoading}
+                    >
+                      {passwordLoading ? "Changing..." : "Change Password"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </Layout>
   );
 };
-
-// Function to calculate BMR (Basal Metabolic Rate) using the Mifflin-St Jeor Equation
-function calculateBMR(healthProfile) {
-  const weight = Number(healthProfile.weight);
-  const height = Number(healthProfile.height);
-  const age = Number(healthProfile.age);
-  const gender = healthProfile.gender;
-  
-  if (!weight || !height || !age) return 0;
-  
-  if (gender === 'Male') {
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) + 5);
-  } else {
-    return Math.round((10 * weight) + (6.25 * height) - (5 * age) - 161);
-  }
-}
-
-// Function to calculate TDEE (Total Daily Energy Expenditure)
-function calculateTDEE(healthProfile) {
-  const bmr = calculateBMR(healthProfile);
-  const activityLevel = healthProfile.activityLevel;
-  
-  let activityMultiplier = 1.2; // Sedentary
-  
-  switch (activityLevel) {
-    case 'Lightly Active':
-      activityMultiplier = 1.375;
-      break;
-    case 'Moderately Active':
-      activityMultiplier = 1.55;
-      break;
-    case 'Very Active':
-      activityMultiplier = 1.725;
-      break;
-    case 'Extremely Active':
-      activityMultiplier = 1.9;
-      break;
-    default:
-      activityMultiplier = 1.2;
-  }
-  
-  return Math.round(bmr * activityMultiplier);
-}
-
-// Function to calculate target calories based on goal
-function calculateTarget(healthProfile) {
-  const tdee = calculateTDEE(healthProfile);
-  const goal = healthProfile.goal;
-  
-  switch (goal) {
-    case 'Weight Loss':
-      return Math.round(tdee * 0.8); // 20% deficit
-    case 'Weight Gain':
-    case 'Muscle Gain':
-      return Math.round(tdee * 1.15); // 15% surplus
-    default:
-      return tdee; // Maintenance
-  }
-}
 
 export default ProfilePage;

@@ -10,7 +10,11 @@ npm install
 
 
 
-
+public api key:
+7a6e45249407478683346a18f937ba47
+026008f475974904a5fff1f27ac6a23c
+d9d003f4f57646289aa4d50386b24ef6
+9c657b351ef94436ba49efe35a78d955
 
 backend:
 cd D:\SEPM\NutriGen_Bot\backend
@@ -21,91 +25,10 @@ Frontend:
 cd D:\SEPM\NutriGen_Bot\frontend
 npm run dev
 
-Project structure:
+Check document.txt for workspace of developers
 
-NutriGen_Bot/
-│
-├── backend/
-│   ├── dataconnect/
-│   │   ├── connector/
-│   │   │   ├── connector.yaml
-│   │   │   ├── mutations.gql
-│   │   │   ├── queries.gql
-│   │   ├── schema/
-│   │   │   ├── schema.gql
-│   │   │   ├── dataconnect.yaml
-│   ├── functions/ (backend workspace here)
-│   │   ├── node_modules/
-│   │   ├── .gitignore
-│   │   ├── index.js
-│   │   ├── uploadPhoto.js
-│   │   ├── firestore-debug.log
-│   │   ├── package-lock.json
-│   │   ├── package.json
-│   ├── src/
-│   │   ├── cacheResults.js
-│   │   ├── calculateTDEE.js
-│   │   ├── searchRecipe.js
-│   ├── .firebaserc
-│   ├── .gitignore
-│   ├── firebase.json
-│   ├── firebase-debug.log
-│   ├── package-lock.json
-│   ├── package.json
-│
-├── frontend/
-│   ├── .next/
-│   ├── node_modules/
-│   ├── public/
-│   │   ├── favicon.ico
-│   │   ├── file.svg
-│   │   ├── globe.svg
-│   │   ├── next.svg
-│   │   ├── vercel.svg
-│   │   ├── window.svg
-│   ├── src/ (frontend workspace here)
-│   │   ├── api/
-│   │   │   ├── authService.js
-│   │   │   ├── blogService.js
-│   │   │   ├── firebaseConfig.js
-│   │   │   ├── getRecipe.js
-│   │   │   ├── login.js
-│   │   │   ├── profile.js
-│   │   │   ├── sendResetLinkEmail.js
-│   │   │   ├── signup.js
-│   │   ├── pages/
-│   │   │   ├── auth/
-│   │   │   │   ├── forgotPassword.tsx
-│   │   │   │   ├── login.tsx
-│   │   │   │   ├── signup.tsx
-│   │   │   │   ├── onboarding.tsx
-│   │   │   ├── components/
-│   │   │   │   ├── common/
-│   │   │   │   │   ├── BottomNav.tsx
-│   │   │   │   │   ├── footer.tsx
-│   │   │   │   │   ├── header.tsx
-│   │   │   │   │   ├── layout.tsx
-│   │   │   ├── recipes/
-│   │   │   │   ├── [id].tsx
-│   │   │   ├── _app.tsx
-│   │   │   ├── _document.tsx
-│   │   │   ├── index.tsx
-│   │   │   ├── about.tsx
-│   │   │   ├── profile.tsx
-│   │   ├── styles/
-│   │   │   ├── globals.css
-│   ├── .gitignore
-│   ├── eslint.config.mjs
-│   ├── next-env.d.ts
-│   ├── next.config.mjs
-│   ├── package-lock.json
-│   ├── package.json
-│   ├── postcss.config.js
-│   ├── postcss.config.mjs
-│   ├── tailwind.config.js
-│   ├── tsconfig.json
-│   ├── netlify.toml
-│   ├── README.md
+
+
 
 
 Working scope of developer:

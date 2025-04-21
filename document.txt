@@ -1,0 +1,287 @@
+Project structure:
+
+NutriGen_Bot/
+│
+├── backend/
+│   ├── dataconnect/
+│   │   ├── connector/
+│   │   │   ├── connector.yaml
+│   │   │   ├── mutations.gql
+│   │   │   ├── queries.gql
+│   │   ├── schema/
+│   │   │   ├── schema.gql
+│   │   │   ├── dataconnect.yaml
+│   ├── functions/ (backend workspace here)
+│   │   ├── admin/
+│   │   │   ├── adminStats.js
+│   │   │   ├── adminUtils.js
+│   │   │   ├── index.js
+│   │   ├── node_modules/
+│   │   ├── .gitignore
+│   │   ├── enhanceSearchRecipe.js
+│   │   ├── getNutritionProfile.js
+│   │   ├── getRecipeDetails.js
+│   │   ├── index.js
+│   │   ├── uploadChatPhoto.js
+│   │   ├── uploadPhoto.js
+│   │   ├── searchRecipe.js
+│   │   ├── firestore-debug.log
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   ├── src/
+│   │   ├── conflictDetector.js
+│   │   ├── nutritionSearchProcessor.js
+│   │   ├── recipeFilter.js
+│   │   ├── recipeScorer.js
+│   ├── .firebaserc
+│   ├── .gitignore
+│   ├── firebase.json
+│   ├── firebase-debug.log
+│   ├── package-lock.json
+│   ├── package.json
+│
+├── frontend/
+│   ├── .next/
+│   ├── node_modules/
+│   ├── public/
+│   │   ├── favicon.ico
+│   │   ├── file.svg
+│   │   ├── globe.svg
+│   │   ├── next.svg
+│   │   ├── vercel.svg
+│   │   ├── window.svg
+│   ├── src/ (frontend workspace here)
+│   │   ├── api/
+│   │   │   ├── adminAPI/
+│   │   │   │   ├── adminAPI.js
+│   │   │   │   ├── adminChatService.js
+│   │   │   │   ├── adminDashboard.js
+│   │   │   │   ├── AdminRoute.js
+│   │   │   │   ├── searchManagement.js
+│   │   │   │   ├── UserDetailsService.js
+│   │   │   │   ├── UserManagement.js
+│   │   │   ├── authService.js
+│   │   │   ├── blogService.js
+│   │   │   ├── chatService.js
+│   │   │   ├── firebaseConfig.js
+│   │   │   ├── getRecipe.js
+│   │   │   ├── getUserHealthProfile.js
+│   │   │   ├── login.js
+│   │   │   ├── profile.js
+│   │   │   ├── profileValidation.js
+│   │   │   ├── ProtectedRoute.js
+│   │   │   ├── searchHistoryService.js
+│   │   │   ├── sendResetLinkEmail.js
+│   │   │   ├── signup.js
+│   │   │   ├── suggestionService.js
+│   │   │   ├── useAuth.js
+│   │   ├── components\ui (shadcn UI files)
+│   │   ├── lib/
+│   │   │   ├── utils.ts
+│   │   ├── pages/
+│   │   │   ├── adminUI/
+│   │   │   │   ├── components
+│   │   │   │   │   ├── ChatManagement
+│   │   │   │   │   │   ├── ActiveChatCard.tsx
+│   │   │   │   │   │   ├── ActiveChatsTab.tsx
+│   │   │   │   │   │   ├── AllChatsTab.tsx
+│   │   │   │   │   │   ├── AnalyticsSummaryCards.tsx
+│   │   │   │   │   │   ├── AnalyticsTab.tsx
+│   │   │   │   │   │   ├── ChatDetailDialog.tsx
+│   │   │   │   │   │   ├── ChatDetailMessage.tsx
+│   │   │   │   │   │   ├── ChatTableRow.tsx
+│   │   │   │   │   ├── AdminDashboardCharts.tsx
+│   │   │   │   │   ├── AdminLayout.tsx
+│   │   │   │   │   ├── ChatArea.tsx
+│   │   │   │   │   ├── ChatMessage.tsx
+│   │   │   │   │   ├── DateRangePicker.tsx
+│   │   │   │   │   ├── EmptyChatState.tsx
+│   │   │   │   │   ├── ImageUploader.tsx
+│   │   │   │   │   ├── SearchAnalyticsDashboard.tsx
+│   │   │   │   │   ├── SearchHistoryTable.tsx
+│   │   │   │   │   ├── SearchStatCards.tsx
+│   │   │   │   │   ├── StatCard.tsx
+│   │   │   │   │   ├── UserBasicInfo.tsx
+│   │   │   │   │   ├── UserDataTable.tsx
+│   │   │   │   │   ├── UserDetailsHeader.tsx
+│   │   │   │   │   ├── UserDetailsTabs.tsx
+│   │   │   │   │   ├── UserFilters.tsx
+│   │   │   │   │   ├── UserHealthProfile.tsx
+│   │   │   │   │   ├── UserNutritionInfo.tsx
+│   │   │   │   │   ├── UserSavedRecipes.tsx
+│   │   │   │   │   ├── UserSidebar.tsx
+│   │   │   │   │   ├── UserTable.tsx
+│   │   │   │   ├── AssistantChat.tsx
+│   │   │   │   ├── ChatManagement.tsx
+│   │   │   │   ├── index.tsx
+│   │   │   │   ├── NutritionData.tsx
+│   │   │   │   ├── SearchManagement.tsx
+│   │   │   │   ├── UserDetails.tsx
+│   │   │   │   ├── UserManagement.tsx
+│   │   │   ├── auth/
+│   │   │   │   ├── forgotPassword.tsx
+│   │   │   │   ├── login.tsx
+│   │   │   │   ├── signup.tsx
+│   │   │   │   ├── onboarding.tsx
+│   │   │   ├── components/
+│   │   │   │   ├── blog/
+│   │   │   │   │   ├── BlogPost.tsx
+│   │   │   │   │   ├── CreatePostModal.tsx
+│   │   │   │   │   ├── PostDetailModal.tsx
+│   │   │   │   ├── common/
+│   │   │   │   │   ├── BottomNav.tsx
+│   │   │   │   │   ├── footer.tsx
+│   │   │   │   │   ├── header.tsx
+│   │   │   │   │   ├── layout.tsx
+│   │   │   │   │   ├──ProfileRouteGuard.tsx
+│   │   │   │   ├── onboarding/
+│   │   │   │   │   ├── ActivityGoalsStep.tsx
+│   │   │   │   │   ├── AllergiesStep.tsx
+│   │   │   │   │   ├── BasicInfoStep.tsx
+│   │   │   │   │   ├── ProgressBar.tsx
+│   │   │   │   ├── profile/
+│   │   │   │   │   ├── HealthProfileSection.tsx
+│   │   │   │   │   ├── NutritionDashboard.tsx
+│   │   │   │   │   ├── ProfileTabs.tsx
+│   │   │   │   │   ├── SavedRecipes.tsx
+│   │   │   ├── recipe/
+│   │   │   │   ├── Filter.tsx
+│   │   │   │   ├── [id].tsx
+│   │   │   │   ├── RecipeCard.tsx
+│   │   │   │   ├── SearchHistory.tsx
+│   │   │   │   ├── SearchSuggestions.tsx
+│   │   │   ├── _app.tsx
+│   │   │   ├── _document.tsx
+│   │   │   ├── index.tsx
+│   │   │   ├── about.tsx
+│   │   │   ├── blog.tsx
+│   │   │   ├── privacy.tsx
+│   │   │   ├── profile.tsx
+│   │   │   ├── recipes.tsx
+│   │   │   ├── terms.tsx
+│   │   ├── styles/
+│   │   │   ├── globals.css
+│   │   ├── utils/
+│   │   │   ├── nutritionCalculator.ts
+│   │   │   ├── ingredientSuggestions.ts
+│   │   │   ├── exportToExcel.ts
+│   │   │   ├── dietaryConflicts.ts
+│   │   │   ├── searchConflictDetector.ts
+│   │   │   ├── useScrollReveal.ts
+│   ├── .gitignore
+│   ├── .env.local
+│   ├── components.json
+│   ├── eslint.config.mjs
+│   ├── next-env.d.ts
+│   ├── next.config.mjs
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── postcss.config.js
+│   ├── postcss.config.mjs
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── netlify.toml
+│   ├── README.md
+
+
+firebase_structure = """
+Collection: user
+├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
+│   ├── createdAt: "2025-04-13T16:10:55.025Z"
+│   ├── email: "khanh.trinh30112003@gmail.com"
+│   ├── fullName: "Khanh Trinh"
+│   ├── healthProfile:
+│   │   ├── activityLevel: "Very Active"
+│   │   ├── age: "26"
+│   │   ├── allergies:
+│   │   │   ├── "Shellfish"
+│   │   │   ├── "Dairy"
+│   │   │   └── "Sulfite"
+│   │   ├── calculatedNutrition:
+│   │   │   ├── bmr: 1363
+│   │   │   ├── caloriesPerMeal: 784
+│   │   │   ├── carbsPerMeal: 78
+│   │   │   ├── dailyCarbs: 235
+│   │   │   ├── dailyFat: 78
+│   │   │   ├── dailyProtein: 176
+│   │   │   ├── fatPerMeal: 26
+│   │   │   ├── proteinPerMeal: 59
+│   │   │   ├── targetCalories: 2351
+│   │   │   └── tdee: 2351
+│   │   ├── dietaryRestrictions:
+│   │   │   ├── "Dairy-Free"
+│   │   │   └── "Mediterranean"
+│   │   ├── gender: "Female"
+│   │   ├── goal: "Weight Maintenance"
+│   │   ├── height: "175"
+│   │   ├── macroDistribution: "Balanced"
+│   │   ├── mealsPerDay: 3
+│   │   └── weight: "56"
+│   ├── provider: "password"
+│   ├── role: "user"
+│   ├── savedRecipes:
+│   │   ├── 0:
+│   │   │   ├── calories: 717.58
+│   │   │   ├── carbs: 108.54
+│   │   │   ├── fat: 6.67
+│   │   │   ├── id: 653686
+│   │   │   ├── image: "https://img.spoonacular.com/recipes/653686-312x231.jpg"
+│   │   │   ├── protein: 68.49
+│   │   │   ├── readyInMinutes: 30
+│   │   │   ├── savedAt: "2025-04-13T16:12:44.222Z"
+│   │   │   ├── servings: 4
+│   │   │   └── title: "One Pot Meal: Shrimp Boil"
+│   │   ├── 1:
+│   │   │   ├── calories: 626.12
+│   │   │   ├── carbs: 44.38
+│   │   │   ├── fat: 35.58
+│   │   │   ├── id: 663931
+│   │   │   ├── image: "https://img.spoonacular.com/recipes/663931-312x231.jpg"
+│   │   │   ├── protein: 33.78
+│   │   │   ├── readyInMinutes: 30
+│   │   │   ├── savedAt: "2025-04-13T16:12:46.091Z"
+│   │   │   ├── servings: 4
+│   │   │   └── title: "Tuna Mexi Melts"
+│   └── status: "active"
+│   └── updatedAt: "2025-04-13T16:12:17.943Z"
+"""
+
+Collection: search_history
+├── Document ID: LwkuRa2l09QuvphvxlWcn1MSE3I2
+│   └── searches (array)
+│       └── 0:
+│           ├── filters:
+│           │   └── cuisine: ""
+│           ├── id: "1744560760189"
+│           ├── term: "fish"
+│           └── timestamp: "2025-04-13T16:12:40.189Z"
+│           1:
+│           ├── filters:
+│           │   └── cuisine: "asian"
+│           ├── id: "1744736982996"
+│           ├── term: "beef"
+│           └── timestamp: "2025-04-13T16:12:40.189Z"
+"""
+
+Collection: chats
+├── Document ID: r016Aj13RaTsZJbxYhY1
+│   ├── admins:
+│   │   └── 0: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
+│   ├── createdAt: "2025-04-19T12:01:10.000Z"
+│   ├── lastMessage:
+│   │   ├── text: "Hi"
+│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
+│   ├── status: "closed"
+│   ├── updatedAt: "2025-04-19T12:57:27.000Z"
+│   └── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│
+│   Subcollection: messages
+│   ├── Document ID: 1pvwmWy8iRBmHmyfMADa
+│   │   ├── imageUrl: null
+│   │   ├── isUser: false
+│   │   ├── senderId: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
+│   │   ├── senderName: "Khanh Trinh"
+│   │   ├── senderRole: "admin"
+│   │   ├── text: "Hi"
+│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
+"""
