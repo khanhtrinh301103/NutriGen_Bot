@@ -8,7 +8,8 @@ firebase use --add
 cd ../frontend
 npm install
 
-
+admin@gmail.com
+admin123
 
 public api key: (getRecipeDetails.js, enhanceSearchRecipe.js)
 7a6e45249407478683346a18f937ba47
