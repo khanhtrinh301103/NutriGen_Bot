@@ -24,6 +24,7 @@ NutriGen_Bot/
 │   │   ├── index.js
 │   │   ├── uploadChatPhoto.js
 │   │   ├── uploadPhoto.js
+│   │   ├── uploadPostImage.js
 │   │   ├── searchRecipe.js
 │   │   ├── firestore-debug.log
 │   │   ├── package-lock.json
@@ -74,6 +75,7 @@ NutriGen_Bot/
 │   │   │   ├── sendResetLinkEmail.js
 │   │   │   ├── signup.js
 │   │   │   ├── suggestionService.js
+│   │   │   ├── upload-post-image.js
 │   │   │   ├── useAuth.js
 │   │   ├── components\ui (shadcn UI files)
 │   │   ├── lib/
