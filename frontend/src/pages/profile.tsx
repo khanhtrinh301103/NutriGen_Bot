@@ -12,9 +12,6 @@ import ProfileTabs from './components/profile/ProfileTabs';
 import HealthProfileSection from './components/profile/HealthProfileSection';
 import NutritionDashboard from './components/profile/NutritionDashboard';
 import SavedRecipes from './components/profile/SavedRecipes';
-import MyPostsSection from './components/profile/MyPostsSection';
-import SavedPostsSection from './components/profile/SavedPostsSection';
-import ActivitySection from './components/profile/ActivitySection';
 
 const ProfilePage: React.FC = () => {
   const router = useRouter();
@@ -350,21 +347,6 @@ const ProfilePage: React.FC = () => {
 
             {activeTab === 'saved' && (
               <SavedRecipes user={user} />
-            )}
-            
-            {/* New Tab: My Posts */}
-            {activeTab === 'my-posts' && (
-              <MyPostsSection user={user} />
-            )}
-            
-            {/* New Tab: Saved Posts */}
-            {activeTab === 'saved-posts' && (
-              <SavedPostsSection user={user} />
-            )}
-            
-            {/* New Tab: Activity (Likes & Comments) */}
-            {activeTab === 'activity' && (
-              <ActivitySection user={user} />
             )}
           </div>
         </div>
