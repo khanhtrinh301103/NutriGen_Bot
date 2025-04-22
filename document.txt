@@ -22,13 +22,13 @@ NutriGen_Bot/
 │   │   ├── getNutritionProfile.js
 │   │   ├── getRecipeDetails.js
 │   │   ├── index.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── searchRecipe.js
 │   │   ├── uploadChatPhoto.js
 │   │   ├── uploadPhoto.js
 │   │   ├── uploadPostImage.js
-│   │   ├── searchRecipe.js
 │   │   ├── firestore-debug.log
-│   │   ├── package-lock.json
-│   │   ├── package.json
 │   ├── src/
 │   │   ├── conflictDetector.js
 │   │   ├── nutritionSearchProcessor.js
@@ -77,6 +77,7 @@ NutriGen_Bot/
 │   │   │   ├── suggestionService.js
 │   │   │   ├── upload-post-image.js
 │   │   │   ├── useAuth.js
+│   │   │   ├── userBlogService.js
 │   │   ├── components\ui (shadcn UI files)
 │   │   ├── lib/
 │   │   │   ├── utils.ts
@@ -142,9 +143,13 @@ NutriGen_Bot/
 │   │   │   │   │   ├── BasicInfoStep.tsx
 │   │   │   │   │   ├── ProgressBar.tsx
 │   │   │   │   ├── profile/
+│   │   │   │   │   ├── ActivityHistory.tsx
 │   │   │   │   │   ├── HealthProfileSection.tsx
+│   │   │   │   │   ├── MyPosts.tsx
 │   │   │   │   │   ├── NutritionDashboard.tsx
 │   │   │   │   │   ├── ProfileTabs.tsx
+│   │   │   │   │   ├── RecipeCard.tsx
+│   │   │   │   │   ├── SavedPosts.tsx
 │   │   │   │   │   ├── SavedRecipes.tsx
 │   │   │   ├── recipe/
 │   │   │   │   ├── Filter.tsx
