@@ -7,11 +7,15 @@ interface ProfileTabsProps {
 }
 
 const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => {
+
   // Define tabs
   const tabs = [
     { id: 'profile', label: 'Health Profile' },
     { id: 'nutrition', label: 'Nutrition Dashboard' },
-    { id: 'saved', label: 'Saved Recipes' }
+    { id: 'saved', label: 'Saved Recipes' },
+    { id: 'my-posts', label: 'My Posts' },
+    { id: 'saved-posts', label: 'Saved Posts' },
+    { id: 'activity', label: 'Activities' }
   ];
 
   // Logger for tab changes
