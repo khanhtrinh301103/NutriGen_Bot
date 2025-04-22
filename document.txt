@@ -219,7 +219,11 @@ Collection: user
 │   │   ├── macroDistribution: "Balanced"
 │   │   ├── mealsPerDay: 3
 │   │   └── weight: "56"
+│   ├── likedPosts:
+│   │   └── 0: "9xCbmxspqWm8RhdFOTDF"
 │   ├── provider: "password"
+│   ├── savedPosts:
+│   │   └── 0: "TdG0T8laVY7AUByHrp9M"
 │   ├── role: "user"
 │   ├── savedRecipes:
 │   │   ├── 0:
@@ -266,24 +270,63 @@ Collection: search_history
 """
 
 Collection: chats
-├── Document ID: r016Aj13RaTsZJbxYhY1
+├── Document ID: 4wglnbsn5Byvdo0mur1i
+│   ├── topic: "Anonymous Chat - Account Suspended"
+│   ├── userId: "anonymous"
+│   ├── status: "active"
+│   ├── createdAt: "2025-04-20T16:40:26+07:00"
+│   ├── updatedAt: "2025-04-20T16:40:27+07:00"
+│   ├── lastMessage:
+│   │   ├── text: "Hello, I'm having an issue with my account: ..."
+│   │   └── timestamp: "2025-04-20T16:40:27+07:00"
 │   ├── admins:
 │   │   └── 0: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
-│   ├── createdAt: "2025-04-19T12:01:10.000Z"
-│   ├── lastMessage:
-│   │   ├── text: "Hi"
-│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
-│   ├── status: "closed"
-│   ├── updatedAt: "2025-04-19T12:57:27.000Z"
-│   └── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│   └── anonymousUser:
+│       ├── name: "kent"
+│       ├── email: "kent@gmail.com"
+│       └── issue: "Account Suspended"
 │
 │   Subcollection: messages
-│   ├── Document ID: 1pvwmWy8iRBmHmyfMADa
+│   ├── Document ID: 9qphXOriswX85wMOj9Ae
+│   │   ├── senderId: "ATXqoIVQY2WA4Xob64NEMm5i3Po1"
+│   │   ├── senderName: "kent"
+│   │   ├── senderRole: "user"
+│   │   ├── isUser: true
 │   │   ├── imageUrl: null
-│   │   ├── isUser: false
-│   │   ├── senderId: "GDzHMZIEQNP8leaVU4XCYQbCcMz1"
-│   │   ├── senderName: "Khanh Trinh"
-│   │   ├── senderRole: "admin"
-│   │   ├── text: "Hi"
-│   │   └── timestamp: "2025-04-19T12:56:29.000Z"
-"""
+│   │   ├── text: "Hello, I'm having an issue with my account: ..."
+│   │   └── timestamp: "2025-04-20T16:40:27+07:00"
+│   └── Document ID: OAYhdE5D5cepobkhjmTu
+│       ├── senderId: "system"
+│       ├── senderName: "System"
+│       ├── senderRole: "system"
+│       ├── isUser: false
+│       ├── imageUrl: null
+│       ├── text: "Anonymous user kent (kent@gmail.com) has started..."
+│       └── timestamp: "2025-04-20T16:40:27+07:00"
+
+
+Collection: posts
+├── Document ID: TdG0T8laVY7AUByHrp9M
+│   ├── caption: "Hot, crunchy, salty, and begging for some sauce!..."
+│   ├── createdAt: "2025-04-23T00:00:36+07:00"
+│   ├── images: [Array of 5 image URLs]
+│   ├── isDeleted: false
+│   ├── saved: false
+│   ├── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│   ├── userName: "Khanh Trinh"
+│   └── userAvatar: "https://firebasestorage.googleapis.com/..."
+│
+│   Subcollection: comments
+│   └── Document ID: 1l46ZNlkojJvw8TIYCCV
+│       ├── text: "is it nice?"
+│       ├── timestamp: "2025-04-23T00:01:02+07:00"
+│       ├── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│       ├── userName: "Khanh Trinh"
+│       └── userAvatar: "https://firebasestorage.googleapis.com/..."
+│
+│   Subcollection: likes
+│   └── Document ID: KJU8FOwBJW5IWdBvITuC
+│       ├── timestamp: "2025-04-23T00:24:26+07:00"
+│       ├── userId: "PVjkXZ4Ri2TDK0xSJ2S2JlaHiwz1"
+│       ├── userName: "Khanh Trinh"
+│       └── userAvatar: "https://firebasestorage.googleapis.com/..."
