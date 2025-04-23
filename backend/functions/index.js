@@ -7,6 +7,7 @@ const uploadPostImageRoute = require('./uploadPostImage'); // Thêm route mới 
 const enhancedSearchRecipeRoute = require('./enhanceSearchRecipe');
 const getRecipeDetailsRoute = require('./getRecipeDetails');
 const getNutritionProfileRoute = require('./getNutritionProfile');
+const deletePostImagesRouter = require('./deletePostImages'); 
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use('/api', uploadPostImageRoute); // Thêm route mới
 app.use('/api', enhancedSearchRecipeRoute);
 app.use('/api', getRecipeDetailsRoute);
 app.use('/api', getNutritionProfileRoute);
+app.use('/api', deletePostImagesRouter);
 
 const PORT = 5000;
 app.listen(PORT, () => {

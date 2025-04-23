@@ -93,6 +93,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                     Chat Management
                   </a>
                 </Link>
+                <Link href="/adminUI/PostsManagement" legacyBehavior>
+                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
+                    router.pathname === '/adminUI/PostsManagement' 
+                      ? 'text-white' 
+                      : 'text-green-100 hover:text-white'
+                  }`} style={{ backgroundColor: router.pathname === '/adminUI/PostsManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
+                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                    Blog Management
+                  </a>
+                </Link>
               </nav>
               <div className="mt-auto">
                 <button
@@ -191,6 +203,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                   Chat Management
                 </a>
               </Link>
+              <Link href="/adminUI/PostsManagement" legacyBehavior>
+                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                  router.pathname === '/adminUI/PostsManagement' 
+                    ? 'text-white' 
+                    : 'text-green-100 hover:text-white'
+                }`} style={{ backgroundColor: router.pathname === '/adminUI/PostsManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
+                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                  </svg>
+                  Blog Management
+                </a>
+              </Link>
               <button
                 onClick={handleSignOut}
                 className="w-full group flex items-center px-2 py-2 text-base font-medium text-green-100 rounded-md hover:text-white"
@@ -280,6 +304,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
                 <span className="text-xs mt-1">Manage</span>
+              </a>
+            </Link>
+            
+            <Link href="/adminUI/PostsManagement" legacyBehavior>
+              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/PostsManagement' ? 'text-green-600' : 'text-gray-600'}`}>
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                </svg>
+                <span className="text-xs mt-1">Blog</span>
               </a>
             </Link>
           </div>

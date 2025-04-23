@@ -30,6 +30,21 @@ Check document.txt for workspace of developers
 
 
 
+I make a lot of blended, smooth green sauces – but this lady is a whole new vibe. Spoonable, chunky, and fun. She is the exact thing I didn’t realize my smoky grilled chicken was needing.
+
+The combination of avocado, pistachio, chives, and lemon is like a mashup of guacamole, gremolata, and springtime brightness and it is SO good.
+
+I know some of you are going to look at the sauce ingredients and think you want a lime in there, but give the lemon a chance. The lemon with the chives and the roasty pistachios… it’s so fresh and unique. I want this for you.
+
+
+
+
+OOH BABY these are so good! My husband’s favorite dessert is carrot cake, so the bar is high for us to have a really solid house-favorite carrot cake cupcake recipe.
+
+(I’m also very attached to this carrot cake coffee cake, which is a bit more brunchy, so we now have options.)
+
+They are fluffy and plush with a nice little domed top, but they are also dense and buttery-ish enough to feel like a proper carrot cake!
+
 
 
 Working scope of developer:

@@ -195,7 +195,7 @@ const CreatePostModal = ({ onClose, onCreatePost }) => {
                   disabled={isUploading}
                 />
               </label>
-              <p className="text-xs text-gray-500 mt-1">Up to 5 images will be displayed in the post preview</p>
+              <p className="text-xs text-gray-500 mt-1">Up to 4 images will be displayed in the post preview</p>
             </div>
           </div>
           

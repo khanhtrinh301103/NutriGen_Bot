@@ -18,6 +18,7 @@ NutriGen_Bot/
 │   │   │   ├── index.js
 │   │   ├── node_modules/
 │   │   ├── .gitignore
+│   │   ├── deletePostImages.js
 │   │   ├── enhanceSearchRecipe.js
 │   │   ├── getNutritionProfile.js
 │   │   ├── getRecipeDetails.js
@@ -58,6 +59,7 @@ NutriGen_Bot/
 │   │   │   │   ├── adminChatService.js
 │   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
+│   │   │   │   ├── postsManagementService.js
 │   │   │   │   ├── searchManagement.js
 │   │   │   │   ├── UserDetailsService.js
 │   │   │   │   ├── UserManagement.js
@@ -93,6 +95,8 @@ NutriGen_Bot/
 │   │   │   │   │   │   ├── ChatDetailDialog.tsx
 │   │   │   │   │   │   ├── ChatDetailMessage.tsx
 │   │   │   │   │   │   ├── ChatTableRow.tsx
+│   │   │   │   │   ├── PostsManagement
+│   │   │   │   │   │   ├── PostDetailDialog.tsx
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   │   ├── ChatArea.tsx
