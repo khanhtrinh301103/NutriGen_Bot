@@ -1,19 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Link from "next/link";
-import { auth } from "../../../api/firebaseConfig";
 import { useRouter } from "next/router";
+import { useAuth } from "../../../api/useAuth";
 
 const Header = () => {
-  const [user, setUser] = useState(null);
+  const { user, userRole } = useAuth();
   const router = useRouter();
-
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
-      setUser(currentUser);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const goToProfile = () => {
     router.push("/profile");
@@ -25,6 +17,9 @@ const Header = () => {
     { name: "Blog", path: "/blog", icon: "✍️" },
     { name: "About", path: "/about", icon: "ℹ️" },
   ];
+
+  // Debug log to track user info
+  console.log("📱 [Header] User info:", user?.displayName, user?.email, userRole);
 
   return (
     <header className="header shadow-md bg-green-600 text-white sticky top-0 z-50">
@@ -64,6 +59,10 @@ const Header = () => {
                   src={user.photoURL}
                   alt="Profile"
                   className="h-8 w-8 rounded-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = "https://via.placeholder.com/40?text=U";
+                  }}
                 />
               ) : (
                 <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-700 font-semibold">
