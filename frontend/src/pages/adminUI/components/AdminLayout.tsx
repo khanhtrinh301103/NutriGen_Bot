@@ -1,324 +1,196 @@
-// frontend/src/pages/adminUI/components/AdminLayout.tsx
 import React, { useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { signOutUser } from '../../../api/authService';
+import { motion, LayoutGroup, AnimatePresence } from 'framer-motion';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
   title?: string;
 }
 
+const navItems = [
+  { path: '/adminUI', label: 'Dashboard', icon: 'M3 10l6 6L21 4' },
+  { path: '/adminUI/UserManagement', label: 'Users', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
+  { path: '/adminUI/SearchManagement', label: 'Search', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
+  { path: '/adminUI/AssistantChat', label: 'Chatbot', icon: 'M8 10h.01 M12 10h.01 M16 10h.01 M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
+  { path: '/adminUI/ChatManagement', label: 'Manage Chat', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l.123.38a1 1 0 00.952.69h.39c.969 0 1.371 1.24.588 1.81l-.316.23a1 1 0 000 1.558l.316.23c.783.57.38 1.81-.588 1.81h-.39a1 1 0 00-.952.69l-.123.38c-.3.921-1.603.921-1.902 0l-.123-.38a1 1 0 00-.952-.69h-.39c-.969 0-1.371-1.24-.588-1.81l.316-.23a1 1 0 000-1.558l-.316-.23c-.783-.57-.38-1.81.588-1.81h.39a1 1 0 00.952-.69l.123-.38z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+  { path: '/adminUI/PostsManagement', label: 'Blog Posts', icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9 M7 16h6M7 8h6v4H7V8z' }
+];
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dashboard' }) => {
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const [isMobileOpen, setMobileOpen] = useState(false);
+
   const handleSignOut = async () => {
     try {
       await signOutUser();
       router.push('/auth/login');
-    } catch (error) {
-      console.error('Error signing out:', error);
+    } catch (err) {
+      console.error('Sign out error:', err);
     }
   };
-  
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* Sidebar - Desktop */}
-      <div className="hidden md:flex md:flex-shrink-0">
-        <div className="flex flex-col w-64">
-          <div className="flex flex-col flex-grow pt-5 overflow-y-auto border-r" style={{ backgroundColor: '#4b7e53' }}>
-            <div className="flex items-center flex-shrink-0 px-4">
-              <span className="text-white font-bold text-xl">NutriGen Admin</span>
-            </div>
-            <div className="flex flex-col flex-grow px-4 mt-5">
-              <nav className="flex-1 space-y-1" style={{ backgroundColor: '#4b7e53' }}>
-                <Link href="/adminUI" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
-                    </svg>
-                    Dashboard
-                  </a>
-                </Link>
-                <Link href="/adminUI/UserManagement" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/UserManagement' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/UserManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Users
-                  </a>
-                </Link>
-                <Link href="/adminUI/SearchManagement" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/SearchManagement' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/SearchManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    Search Management
-                  </a>
-                </Link>
-                <Link href="/adminUI/AssistantChat" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/AssistantChat' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/AssistantChat' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                    Assistant Chat
-                  </a>
-                </Link>
-                <Link href="/adminUI/ChatManagement" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/ChatManagement' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/ChatManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                    </svg>
-                    Chat Management
-                  </a>
-                </Link>
-                <Link href="/adminUI/PostsManagement" legacyBehavior>
-                  <a className={`group flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                    router.pathname === '/adminUI/PostsManagement' 
-                      ? 'text-white' 
-                      : 'text-green-100 hover:text-white'
-                  }`} style={{ backgroundColor: router.pathname === '/adminUI/PostsManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                    <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                    </svg>
-                    Blog Management
-                  </a>
-                </Link>
-              </nav>
-              <div className="mt-auto">
-                <button
-                  onClick={handleSignOut}
-                  className="group flex items-center px-4 py-2 text-sm font-medium text-green-100 rounded-md hover:text-white"
-                  style={{ transition: 'all 0.2s' }}
-                >
-                  <svg className="mr-3 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  Sign out
-                </button>
-              </div>
-            </div>
+    <LayoutGroup>
+      <div className="flex h-screen bg-gray-50">
+        {/* Desktop Sidebar */}
+        <motion.aside
+          layout
+          initial={{ x: -300 }}
+          animate={{ x: 0 }}
+          exit={{ x: -300 }}
+          transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+          className="hidden md:flex flex-col w-64 bg-white shadow-lg"
+        >
+          <div className="px-6 py-4 border-b">
+            <h2 className="text-2xl font-bold text-green-700">NutriGen Admin</h2>
           </div>
-        </div>
-      </div>
-
-      {/* Mobile menu */}
-      <div className="md:hidden fixed inset-0 flex z-40" style={{ display: isMobileMenuOpen ? 'flex' : 'none' }}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setIsMobileMenuOpen(false)}></div>
-        <div className="relative flex-1 flex flex-col max-w-xs w-full" style={{ backgroundColor: '#4b7e53' }}>
-          <div className="absolute top-0 right-0 -mr-12 pt-2">
-            <button
-              className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-              onClick={() => setIsMobileMenuOpen(false)}
+          <nav className="flex-1 overflow-y-auto mt-4">
+            {navItems.map(item => {
+              const active = router.pathname === item.path;
+              return (
+                <Link href={item.path} key={item.path} passHref>
+                  <motion.a
+                    layout
+                    whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
+                    whileTap={{ scale: 0.97 }}
+                    animate={{ backgroundColor: active ? '#e3fcec' : '#fff' }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                    className={`flex items-center px-6 py-3 mx-2 my-1 rounded-lg cursor-pointer text-gray-700 ${
+                      active ? 'font-semibold' : 'font-medium'
+                    }`}
+                  >
+                    <svg
+                      className="h-6 w-6 mr-3 text-green-500"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                    </svg>
+                    <span className="flex-1">{item.label}</span>
+                  </motion.a>
+                </Link>
+              );
+            })}
+          </nav>
+          <div className="px-6 py-4 border-t">
+            <motion.button
+              layout
+              whileHover={{ scale: 1.03, backgroundColor: '#fde8e8' }}
+              whileTap={{ scale: 0.97 }}
+              transition={{ type: 'spring', stiffness: 180 }}
+              onClick={handleSignOut}
+              className="flex items-center w-full px-4 py-2 rounded-lg text-red-600 font-medium"
             >
-              <span className="sr-only">Close sidebar</span>
-              <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
-            <div className="flex-shrink-0 flex items-center px-4">
-              <span className="text-white font-bold text-xl">NutriGen Admin</span>
-            </div>
-            <nav className="mt-5 px-2 space-y-1">
-              <Link href="/adminUI" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
-                  </svg>
-                  Dashboard
-                </a>
-              </Link>
-              <Link href="/adminUI/UserManagement" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/UserManagement' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/UserManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  Users
-                </a>
-              </Link>
-              <Link href="/adminUI/SearchManagement" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/SearchManagement' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/SearchManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  Search Management
-                </a>
-              </Link>
-              <Link href="/adminUI/AssistantChat" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/AssistantChat' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/AssistantChat' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                  </svg>
-                  Assistant Chat
-                </a>
-              </Link>
-              <Link href="/adminUI/ChatManagement" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/ChatManagement' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/ChatManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                  </svg>
-                  Chat Management
-                </a>
-              </Link>
-              <Link href="/adminUI/PostsManagement" legacyBehavior>
-                <a className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                  router.pathname === '/adminUI/PostsManagement' 
-                    ? 'text-white' 
-                    : 'text-green-100 hover:text-white'
-                }`} style={{ backgroundColor: router.pathname === '/adminUI/PostsManagement' ? '#3a6442' : 'transparent', transition: 'all 0.2s' }}>
-                  <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                  </svg>
-                  Blog Management
-                </a>
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="w-full group flex items-center px-2 py-2 text-base font-medium text-green-100 rounded-md hover:text-white"
-                style={{ transition: 'all 0.2s' }}
+              <svg
+                className="h-5 w-5 mr-2"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
               >
-                <svg className="mr-4 h-6 w-6 text-green-200" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                </svg>
-                Sign out
-              </button>
-            </nav>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
+              </svg>
+              Sign Out
+            </motion.button>
           </div>
-        </div>
-      </div>
+        </motion.aside>
 
-      {/* Main content area */}
-      <div className="flex flex-col flex-1 w-0 overflow-hidden">
-        {/* Top navigation - mobile only */}
-        <div className="md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-white shadow">
-          <button
-            className="-ml-0.5 -mt-0.5 h-12 w-12 inline-flex items-center justify-center rounded-md text-gray-500 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-green-500"
-            onClick={() => setIsMobileMenuOpen(true)}
+        {/* Mobile Toggler */}
+        <div className="md:hidden fixed top-4 left-4 z-50">
+          <motion.button
+            onClick={() => setMobileOpen(true)}
+            whileHover={{ scale: 1.1 }}
+            transition={{ type: 'spring', stiffness: 300 }}
+            className="p-2 bg-white rounded-md shadow-lg"
           >
-            <span className="sr-only">Open sidebar</span>
-            <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-6 w-6 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
-          </button>
+          </motion.button>
         </div>
 
-        {/* Page header */}
-        <header className="bg-white shadow">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-          </div>
-        </header>
+        {/* Mobile Sidebar */}
+        <AnimatePresence>
+          {isMobileOpen && (
+            <motion.aside
+              layout
+              initial={{ x: -300 }}
+              animate={{ x: 0 }}
+              exit={{ x: -300 }}
+              transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+              className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg md:hidden"
+            >
+              <div className="px-6 py-4 border-b flex justify-between items-center">
+                <h2 className="text-xl font-bold text-green-700">Admin</h2>
+                <motion.button onClick={() => setMobileOpen(false)} whileHover={{ scale: 1.1 }}>
+                  <svg className="h-6 w-6 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </motion.button>
+              </div>
+              <nav className="mt-4">
+                {navItems.map(item => (
+                  <Link href={item.path} key={item.path} passHref>
+                    <motion.a
+                      layout
+                      onClick={() => setMobileOpen(false)}
+                      whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                      className="flex items-center px-6 py-3 mx-2 rounded-lg text-gray-700"
+                    >
+                      <svg
+                        className="h-5 w-5 mr-3 text-green-500"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      </svg>
+                      {item.label}
+                    </motion.a>
+                  </Link>
+                ))}
+              </nav>
+              <div className="absolute bottom-0 w-full px-6 py-4 border-t">
+                <motion.button
+                  layout
+                  whileHover={{ scale: 1.03, backgroundColor: '#fde8e8' }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 180 }}
+                  onClick={handleSignOut}
+                  className="flex items-center w-full px-4 py-2 rounded-lg text-red-600 font-medium"
+                >
+                  <svg
+                    className="h-5 w-5 mr-2"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
+                  </svg>
+                  Sign Out
+                </motion.button>
+              </div>
+            </motion.aside>
+          )}
+        </AnimatePresence>
 
-        {/* Main content */}
-        <main className="flex-1 relative overflow-y-auto focus:outline-none pb-16 md:pb-0">
-          <div className="py-6">
-            {children}
-          </div>
-        </main>
-        
-        {/* Bottom Navigation for Mobile */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white shadow-lg border-t border-gray-200 z-40">
-          <div className="flex justify-around">
-            <Link href="/adminUI" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10l6 6L21 4" />
-                </svg>
-                <span className="text-xs mt-1">Dashboard</span>
-              </a>
-            </Link>
-            
-            <Link href="/adminUI/UserManagement" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/UserManagement' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="text-xs mt-1">Users</span>
-              </a>
-            </Link>
-            
-            <Link href="/adminUI/SearchManagement" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/SearchManagement' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <span className="text-xs mt-1">Search</span>
-              </a>
-            </Link>
-            
-            <Link href="/adminUI/AssistantChat" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/AssistantChat' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                </svg>
-                <span className="text-xs mt-1">Chat</span>
-              </a>
-            </Link>
-
-            <Link href="/adminUI/ChatManagement" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/ChatManagement' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-                <span className="text-xs mt-1">Manage</span>
-              </a>
-            </Link>
-            
-            <Link href="/adminUI/PostsManagement" legacyBehavior>
-              <a className={`flex flex-col items-center py-3 px-2 ${router.pathname === '/adminUI/PostsManagement' ? 'text-green-600' : 'text-gray-600'}`}>
-                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
-                <span className="text-xs mt-1">Blog</span>
-              </a>
-            </Link>
-          </div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-auto">
+          <header className="bg-white shadow px-6 py-4">
+            <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+          </header>
+          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
         </div>
       </div>
-    </div>
+    </LayoutGroup>
   );
 };
 
