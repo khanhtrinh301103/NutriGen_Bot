@@ -7,6 +7,7 @@ import CreatePostModal from '../pages/components/blog/CreatePostModal';
 import PostDetailModal from '../pages/components/blog/PostDetailModal';
 import { getAllPosts, addComment, toggleLikePost, toggleSavePost, getPostComments, getPostLikes, isPostLiked, isPostSaved } from '../api/blogService';
 import { auth } from '../api/firebaseConfig';
+import { motion, AnimatePresence } from 'framer-motion'; // Import Framer Motion
 
 const BlogPage = () => {
   const router = useRouter();
@@ -20,6 +21,7 @@ const BlogPage = () => {
   const [likes, setLikes] = useState([]);
   const [isPostLikedByUser, setIsPostLikedByUser] = useState(false);
   const [isPostSavedByUser, setIsPostSavedByUser] = useState(false);
+  const [animateItems, setAnimateItems] = useState(false);
   
   // Load all blog posts on component mount
   useEffect(() => {
@@ -28,8 +30,29 @@ const BlogPage = () => {
         setLoading(true);
         console.log('Fetching posts...');
         const posts = await getAllPosts();
-        setBlogPosts(posts);
+        
+        // Check saved status for each post if user is logged in
+        if (auth.currentUser) {
+          const postsWithSavedStatus = await Promise.all(posts.map(async (post) => {
+            // Check if the post is saved by the current user
+            const saved = await isPostSaved(post.id);
+            console.log(`Post ${post.id} saved status: ${saved}`);
+            return {
+              ...post,
+              saved
+            };
+          }));
+          setBlogPosts(postsWithSavedStatus);
+        } else {
+          setBlogPosts(posts);
+        }
+        
         setLoading(false);
+        
+        // Start animation for posts after a short delay
+        setTimeout(() => {
+          setAnimateItems(true);
+        }, 100);
       } catch (err) {
         console.error('Error fetching posts:', err);
         // Hiển thị thông báo lỗi cụ thể hơn
@@ -43,6 +66,19 @@ const BlogPage = () => {
     };
 
     fetchPosts();
+    
+    // Add auth state change listener to refresh saved posts when user logs in/out
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        // User logged in, refresh posts to show correct saved status
+        fetchPosts();
+      } else {
+        // User logged out, reset saved status
+        setBlogPosts(prev => prev.map(post => ({...post, saved: false})));
+      }
+    });
+    
+    return () => unsubscribe();
   }, []);
   
   // Check authentication status
@@ -77,13 +113,16 @@ const BlogPage = () => {
           const liked = await isPostLiked(selectedPost.id);
           const saved = await isPostSaved(selectedPost.id);
           
+          console.log(`Modal: Post ${selectedPost.id} saved status: ${saved}, liked status: ${liked}`);
+          
           setIsPostLikedByUser(liked);
           setIsPostSavedByUser(saved);
           
-          // Đồng bộ trạng thái liked giữa selectedPost và blogPosts
+          // Đồng bộ trạng thái liked và saved giữa selectedPost và blogPosts
           setSelectedPost(prev => ({
             ...prev,
-            liked
+            liked,
+            saved
           }));
         } catch (err) {
           console.error('Error fetching post details:', err);
@@ -106,7 +145,30 @@ const BlogPage = () => {
       
       // Refresh posts after creation to include the new post
       const refreshedPosts = await getAllPosts();
-      setBlogPosts(refreshedPosts);
+      
+      // Check saved status for each post if user is logged in
+      if (auth.currentUser) {
+        const postsWithSavedStatus = await Promise.all(refreshedPosts.map(async (post) => {
+          const saved = await isPostSaved(post.id);
+          return {
+            ...post,
+            saved
+          };
+        }));
+        
+        // Reset animation state before updating posts
+        setAnimateItems(false);
+        setBlogPosts(postsWithSavedStatus);
+      } else {
+        // Reset animation state before updating posts
+        setAnimateItems(false);
+        setBlogPosts(refreshedPosts);
+      }
+      
+      // Re-trigger animations after posts update
+      setTimeout(() => {
+        setAnimateItems(true);
+      }, 100);
       
       setShowCreateModal(false);
     } catch (error) {
@@ -127,6 +189,7 @@ const BlogPage = () => {
       
       // Toggle like status
       const isNowLiked = await toggleLikePost(postId);
+      console.log(`Post ${postId} is now ${isNowLiked ? 'liked' : 'unliked'}`);
       
       // Đồng bộ luôn trạng thái like của bài viết được chọn
       if (selectedPost && selectedPost.id === postId) {
@@ -146,8 +209,8 @@ const BlogPage = () => {
       }
       
       // Update the post in the blogPosts list
-      setBlogPosts(prevPosts => 
-        prevPosts.map(post => {
+      setBlogPosts(prevPosts => {
+        const updatedPosts = prevPosts.map(post => {
           if (post.id === postId) {
             // Adjust like count based on action
             const newLikesCount = isNowLiked
@@ -161,8 +224,14 @@ const BlogPage = () => {
             };
           }
           return post;
-        })
-      );
+        });
+        
+        console.log('Updated blogPosts after like action:', 
+          updatedPosts.map(p => ({ id: p.id, liked: p.liked }))
+        );
+        
+        return updatedPosts;
+      });
     } catch (error) {
       console.error('Error toggling like for post:', error);
     }
@@ -170,7 +239,7 @@ const BlogPage = () => {
   
   const handleSavePost = async (postId) => {
     try {
-      console.log('Saving post:', postId);
+      console.log('Toggling save for post:', postId);
       
       // Check if user is logged in
       if (!auth.currentUser) {
@@ -180,9 +249,11 @@ const BlogPage = () => {
       
       // Toggle save status
       const isNowSaved = await toggleSavePost(postId);
+      console.log(`Post ${postId} is now ${isNowSaved ? 'saved' : 'unsaved'}`);
       
       // Update UI based on result
       if (selectedPost && selectedPost.id === postId) {
+        console.log(`Updating selected post ${postId} saved status to ${isNowSaved}`);
         setIsPostSavedByUser(isNowSaved);
         setSelectedPost(prev => ({
           ...prev,
@@ -191,19 +262,26 @@ const BlogPage = () => {
       }
       
       // Update the post in the blogPosts list
-      setBlogPosts(prevPosts =>
-        prevPosts.map(post => {
+      setBlogPosts(prevPosts => {
+        const updatedPosts = prevPosts.map(post => {
           if (post.id === postId) {
+            console.log(`Updating post ${postId} in blogPosts list, saved status: ${isNowSaved}`);
             return {
               ...post,
               saved: isNowSaved
             };
           }
           return post;
-        })
-      );
+        });
+        
+        console.log('Updated blogPosts after save action:', 
+          updatedPosts.map(p => ({ id: p.id, saved: p.saved }))
+        );
+        
+        return updatedPosts;
+      });
     } catch (error) {
-      console.error('Error saving post:', error);
+      console.error('Error toggling save for post:', error);
     }
   };
   
@@ -258,6 +336,59 @@ const BlogPage = () => {
     }
   };
 
+  // Animation variants for items
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { y: 20, opacity: 0 },
+    show: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 260, 
+        damping: 20 
+      }
+    }
+  };
+  
+  // Animation for the page title
+  const titleVariants = {
+    hidden: { y: -50, opacity: 0 },
+    visible: { 
+      y: 0, 
+      opacity: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 30,
+        duration: 0.7 
+      }
+    }
+  };
+  
+  // Button hover animation
+  const buttonVariants = {
+    hover: { 
+      scale: 1.05,
+      backgroundColor: "#22c55e", // Green-600
+      boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.1)",
+      transition: { duration: 0.3 }
+    },
+    tap: { 
+      scale: 0.95 
+    }
+  };
+
   return (
     <>
       <Head>
@@ -267,9 +398,22 @@ const BlogPage = () => {
       <Layout>
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-bold">NutriGen Community</h1>
-            <button 
-              className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            <motion.h1 
+              className="text-3xl font-bold"
+              initial="hidden"
+              animate="visible"
+              variants={titleVariants}
+            >
+              NutriGen Community
+            </motion.h1>
+            <motion.button 
+              className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              whileHover="hover"
+              whileTap="tap"
+              variants={buttonVariants}
               onClick={() => {
                 if (!auth.currentUser) {
                   router.push('/auth/login');
@@ -279,107 +423,180 @@ const BlogPage = () => {
               }}
             >
               Create Your Post
-            </button>
+            </motion.button>
           </div>
           
           {/* Loading State */}
-          {loading && (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
-            </div>
-          )}
+          <AnimatePresence>
+            {loading && (
+              <motion.div 
+                className="flex justify-center items-center py-12"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Error State */}
-          {error && (
-            <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-6">
-              <p>{error}</p>
-              <button 
-                className="mt-2 text-red-600 underline"
-                onClick={() => window.location.reload()}
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                className="bg-red-100 text-red-700 p-4 rounded-lg mb-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.4 }}
               >
-                Try Again
-              </button>
-            </div>
-          )}
+                <p>{error}</p>
+                <motion.button 
+                  className="mt-2 text-red-600 underline"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Empty State */}
-          {!loading && !error && blogPosts.length === 0 && (
-            <div className="text-center py-12">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <h3 className="text-xl font-semibold mb-2">No Posts Yet</h3>
-              <p className="text-gray-600 mb-4">Be the first to share your nutrition journey!</p>
-              <button 
-                className="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-                onClick={() => {
-                  if (!auth.currentUser) {
-                    router.push('/auth/login');
-                  } else {
-                    setShowCreateModal(true);
-                  }
+          <AnimatePresence>
+            {!loading && !error && blogPosts.length === 0 && (
+              <motion.div 
+                className="text-center py-12"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ 
+                  type: "spring",
+                  stiffness: 300,
+                  damping: 25
                 }}
               >
-                Create a Post
-              </button>
-            </div>
-          )}
+                <motion.svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-16 w-16 mx-auto text-gray-400 mb-4" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                  initial={{ rotateY: 0 }}
+                  animate={{ rotateY: 360 }}
+                  transition={{ duration: 1.5, delay: 0.5 }}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </motion.svg>
+                <motion.h3 
+                  className="text-xl font-semibold mb-2"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7 }}
+                >
+                  No Posts Yet
+                </motion.h3>
+                <motion.p 
+                  className="text-gray-600 mb-4"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                >
+                  Be the first to share your nutrition journey!
+                </motion.p>
+                <motion.button 
+                  className="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 1.1 }}
+                  whileHover="hover"
+                  whileTap="tap"
+                  variants={buttonVariants}
+                  onClick={() => {
+                    if (!auth.currentUser) {
+                      router.push('/auth/login');
+                    } else {
+                      setShowCreateModal(true);
+                    }
+                  }}
+                >
+                  Create a Post
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
           
           {/* Blog Posts */}
           {!loading && !error && blogPosts.length > 0 && (
-            <div className="space-y-6">
-              {blogPosts.map(post => (
-                <BlogPost 
-                  key={post.id} 
-                  post={{
-                    ...post,
-                    likes: post.likesCount || 0,
-                    comments: post.commentsCount || 0,
-                    saved: post.saved || false,
-                    liked: post.liked || false, // Thêm trạng thái liked từ server
-                    // Ensure post has all properties expected by the component
-                    images: post.images || []
-                  }}
-                  onPostClick={() => handlePostClick(post)}
-                  onLike={() => handleLikePost(post.id)}
-                  onSave={() => handleSavePost(post.id)}
-                  onComment={(comment) => handleAddComment(post.id, comment)}
-                />
+            <motion.div 
+              className="space-y-6"
+              variants={containerVariants}
+              initial="hidden"
+              animate={animateItems ? "show" : "hidden"}
+            >
+              {blogPosts.map((post, index) => (
+                <motion.div 
+                  key={post.id}
+                  variants={itemVariants} 
+                  custom={index}
+                  layoutId={`post-${post.id}`}
+                  className="transform-gpu"
+                >
+                  <BlogPost 
+                    post={{
+                      ...post,
+                      likes: post.likesCount || 0,
+                      comments: post.commentsCount || 0,
+                      saved: post.saved || false,
+                      liked: post.liked || false,
+                      images: post.images || []
+                    }}
+                    onPostClick={() => handlePostClick(post)}
+                    onLike={() => handleLikePost(post.id)}
+                    onSave={() => handleSavePost(post.id)}
+                    onComment={(comment) => handleAddComment(post.id, comment)}
+                  />
+                </motion.div>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
         
         {/* Create Post Modal */}
-        {showCreateModal && (
-          <CreatePostModal 
-            onClose={() => setShowCreateModal(false)} 
-            onCreatePost={handleCreatePost}
-          />
-        )}
+        <AnimatePresence>
+          {showCreateModal && (
+            <CreatePostModal 
+              onClose={() => setShowCreateModal(false)} 
+              onCreatePost={handleCreatePost}
+            />
+          )}
+        </AnimatePresence>
         
         {/* Post Detail Modal */}
-        {showDetailModal && selectedPost && (
-          <PostDetailModal 
-            post={{
-              ...selectedPost,
-              likes: selectedPost.likesCount || 0,
-              likesData: likes || [],
-              comments: comments || [],
-              saved: isPostSavedByUser,
-              liked: isPostLikedByUser || selectedPost.liked // Sử dụng trạng thái từ selectedPost nếu cần
-            }}
-            onClose={() => {
-              setShowDetailModal(false);
-              setSelectedPost(null);
-              setComments([]);
-              setLikes([]);
-            }}
-            onLike={() => handleLikePost(selectedPost.id)}
-            onSave={() => handleSavePost(selectedPost.id)}
-            onComment={(comment) => handleAddComment(selectedPost.id, comment)}
-          />
-        )}
+        <AnimatePresence>
+          {showDetailModal && selectedPost && (
+            <PostDetailModal 
+              post={{
+                ...selectedPost,
+                likes: selectedPost.likesCount || 0,
+                likesData: likes || [],
+                comments: comments || [],
+                saved: isPostSavedByUser,
+                liked: isPostLikedByUser || selectedPost.liked
+              }}
+              onClose={() => {
+                setShowDetailModal(false);
+                setSelectedPost(null);
+                setComments([]);
+                setLikes([]);
+              }}
+              onLike={() => handleLikePost(selectedPost.id)}
+              onSave={() => handleSavePost(selectedPost.id)}
+              onComment={(comment) => handleAddComment(selectedPost.id, comment)}
+            />
+          )}
+        </AnimatePresence>
       </Layout>
     </>
   );
