@@ -1,7 +1,7 @@
 // frontend/src/pages/components/profile/ActivityHistory.tsx
 import React, { useState, useEffect } from 'react';
 import { getLikedPosts, getCommentedPosts } from '../../../api/userBlogService';
-import { toggleLikePost, toggleSavePost, addComment } from '../../../api/blogService';
+import { toggleLikePost, toggleSavePost, addComment, isPostSaved } from '../../../api/blogService';
 import { format, formatDistance } from 'date-fns';
 import { auth } from '../../../api/firebaseConfig';
 import { useRouter } from 'next/router';
@@ -20,6 +20,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
   const [selectedPost, setSelectedPost] = useState<any | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [newComment, setNewComment] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0); // Add refresh key to force re-render
 
   // Fetch activity data based on active tab
   useEffect(() => {
@@ -30,16 +31,34 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
         
         if (activeTab === 'likes') {
           console.log('Fetching liked posts...');
-          if (likedPosts.length === 0) {
-            const posts = await getLikedPosts();
-            setLikedPosts(posts);
-          }
+          const posts = await getLikedPosts();
+          
+          // Ensure saved status is correctly set
+          const postsWithSavedStatus = await Promise.all(posts.map(async (post) => {
+            const saved = await isPostSaved(post.id);
+            console.log(`Liked post ${post.id} saved status: ${saved}`);
+            return {
+              ...post,
+              saved
+            };
+          }));
+          
+          setLikedPosts(postsWithSavedStatus);
         } else {
           console.log('Fetching commented posts...');
-          if (commentedPosts.length === 0) {
-            const posts = await getCommentedPosts();
-            setCommentedPosts(posts);
-          }
+          const posts = await getCommentedPosts();
+          
+          // Ensure saved status is correctly set
+          const postsWithSavedStatus = await Promise.all(posts.map(async (post) => {
+            const saved = await isPostSaved(post.id);
+            console.log(`Commented post ${post.id} saved status: ${saved}`);
+            return {
+              ...post,
+              saved
+            };
+          }));
+          
+          setCommentedPosts(postsWithSavedStatus);
         }
       } catch (err: any) {
         console.error(`Error fetching ${activeTab}:`, err);
@@ -52,7 +71,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
     if (user) {
       fetchActivityData();
     }
-  }, [user, activeTab, likedPosts.length, commentedPosts.length]);
+  }, [user, activeTab, refreshKey]); // Add refreshKey to dependencies
 
   const handleViewPost = (post: any) => {
     setSelectedPost(post);
@@ -79,9 +98,10 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
       if (activeTab === 'likes') {
         setLikedPosts(prevPosts => prevPosts.map(post => {
           if (post.id === postId) {
+            console.log(`Updating like post ${postId} liked status to ${isNowLiked}`);
             return {
               ...post,
-              likesCount: isNowLiked ? post.likesCount + 1 : post.likesCount - 1,
+              likesCount: isNowLiked ? post.likesCount + 1 : Math.max(0, post.likesCount - 1),
               liked: isNowLiked
             };
           }
@@ -90,9 +110,10 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
       } else {
         setCommentedPosts(prevPosts => prevPosts.map(post => {
           if (post.id === postId) {
+            console.log(`Updating comment post ${postId} liked status to ${isNowLiked}`);
             return {
               ...post,
-              likesCount: isNowLiked ? post.likesCount + 1 : post.likesCount - 1,
+              likesCount: isNowLiked ? post.likesCount + 1 : Math.max(0, post.likesCount - 1),
               liked: isNowLiked
             };
           }
@@ -102,9 +123,10 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
       
       // Update selected post if it's the one being liked
       if (selectedPost && selectedPost.id === postId) {
+        console.log(`Updating selected post ${postId} liked status to ${isNowLiked}`);
         setSelectedPost({
           ...selectedPost,
-          likesCount: isNowLiked ? selectedPost.likesCount + 1 : selectedPost.likesCount - 1,
+          likesCount: isNowLiked ? selectedPost.likesCount + 1 : Math.max(0, selectedPost.likesCount - 1),
           liked: isNowLiked
         });
       }
@@ -122,33 +144,53 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
       
       console.log('Toggling save for post:', postId);
       const isNowSaved = await toggleSavePost(postId);
+      console.log(`Post ${postId} is now ${isNowSaved ? 'saved' : 'unsaved'}`);
       
-      // Update save status in the state
-      const updatePostSaveStatus = (posts: any[]) => {
-        return posts.map(post => {
-          if (post.id === postId) {
-            return {
-              ...post,
-              saved: isNowSaved
-            };
-          }
-          return post;
-        });
-      };
-      
+      // Update save status in the likedPosts state
       if (activeTab === 'likes') {
-        setLikedPosts(updatePostSaveStatus);
+        setLikedPosts(prevPosts => {
+          const updatedPosts = prevPosts.map(post => {
+            if (post.id === postId) {
+              console.log(`Updating liked post ${postId} saved status to ${isNowSaved}`);
+              return {
+                ...post,
+                saved: isNowSaved
+              };
+            }
+            return post;
+          });
+          console.log('Updated likedPosts state:', updatedPosts.map(p => ({ id: p.id, saved: p.saved })));
+          return updatedPosts;
+        });
       } else {
-        setCommentedPosts(updatePostSaveStatus);
+        // Update save status in the commentedPosts state
+        setCommentedPosts(prevPosts => {
+          const updatedPosts = prevPosts.map(post => {
+            if (post.id === postId) {
+              console.log(`Updating commented post ${postId} saved status to ${isNowSaved}`);
+              return {
+                ...post,
+                saved: isNowSaved
+              };
+            }
+            return post;
+          });
+          console.log('Updated commentedPosts state:', updatedPosts.map(p => ({ id: p.id, saved: p.saved })));
+          return updatedPosts;
+        });
       }
       
       // Update selected post if it's the one being saved
       if (selectedPost && selectedPost.id === postId) {
+        console.log(`Updating selected post ${postId} saved status to ${isNowSaved}`);
         setSelectedPost({
           ...selectedPost,
           saved: isNowSaved
         });
       }
+      
+      // Force a refresh of the UI
+      setRefreshKey(prevKey => prevKey + 1);
     } catch (error) {
       console.error('Error toggling save for post:', error);
     }
@@ -244,7 +286,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
           <p>{error}</p>
           <button 
             className="mt-2 text-red-600 underline"
-            onClick={() => window.location.reload()}
+            onClick={() => setRefreshKey(prevKey => prevKey + 1)}
           >
             Try Again
           </button>
@@ -316,6 +358,8 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
           {activePosts.length > 0 && (
             <div className="space-y-6">
               {activePosts.map(post => {
+                // Debug log for saved status
+                console.log(`Rendering post ${post.id} with saved status: ${post.saved}`);
                 // Check if post has been deleted by author
                 const isDeleted = post.isDeleted;
                 
@@ -464,9 +508,9 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
                             </div>
                           </div>
                           
-                          {/* Save button */}
+                          {/* Save button with text indicator */}
                           <button 
-                            className={`text-gray-700 ${post.saved ? 'text-yellow-500' : 'hover:text-yellow-500'}`}
+                            className={`flex items-center space-x-1 ${post.saved ? 'text-yellow-500' : 'text-gray-700 hover:text-yellow-500'}`}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleSavePost(post.id);
@@ -475,6 +519,7 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={post.saved ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                             </svg>
+                            <span className="text-xs">{post.saved ? 'Saved' : 'Save'}</span>
                           </button>
                         </div>
                       </>
@@ -616,14 +661,15 @@ const ActivityHistory: React.FC<ActivityHistoryProps> = ({ user }) => {
                   </div>
                 </div>
                 
-                {/* Save button */}
+                {/* Save button with text indicator */}
                 <button 
-                  className={`text-gray-700 ${selectedPost.saved ? 'text-yellow-500' : 'hover:text-yellow-500'}`}
+                  className={`flex items-center space-x-1 ${selectedPost.saved ? 'text-yellow-500' : 'text-gray-700 hover:text-yellow-500'}`}
                   onClick={() => handleSavePost(selectedPost.id)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill={selectedPost.saved ? "currentColor" : "none"} viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
                   </svg>
+                  <span className="text-xs">{selectedPost.saved ? 'Saved' : 'Save'}</span>
                 </button>
               </div>
               
