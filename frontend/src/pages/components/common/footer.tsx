@@ -7,7 +7,7 @@ const Footer = () => {
   console.log('Rendering Footer component');
 
   return (
-    <footer className="bg-[#3a6442] text-gray-200 py-10 px-6 md:px-20 mt-[30px]">
+    <footer className="primary-bg text-gray-200 py-10 px-6 md:px-20 mt-[30px]">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-base">
         {/* Branding */}
         <div className="space-y-3">

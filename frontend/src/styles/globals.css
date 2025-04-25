@@ -24,6 +24,10 @@ body {
   color: #f8f3e7;
 }
 
+.primary-border-color {
+  border-bottom: 4px solid #4b7e53;
+}
+
 /* ✅ 버튼 스타일 */
 .btn-primary {
   background-color: #4b7e53;

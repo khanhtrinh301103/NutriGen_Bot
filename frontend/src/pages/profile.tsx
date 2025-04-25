@@ -250,7 +250,7 @@ const ProfilePage: React.FC = () => {
     <Layout>
       <div className="container mx-auto px-4 py-8">
         {/* Profile Header */}
-        <div className="bg-gradient-to-r from-emerald-600 to-green-500 px-6 py-6 flex justify-between items-center rounded-xl">
+        <div className="primary-bg px-6 py-6 mt-10 flex justify-between items-center rounded-xl">
           <div className="flex items-center">
             <div className="mr-4 relative">
               {/* Input file ẩn, chỉ mở khi user click vào avatar */}
@@ -309,7 +309,7 @@ const ProfilePage: React.FC = () => {
             {/* Change Password Button */}
             <button 
               onClick={handleOpenPasswordModal}
-              className="px-4 py-2 bg-white text-emerald-600 rounded-md hover:bg-gray-100 transition-colors duration-200"
+              className="px-4 py-2 bg-white primary-text-color rounded-md hover:bg-gray-100 transition-colors duration-200"
             >
               Change Password
             </button>

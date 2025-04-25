@@ -31,8 +31,8 @@ const ProfileTabs: React.FC<ProfileTabsProps> = ({ activeTab, onTabChange }) => 
           key={tab.id}
           className={`py-3 px-6 font-medium ${
             activeTab === tab.id 
-              ? 'text-emerald-600 border-b-2 border-emerald-500' 
-              : 'text-gray-500 hover:text-emerald-600'
+              ? 'primary-text-color primary-border-color' 
+              : 'text-gray-500 hover:text-[#4b7e53]'
           }`}
           onClick={() => handleTabClick(tab.id)}
         >
