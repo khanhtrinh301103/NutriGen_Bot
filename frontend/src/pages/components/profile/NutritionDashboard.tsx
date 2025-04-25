@@ -189,11 +189,11 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
   return (
     <div className="max-w-5xl mx-auto">
       <div className="bg-white shadow rounded-lg overflow-hidden">
-        <div className="px-4 py-5 sm:px-6 bg-emerald-50">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
+        <div className="px-4 py-5 sm:px-6 primary-bg">
+          <h3 className="text-lg leading-6 font-medium text-white">
             Your Nutrition Summary
           </h3>
-          <p className="mt-1 max-w-2xl text-sm text-gray-500">
+          <p className="mt-1 max-w-2xl mx-auto text-sm text-white">
             Based on your health profile, activity level, and goals
           </p>
         </div>
@@ -287,7 +287,7 @@ const NutritionDashboard: React.FC<NutritionDashboardProps> = ({
                 {!isEditingMeals ? (
                   <div className="flex items-center justify-between py-3 px-5 bg-white rounded-lg border border-gray-100">
                     <div>
-                      <span className="text-4xl font-bold text-emerald-600">{profileData.healthProfile.mealsPerDay || 3}</span>
+                      <span className="text-4xl font-bold primary-text-color">{profileData.healthProfile.mealsPerDay || 3}</span>
                       <span className="ml-2 text-sm text-gray-500">meals per day</span>
                     </div>
                     <div className="text-sm text-gray-500">
