@@ -1,4 +1,4 @@
-// frontend/src/pages/adminUI/components/chat/EmptyChatState.tsx
+// frontend/src/pages/adminUI/components/AdminChat/EmptyChatState.tsx
 import React from 'react';
 
 const EmptyChatState: React.FC = () => {

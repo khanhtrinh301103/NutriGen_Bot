@@ -26,7 +26,7 @@ const AssistantChat = () => {
   // Nếu có chatId trong URL, tự động chọn chat đó
   useEffect(() => {
     const fetchChatFromUrl = async () => {
-      if (chatId && typeof chatId === 'string') {
+      if (chatId && typeof chatId === 'string' && user?.uid) {
         try {
           setIsLoadingChat(true);
           setError(null);
@@ -41,6 +41,11 @@ const AssistantChat = () => {
             console.warn(`⚠️ [AdminChat] Attempting to open a ${chatDetails.status} chat: ${chatId}`);
           }
           
+          // Kiểm tra nếu chat đã được phân công cho admin khác
+          if (chatDetails.assignedAdmin && chatDetails.assignedAdmin !== user.uid) {
+            console.warn(`⚠️ [AdminChat] Attempting to open a chat assigned to another admin: ${chatId}`);
+          }
+          
           // Lấy thông tin người dùng
           const userData = chatDetails.userDetails || {};
           
@@ -50,7 +55,11 @@ const AssistantChat = () => {
             userId: chatDetails.userId,
             fullName: userData.fullName || 'Unknown User',
             email: userData.email || '',
-            status: chatDetails.status
+            status: chatDetails.status,
+            topic: chatDetails.topic || 'General Support',
+            assignedAdmin: chatDetails.assignedAdmin || null,
+            isAssigned: chatDetails.assignedAdmin === user.uid,
+            canAccept: !chatDetails.assignedAdmin && chatDetails.status === 'active'
           });
           
           setIsLoadingChat(false);
@@ -63,7 +72,7 @@ const AssistantChat = () => {
     };
     
     fetchChatFromUrl();
-  }, [chatId]);
+  }, [chatId, user]);
   
   // Log khi người dùng được chọn
   const handleUserSelect = (user) => {

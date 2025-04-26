@@ -1,4 +1,4 @@
-// frontend/src/pages/adminUI/components/chat/ChatMessage.tsx
+// frontend/src/pages/adminUI/components/AdminChat/ChatMessage.tsx
 import React, { useState } from 'react';
 import { Avatar } from '@/components/ui/avatar';
 import { format } from 'date-fns';
@@ -29,7 +29,20 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
     }
   };
 
+  // Xác định loại tin nhắn (admin, user, hoặc system)
   const isAdmin = message.isAdmin;
+  const isSystem = message.senderId === 'system';
+  
+  // Nếu là tin nhắn hệ thống, hiển thị khác biệt
+  if (isSystem) {
+    return (
+      <div className="flex justify-center my-2">
+        <div className="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-full">
+          {message.text}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className={`flex ${isAdmin ? 'justify-end' : 'justify-start'}`}>
@@ -54,7 +67,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
               ? 'bg-green-500 text-white rounded-tr-none' 
               : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none'
           }`}>
-{message.text && (
+            {message.text && (
               <p className="whitespace-pre-wrap break-words mb-2">{message.text}</p>
             )}
             

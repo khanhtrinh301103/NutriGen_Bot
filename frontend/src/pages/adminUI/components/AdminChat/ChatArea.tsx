@@ -1,4 +1,4 @@
-// frontend/src/pages/adminUI/components/ChatArea.tsx
+// frontend/src/pages/adminUI/components/AdminChat/ChatArea.tsx
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -7,10 +7,23 @@ import { Avatar } from '@/components/ui/avatar';
 import { Tooltip } from '@/components/ui/tooltip';
 import { TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { 
+  Dialog, DialogContent, DialogDescription, DialogFooter, 
+  DialogHeader, DialogTitle 
+} from '@/components/ui/dialog';
+import { AlertTriangle } from 'lucide-react';
 import ChatMessage from './ChatMessage';
 import EmptyChatState from './EmptyChatState';
 import ImageUploader from './ImageUploader';
-import { getChatMessages, sendAdminMessage, uploadAdminChatImage, getChatDetails } from '../../../../api/adminAPI/adminChatService';
+import { 
+  getChatMessages, 
+  sendAdminMessage, 
+  uploadAdminChatImage, 
+  getChatDetails,
+  releaseChat,
+  closeChat,
+  acceptChat
+} from '../../../../api/adminAPI/adminChatService';
 import { useAuth } from '../../../../api/useAuth';
 
 interface ChatAreaProps {
@@ -25,6 +38,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState('active');
+  const [assignedAdmin, setAssignedAdmin] = useState(null);
+  const [isAssignedToMe, setIsAssignedToMe] = useState(false);
+  const [showReleaseDialog, setShowReleaseDialog] = useState(false);
+  const [showCloseDialog, setShowCloseDialog] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const { user } = useAuth();
@@ -42,19 +60,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       if (selectedUser && selectedUser.id) {
         try {
           setIsLoading(true);
+          setError(null);
+          
           // Lấy thông tin chi tiết của chat
           const chatDetails = await getChatDetails(selectedUser.id);
+          
           // Cập nhật trạng thái chat
           setChatStatus(chatDetails.status || 'active');
-          console.log(`🔍 [ChatArea] Chat status: ${chatDetails.status}`);
+          setAssignedAdmin(chatDetails.assignedAdmin || null);
+          
+          // Kiểm tra xem chat có được phân công cho admin hiện tại không
+          setIsAssignedToMe(chatDetails.assignedAdmin === user?.uid);
+          
+          console.log(`🔍 [ChatArea] Chat status: ${chatDetails.status}, Assigned to: ${chatDetails.assignedAdmin || 'none'}`);
+          
+          setIsLoading(false);
         } catch (err) {
           console.error(`❌ [ChatArea] Error fetching chat details:`, err);
+          setError(`Could not load chat details: ${err.message}`);
+          setIsLoading(false);
         }
       }
     };
 
     fetchChatDetails();
-  }, [selectedUser]);
+  }, [selectedUser, user]);
   
   // Cập nhật tin nhắn khi người dùng được chọn thay đổi
   useEffect(() => {
@@ -84,6 +114,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       return;
     }
     
+    // Kiểm tra quyền admin - chỉ admin được phân công mới được gửi tin nhắn
+    if (!assignedAdmin) {
+      console.error(`❌ [ChatArea] Cannot send message to an unassigned chat`);
+      setError(`You need to accept this chat before sending messages`);
+      return;
+    }
+    
+    if (assignedAdmin !== user?.uid) {
+      console.error(`❌ [ChatArea] Cannot send message to a chat assigned to another admin`);
+      setError(`This chat is assigned to another admin`);
+      return;
+    }
+    
     try {
       let imageUrl = null;
       
@@ -101,7 +144,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       };
       
       // Gửi tin nhắn
-      await sendAdminMessage(selectedUser.id, adminMessage);
+      await sendAdminMessage(selectedUser.id, adminMessage, user?.uid);
       
       console.log(`✉️ [ChatArea] Sent admin message to user: ${selectedUser.id}`);
       
@@ -110,7 +153,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
       setSelectedImage(null);
     } catch (err) {
       console.error(`❌ [ChatArea] Error sending message:`, err);
-      setError("Failed to send message");
+      setError(`Failed to send message: ${err.message}`);
+    }
+  };
+  
+  // Xử lý chấp nhận chat trong khu vực chat
+  const handleAcceptChat = async () => {
+    if (!selectedUser || !user?.uid || !user?.displayName) return;
+    
+    setActionLoading(true);
+    try {
+      console.log(`🔄 [ChatArea] Accepting chat: ${selectedUser.id}`);
+      await acceptChat(selectedUser.id, user.uid, user.displayName || 'Admin');
+      console.log(`✅ [ChatArea] Chat accepted: ${selectedUser.id}`);
+    } catch (err) {
+      console.error(`❌ [ChatArea] Error accepting chat:`, err);
+      setError(`Failed to accept chat: ${err.message}`);
+    } finally {
+      setActionLoading(false);
     }
   };
   
@@ -119,6 +179,19 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
     if (chatStatus !== 'active') {
       console.error(`❌ [ChatArea] Cannot upload image to a ${chatStatus} chat`);
       setError(`Cannot upload image to a ${chatStatus} chat`);
+      return;
+    }
+    
+    // Kiểm tra quyền admin
+    if (!assignedAdmin) {
+      console.error(`❌ [ChatArea] Cannot upload image to an unassigned chat`);
+      setError(`You need to accept this chat before uploading images`);
+      return;
+    }
+    
+    if (assignedAdmin !== user?.uid) {
+      console.error(`❌ [ChatArea] Cannot upload image to a chat assigned to another admin`);
+      setError(`This chat is assigned to another admin`);
       return;
     }
     
@@ -164,6 +237,42 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
     }
   };
   
+  // Xử lý từ bỏ chat
+  const handleReleaseChat = async () => {
+    if (!selectedUser || !user?.uid || !user?.displayName) return;
+    
+    setActionLoading(true);
+    try {
+      console.log(`🔄 [ChatArea] Releasing chat: ${selectedUser.id}`);
+      await releaseChat(selectedUser.id, user.uid, user.displayName || 'Admin');
+      setShowReleaseDialog(false);
+      console.log(`✅ [ChatArea] Chat released: ${selectedUser.id}`);
+    } catch (err) {
+      console.error(`❌ [ChatArea] Error releasing chat:`, err);
+      setError(`Failed to release chat: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+  
+  // Xử lý đóng chat
+  const handleCloseChat = async () => {
+    if (!selectedUser || !user?.uid || !user?.displayName) return;
+    
+    setActionLoading(true);
+    try {
+      console.log(`🔄 [ChatArea] Closing chat: ${selectedUser.id}`);
+      await closeChat(selectedUser.id, user.uid, user.displayName || 'Admin');
+      setShowCloseDialog(false);
+      console.log(`✅ [ChatArea] Chat closed: ${selectedUser.id}`);
+    } catch (err) {
+      console.error(`❌ [ChatArea] Error closing chat:`, err);
+      setError(`Failed to close chat: ${err.message}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+  
   // Nếu không có người dùng nào được chọn
   if (!selectedUser) {
     return <EmptyChatState />;
@@ -171,6 +280,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
   
   // Hiển thị thông báo chat đã đóng
   const isChatClosed = chatStatus !== 'active';
+  const canSendMessage = chatStatus === 'active' && assignedAdmin === user?.uid;
   
   return (
     <div className="flex flex-col w-2/3 h-full">
@@ -196,21 +306,126 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
             )}
           </div>
           <div className="ml-3">
-            <p className="font-medium">{selectedUser.fullName}</p>
+            <div className="flex items-center">
+              <p className="font-medium">{selectedUser.fullName}</p>
+              {selectedUser.topic && (
+                <Badge variant="outline" className="ml-2 bg-blue-50 text-blue-700">
+                  {selectedUser.topic}
+                </Badge>
+              )}
+            </div>
             <p className="text-sm text-gray-500">{selectedUser.email}</p>
           </div>
         </div>
         
-        {/* Hiển thị trạng thái chat */}
-        <Badge 
-          variant="outline" 
-          className={isChatClosed 
-            ? 'bg-gray-100 text-gray-800 hover:bg-gray-100' 
-            : 'bg-green-100 text-green-800 hover:bg-green-100'
-          }
-        >
-          {chatStatus === 'active' ? 'Active' : 'Closed'}
-        </Badge>
+        <div className="flex items-center space-x-2">
+          {/* Hiển thị trạng thái chat */}
+          <Badge 
+            variant="outline" 
+            className={isChatClosed 
+              ? 'bg-gray-100 text-gray-800 hover:bg-gray-100' 
+              : 'bg-green-100 text-green-800 hover:bg-green-100'
+            }
+          >
+            {chatStatus === 'active' ? 'Active' : chatStatus === 'closed' ? 'Closed' : 'Archived'}
+          </Badge>
+          
+          {/* Hiển thị trạng thái phân công */}
+          {assignedAdmin && (
+            <Badge 
+              variant="outline" 
+              className={isAssignedToMe 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-amber-100 text-amber-800'
+              }
+            >
+              {isAssignedToMe ? 'Assigned to Me' : 'Assigned to Others'}
+            </Badge>
+          )}
+          
+          {/* Nút Accept Chat cho admin khi chat chưa được phân công */}
+          {!assignedAdmin && chatStatus === 'active' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="default" 
+                    size="sm"
+                    className="h-9 bg-green-600 hover:bg-green-700"
+                    onClick={handleAcceptChat}
+                  >
+                    Accept Chat
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Accept this conversation to respond</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          {/* Hiển thị các nút hành động */}
+          {isAssignedToMe && chatStatus === 'active' && (
+            <div className="flex space-x-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-9 border-amber-300 text-amber-700 hover:bg-amber-50"
+                      onClick={() => setShowReleaseDialog(true)}
+                    >
+                      Release
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Release this chat for other admins</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="h-9 border-gray-300 text-gray-700 hover:bg-gray-50"
+                      onClick={() => setShowCloseDialog(true)}
+                    >
+                      Close Chat
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>End this conversation</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+          )}
+          
+          {/* Nút đóng chat cho chat không có người phân công */}
+          {!assignedAdmin && chatStatus === 'active' && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    className="h-9 border-gray-300 text-gray-700 hover:bg-gray-50"
+                    onClick={() => setShowCloseDialog(true)}
+                  >
+                    Close Chat
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>End this conversation</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+        </div>
       </div>
       
       {/* Messages */}
@@ -247,20 +462,38 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
         )}
       </div>
       
-      {/* Thông báo chat đã đóng */}
-      {isChatClosed && (
+      {/* Thông báo không thể nhắn tin - chat đã đóng hoặc được giao cho admin khác hoặc chưa accept */}
+      {!canSendMessage && (
         <div className="border-t border-gray-200 p-4 bg-gray-100 text-center">
           <div className="inline-flex items-center text-gray-700 bg-gray-50 rounded-full px-4 py-2 border">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span>This conversation is closed and cannot be continued</span>
+            {isChatClosed ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <span>This conversation is {chatStatus} and cannot be continued</span>
+              </>
+            ) : assignedAdmin && assignedAdmin !== user?.uid ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>This conversation is assigned to another admin</span>
+              </>
+            ) : !assignedAdmin ? (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>You need to accept this conversation before responding</span>
+              </>
+            ) : null}
           </div>
         </div>
       )}
       
       {/* Selected Image Preview */}
-      {selectedImage && !isChatClosed && (
+      {selectedImage && canSendMessage && (
         <div className="border-t border-gray-200 p-2 bg-white">
           <div className="relative inline-block">
             <img 
@@ -280,8 +513,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
         </div>
       )}
       
-      {/* Message Input - ẩn nếu chat đã đóng */}
-      {!isChatClosed && (
+      {/* Message Input - chỉ hiển thị nếu có thể gửi tin nhắn */}
+      {canSendMessage && (
         <div className="border-t border-gray-200 p-4 bg-white">
           <div className="flex space-x-2">
             <Textarea
@@ -334,6 +567,87 @@ const ChatArea: React.FC<ChatAreaProps> = ({ selectedUser }) => {
           </div>
         </div>
       )}
+      
+      {/* Release Chat Dialog */}
+      <Dialog open={showReleaseDialog} onOpenChange={setShowReleaseDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
+              Release Conversation
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to release this conversation? 
+              It will be available for other admins to accept.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowReleaseDialog(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="default"
+              className="bg-amber-600 hover:bg-amber-700"
+              onClick={handleReleaseChat}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : "Release"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Close Chat Dialog */}
+      <Dialog open={showCloseDialog} onOpenChange={setShowCloseDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
+              Close Conversation
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to close this conversation? 
+              The user will not be able to continue this chat.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCloseDialog(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive"
+              onClick={handleCloseChat}
+              disabled={actionLoading}
+            >
+              {actionLoading ? (
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </div>
+              ) : "Close Conversation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
