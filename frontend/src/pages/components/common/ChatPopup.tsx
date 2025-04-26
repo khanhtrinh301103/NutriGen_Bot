@@ -12,7 +12,7 @@ interface ChatPopupProps {
 
 const ChatPopup: React.FC<ChatPopupProps> = ({ isAnonymous = false, anonymousIssue = '', onClose }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<{ id?: string; text: string; isUser: boolean; imageUrl?: string; timestamp?: Date }[]>([]);
+  const [messages, setMessages] = useState<{ id?: string; text: string; isUser: boolean; imageUrl?: string; timestamp?: Date; senderId?: string }[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -245,6 +245,74 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isAnonymous = false, anonymousIss
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Kiểm tra xem một tin nhắn có phải là tin nhắn hệ thống không
+  const isSystemMessage = (message) => {
+    return message.senderId === 'system' || message.senderRole === 'system';
+  };
+
+  // Render các tin nhắn trong chat
+  const renderMessages = () => {
+    if (messages.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center h-full text-gray-500">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+          </svg>
+          <p className="text-center">No messages yet. Start a conversation!</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        {messages.map((msg, index) => {
+          // Nếu là tin nhắn hệ thống, hiển thị dạng thông báo
+          if (isSystemMessage(msg)) {
+            return (
+              <div key={msg.id || index} className="flex justify-center my-2">
+                <div className="bg-gray-100 text-gray-600 text-sm px-4 py-2 rounded-full max-w-[85%] text-center">
+                  {msg.text}
+                </div>
+              </div>
+            );
+          }
+          
+          // Nếu là tin nhắn thông thường, hiển thị dạng bong bóng chat
+          return (
+            <div 
+              key={msg.id || index} 
+              className={`mb-3 flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
+            >
+              <div 
+                className={`inline-block rounded-lg px-3 py-2 ${
+                  msg.isUser 
+                    ? 'bg-green-600 text-white rounded-br-none' 
+                    : 'bg-gray-200 text-gray-800 rounded-bl-none'
+                }`}
+              >
+                {msg.imageUrl && (
+                  <div className="mb-2">
+                    <img 
+                      src={msg.imageUrl} 
+                      alt="Shared image" 
+                      className="rounded max-w-full max-h-[150px] object-contain"
+                    />
+                  </div>
+                )}
+                {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
+                {msg.timestamp && (
+                  <p className={`text-xs mt-1 text-right ${msg.isUser ? 'text-green-200' : 'text-gray-500'}`}>
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className="fixed bottom-16 right-4 sm:bottom-5 sm:right-5 z-50">
       {/* Chat popup */}
@@ -348,44 +416,8 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isAnonymous = false, anonymousIss
                       </svg>
                       <p className="text-center">{error}</p>
                     </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mb-2 text-gray-300" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-center">No messages yet. Start a conversation!</p>
-                    </div>
                   ) : (
-                    messages.map((msg, index) => (
-                      <div 
-                        key={msg.id || index} 
-                        className={`mb-3 max-w-[80%] ${msg.isUser ? 'ml-auto' : 'mr-auto'}`}
-                      >
-                        <div 
-                          className={`rounded-lg p-3 ${
-                            msg.isUser 
-                              ? 'bg-green-600 text-white rounded-br-none' 
-                              : 'bg-gray-200 text-gray-800 rounded-bl-none'
-                          }`}
-                        >
-                          {msg.imageUrl && (
-                            <div className="mb-2">
-                              <img 
-                                src={msg.imageUrl} 
-                                alt="Shared image" 
-                                className="rounded max-w-full max-h-[150px] object-contain"
-                              />
-                            </div>
-                          )}
-                          {msg.text && <p>{msg.text}</p>}
-                          {msg.timestamp && (
-                            <p className={`text-xs mt-1 text-right ${msg.isUser ? 'text-green-200' : 'text-gray-500'}`}>
-                              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))
+                    renderMessages()
                   )}
                   <div ref={messagesEndRef} />
                 </div>

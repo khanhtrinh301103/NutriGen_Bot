@@ -68,7 +68,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message, user }) => {
               : 'bg-white text-gray-900 border border-gray-200 rounded-tl-none'
           }`}>
             {message.text && (
-              <p className="whitespace-pre-wrap break-words mb-2">{message.text}</p>
+              <p className="whitespace-pre-wrap break-words mb-2 text-justify">{message.text}</p>
             )}
             
             {message.imageUrl && (
