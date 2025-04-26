@@ -50,16 +50,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
             {navItems.map(item => {
               const active = router.pathname === item.path;
               return (
-                <Link href={item.path} key={item.path} passHref>
-                  <motion.a
+                <Link 
+                  href={item.path} 
+                  key={item.path}
+                  className={`flex items-center px-6 py-3 mx-2 my-1 rounded-lg cursor-pointer text-gray-700 ${
+                    active ? 'font-semibold' : 'font-medium'
+                  }`}
+                >
+                  <motion.div
                     layout
                     whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
                     whileTap={{ scale: 0.97 }}
                     animate={{ backgroundColor: active ? '#e3fcec' : '#fff' }}
                     transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                    className={`flex items-center px-6 py-3 mx-2 my-1 rounded-lg cursor-pointer text-gray-700 ${
-                      active ? 'font-semibold' : 'font-medium'
-                    }`}
+                    className="flex items-center w-full"
                   >
                     <svg
                       className="h-6 w-6 mr-3 text-green-500"
@@ -71,7 +75,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                     </svg>
                     <span className="flex-1">{item.label}</span>
-                  </motion.a>
+                  </motion.div>
                 </Link>
               );
             })}
@@ -134,14 +138,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
               </div>
               <nav className="mt-4">
                 {navItems.map(item => (
-                  <Link href={item.path} key={item.path} passHref>
-                    <motion.a
+                  <Link 
+                    href={item.path} 
+                    key={item.path}
+                    className="flex items-center px-6 py-3 mx-2 rounded-lg text-gray-700"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <motion.div
                       layout
-                      onClick={() => setMobileOpen(false)}
                       whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
                       whileTap={{ scale: 0.97 }}
                       transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                      className="flex items-center px-6 py-3 mx-2 rounded-lg text-gray-700"
+                      className="flex items-center w-full"
                     >
                       <svg
                         className="h-5 w-5 mr-3 text-green-500"
@@ -153,7 +161,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                       </svg>
                       {item.label}
-                    </motion.a>
+                    </motion.div>
                   </Link>
                 ))}
               </nav>

@@ -76,6 +76,25 @@ const PostsManagement = () => {
     }
   };
 
+    // Xử lý khi một comment bị xóa
+    const handleCommentDeleted = (postId, commentId) => {
+      console.log(`Comment ${commentId} deleted from post ${postId}`);
+      
+      // Remove the deleted comment from state
+      setPostComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+      
+      // Cập nhật số lượng comment của bài post trong danh sách
+      setPosts(prevPosts => prevPosts.map(post => {
+        if (post.id === postId) {
+          return {
+            ...post,
+            commentsCount: post.commentsCount > 0 ? post.commentsCount - 1 : 0
+          };
+        }
+        return post;
+      }));
+    };
+
   // Load posts on component mount
   useEffect(() => {
     loadPosts();
@@ -419,6 +438,7 @@ const handleDeletePost = async (postId: string) => {
           likes={postLikes}
           isOpen={isDialogOpen}
           onClose={() => setIsDialogOpen(false)}
+          onCommentDeleted={handleCommentDeleted}
         />
       )}
     </AdminLayout>

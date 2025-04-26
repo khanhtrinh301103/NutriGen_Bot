@@ -185,3 +185,20 @@ export const restorePost = async (postId) => {
     throw error;
   }
 };
+
+// Thêm hàm này vào src/api/adminAPI/postsManagementService.js
+
+export const deleteComment = async (postId, commentId) => {
+  try {
+    console.log(`Deleting comment ${commentId} from post ${postId}...`);
+    
+    // Delete the comment using Firebase REST API
+    await axios.delete(`${baseUrl}/posts/${postId}/comments/${commentId}`);
+    
+    console.log(`Comment ${commentId} deleted successfully from post ${postId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error deleting comment ${commentId} from post ${postId}:`, error);
+    throw error;
+  }
+};
