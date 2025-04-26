@@ -129,7 +129,7 @@ const AdminDashboard = () => {
 
   return (
     <AdminRoute>
-      <AdminLayout title="Admin Dashboard">
+      <AdminLayout title="Dashboard">
         <main className="container mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
             <div>

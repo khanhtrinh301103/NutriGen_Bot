@@ -10,12 +10,36 @@ interface AdminLayoutProps {
 }
 
 const navItems = [
-  { path: '/adminUI', label: 'Dashboard', icon: 'M3 10l6 6L21 4' },
-  { path: '/adminUI/UserManagement', label: 'Users', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0z M12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-  { path: '/adminUI/SearchManagement', label: 'Search', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
-  { path: '/adminUI/AssistantChat', label: 'Chatbot', icon: 'M8 10h.01 M12 10h.01 M16 10h.01 M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z' },
-  { path: '/adminUI/ChatManagement', label: 'Manage Chat', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l.123.38a1 1 0 00.952.69h.39c.969 0 1.371 1.24.588 1.81l-.316.23a1 1 0 000 1.558l.316.23c.783.57.38 1.81-.588 1.81h-.39a1 1 0 00-.952.69l-.123.38c-.3.921-1.603.921-1.902 0l-.123-.38a1 1 0 00-.952-.69h-.39c-.969 0-1.371-1.24-.588-1.81l.316-.23a1 1 0 000-1.558l-.316-.23c-.783-.57-.38-1.81.588-1.81h.39a1 1 0 00.952-.69l.123-.38z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-  { path: '/adminUI/PostsManagement', label: 'Blog Posts', icon: 'M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9 M7 16h6M7 8h6v4H7V8z' }
+  { 
+    path: '/adminUI', 
+    label: 'Dashboard', 
+    icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' 
+  },
+  { 
+    path: '/adminUI/UserManagement', 
+    label: 'Users', 
+    icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' 
+  },
+  { 
+    path: '/adminUI/SearchManagement', 
+    label: 'Recipe Search', 
+    icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7' 
+  },
+  { 
+    path: '/adminUI/AssistantChat', 
+    label: 'Nutrition Bot', 
+    icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' 
+  },
+  { 
+    path: '/adminUI/ChatManagement', 
+    label: 'Support Chats', 
+    icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' 
+  },
+  { 
+    path: '/adminUI/PostsManagement', 
+    label: 'Food Community', 
+    icon: 'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' 
+  }
 ];
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dashboard' }) => {
@@ -24,6 +48,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
 
   const handleSignOut = async () => {
     try {
+      console.log('Signing out user');
       await signOutUser();
       router.push('/auth/login');
     } catch (err) {
@@ -41,161 +66,252 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, title = 'Admin Dash
           animate={{ x: 0 }}
           exit={{ x: -300 }}
           transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-          className="hidden md:flex flex-col w-64 bg-white shadow-lg"
+          className="hidden md:flex flex-col w-72 bg-gradient-to-b from-green-50 to-white shadow-lg border-r border-green-100"
         >
-          <div className="px-6 py-4 border-b">
-            <h2 className="text-2xl font-bold text-green-700">NutriGen Admin</h2>
+          <div className="px-6 py-5 border-b border-green-100 flex items-center space-x-3">
+            <svg 
+              className="h-8 w-8 text-green-600" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+              <circle cx="12" cy="13" r="3"/>
+            </svg>
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent">
+              NutriGen Admin
+            </h2>
           </div>
-          <nav className="flex-1 overflow-y-auto mt-4">
-            {navItems.map(item => {
+          
+          <nav className="flex-1 overflow-y-auto mt-6 px-3">
+            {navItems.map((item, index) => {
               const active = router.pathname === item.path;
               return (
                 <Link 
                   href={item.path} 
                   key={item.path}
-                  className={`flex items-center px-6 py-3 mx-2 my-1 rounded-lg cursor-pointer text-gray-700 ${
-                    active ? 'font-semibold' : 'font-medium'
-                  }`}
+                  className="block my-1.5"
                 >
-                  <motion.div
-                    layout
-                    whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
-                    whileTap={{ scale: 0.97 }}
-                    animate={{ backgroundColor: active ? '#e3fcec' : '#fff' }}
-                    transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                    className="flex items-center w-full"
+                  <div
+                    className={`flex items-center px-4 py-3 rounded-xl transition duration-200 ${
+                      active 
+                        ? 'bg-green-100/60 text-green-700 shadow-sm' 
+                        : 'text-gray-700 hover:bg-green-50/60'
+                    }`}
                   >
-                    <svg
-                      className="h-6 w-6 mr-3 text-green-500"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                    </svg>
-                    <span className="flex-1">{item.label}</span>
-                  </motion.div>
-                </Link>
-              );
-            })}
-          </nav>
-          <div className="px-6 py-4 border-t">
-            <motion.button
-              layout
-              whileHover={{ scale: 1.03, backgroundColor: '#fde8e8' }}
-              whileTap={{ scale: 0.97 }}
-              transition={{ type: 'spring', stiffness: 180 }}
-              onClick={handleSignOut}
-              className="flex items-center w-full px-4 py-2 rounded-lg text-red-600 font-medium"
-            >
-              <svg
-                className="h-5 w-5 mr-2"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
-              </svg>
-              Sign Out
-            </motion.button>
-          </div>
-        </motion.aside>
-
-        {/* Mobile Toggler */}
-        <div className="md:hidden fixed top-4 left-4 z-50">
-          <motion.button
-            onClick={() => setMobileOpen(true)}
-            whileHover={{ scale: 1.1 }}
-            transition={{ type: 'spring', stiffness: 300 }}
-            className="p-2 bg-white rounded-md shadow-lg"
-          >
-            <svg className="h-6 w-6 text-green-700" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </motion.button>
-        </div>
-
-        {/* Mobile Sidebar */}
-        <AnimatePresence>
-          {isMobileOpen && (
-            <motion.aside
-              layout
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-              className="fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg md:hidden"
-            >
-              <div className="px-6 py-4 border-b flex justify-between items-center">
-                <h2 className="text-xl font-bold text-green-700">Admin</h2>
-                <motion.button onClick={() => setMobileOpen(false)} whileHover={{ scale: 1.1 }}>
-                  <svg className="h-6 w-6 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </motion.button>
-              </div>
-              <nav className="mt-4">
-                {navItems.map(item => (
-                  <Link 
-                    href={item.path} 
-                    key={item.path}
-                    className="flex items-center px-6 py-3 mx-2 rounded-lg text-gray-700"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <motion.div
-                      layout
-                      whileHover={{ scale: 1.05, backgroundColor: '#f0faf4' }}
-                      whileTap={{ scale: 0.97 }}
-                      transition={{ type: 'spring', stiffness: 200, damping: 25 }}
-                      className="flex items-center w-full"
-                    >
+                    <div className={`flex items-center justify-center h-9 w-9 rounded-lg ${
+                      active ? 'bg-green-100 text-green-600' : 'text-gray-500'
+                    }`}>
                       <svg
-                        className="h-5 w-5 mr-3 text-green-500"
+                        className="h-5 w-5"
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
                       >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={active ? 2.2 : 1.8} 
+                          d={item.icon} 
+                        />
                       </svg>
+                    </div>
+                    <span className={`ml-3 ${active ? 'font-semibold' : 'font-medium'}`}>
                       {item.label}
-                    </motion.div>
-                  </Link>
-                ))}
-              </nav>
-              <div className="absolute bottom-0 w-full px-6 py-4 border-t">
-                <motion.button
-                  layout
-                  whileHover={{ scale: 1.03, backgroundColor: '#fde8e8' }}
-                  whileTap={{ scale: 0.97 }}
-                  transition={{ type: 'spring', stiffness: 180 }}
-                  onClick={handleSignOut}
-                  className="flex items-center w-full px-4 py-2 rounded-lg text-red-600 font-medium"
-                >
-                  <svg
-                    className="h-5 w-5 mr-2"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7" />
-                  </svg>
-                  Sign Out
-                </motion.button>
+                    </span>
+                    
+                    {active && (
+                      <div className="w-1.5 h-8 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full absolute -left-0.5" />
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </nav>
+          
+          <div className="px-4 py-5 border-t border-green-100">
+            <div className="mb-4 px-3 py-2 bg-green-50 rounded-lg">
+              <div className="flex items-center space-x-3">
+                <div className="h-10 w-10 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold">
+                  {/* Display admin initial or avatar */}
+                  A
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Admin User</p>
+                  <p className="text-xs text-gray-500">Nutrition Expert</p>
+                </div>
               </div>
-            </motion.aside>
+            </div>
+            
+            <button
+              onClick={handleSignOut}
+              className="flex items-center w-full px-4 py-3 rounded-xl text-red-600 font-medium transition duration-200 hover:bg-red-50"
+            >
+              <div className="flex items-center justify-center h-9 w-9 rounded-lg text-red-500">
+                <svg
+                  className="h-5 w-5"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </div>
+              <span className="ml-3">Sign Out</span>
+            </button>
+          </div>
+        </motion.aside>
+
+        {/* Mobile Toggler */}
+        <div className="md:hidden fixed top-4 left-4 z-50">
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="p-2.5 bg-white rounded-lg shadow-lg transition duration-200 hover:bg-gray-50"
+          >
+            <svg className="h-6 w-6 text-green-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Mobile Sidebar */}
+        <AnimatePresence>
+          {isMobileOpen && (
+            <>
+              <div
+                className="fixed inset-0 bg-black/50 md:hidden z-40"
+                onClick={() => setMobileOpen(false)}
+              />
+              <motion.aside
+                initial={{ x: -300 }}
+                animate={{ x: 0 }}
+                exit={{ x: -300 }}
+                transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+                className="fixed inset-y-0 left-0 z-50 w-72 bg-gradient-to-b from-green-50 to-white shadow-xl md:hidden"
+              >
+                <div className="px-6 py-5 border-b border-green-100 flex justify-between items-center">
+                  <div className="flex items-center space-x-3">
+                    <svg 
+                      className="h-7 w-7 text-green-600" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 2.69l5.66 5.66a8 8 0 11-11.31 0z"/>
+                      <circle cx="12" cy="13" r="3"/>
+                    </svg>
+                    <h2 className="text-xl font-bold bg-gradient-to-r from-green-700 to-green-500 bg-clip-text text-transparent">
+                      NutriGen
+                    </h2>
+                  </div>
+                  <button 
+                    onClick={() => setMobileOpen(false)} 
+                    className="p-1.5 rounded-lg hover:bg-gray-100 transition duration-200"
+                  >
+                    <svg className="h-5 w-5 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <nav className="mt-5 px-3">
+                  {navItems.map((item, index) => {
+                    const active = router.pathname === item.path;
+                    return (
+                      <Link 
+                        href={item.path} 
+                        key={item.path}
+                        className="block my-1"
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        <div
+                          className={`flex items-center px-4 py-3 rounded-xl transition duration-200 ${
+                            active 
+                              ? 'bg-green-100/60 text-green-700 shadow-sm' 
+                              : 'text-gray-700 hover:bg-green-50/60'
+                          }`}
+                        >
+                          <div className={`flex items-center justify-center h-8 w-8 rounded-lg ${
+                            active ? 'bg-green-100 text-green-600' : 'text-gray-500'
+                          }`}>
+                            <svg
+                              className="h-5 w-5"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                            >
+                              <path 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                strokeWidth={active ? 2.2 : 1.8} 
+                                d={item.icon} 
+                              />
+                            </svg>
+                          </div>
+                          <span className={`ml-3 ${active ? 'font-semibold' : 'font-medium'}`}>
+                            {item.label}
+                          </span>
+                          
+                          {active && (
+                            <div className="w-1.5 h-8 bg-gradient-to-b from-green-500 to-emerald-400 rounded-full absolute -left-0.5" />
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </nav>
+                
+                <div className="absolute bottom-0 w-full px-4 py-5 border-t border-green-100">
+                  <div className="mb-4 px-3 py-2 bg-green-50 rounded-lg">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-9 w-9 rounded-full bg-green-200 flex items-center justify-center text-green-700 font-bold">
+                        A
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Admin User</p>
+                        <p className="text-xs text-gray-500">Nutrition Expert</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center w-full px-4 py-3 rounded-xl text-red-600 font-medium transition duration-200 hover:bg-red-50"
+                  >
+                    <div className="flex items-center justify-center h-8 w-8 rounded-lg text-red-500">
+                      <svg
+                        className="h-5 w-5"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </div>
+                    <span className="ml-3">Sign Out</span>
+                  </button>
+                </div>
+              </motion.aside>
+            </>
           )}
         </AnimatePresence>
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col overflow-auto">
-          <header className="bg-white shadow px-6 py-4">
-            <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+          <header className="bg-white shadow-sm px-8 py-5 border-b border-gray-200">
+            <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
           </header>
-          <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+          <main className="flex-1 p-8 overflow-y-auto bg-gray-50">{children}</main>
         </div>
       </div>
     </LayoutGroup>
