@@ -59,6 +59,7 @@ NutriGen_Bot/
 │   │   │   │   ├── adminChatService.js
 │   │   │   │   ├── adminDashboard.js
 │   │   │   │   ├── AdminRoute.js
+│   │   │   │   ├── postsAnalyticsService.js
 │   │   │   │   ├── postsManagementService.js
 │   │   │   │   ├── searchManagement.js
 │   │   │   │   ├── UserDetailsService.js
@@ -96,7 +97,14 @@ NutriGen_Bot/
 │   │   │   │   │   │   ├── ChatDetailMessage.tsx
 │   │   │   │   │   │   ├── ChatTableRow.tsx
 │   │   │   │   │   ├── PostsManagement
+│   │   │   │   │   │   ├── CaptionAnalysisChart.tsx
+│   │   │   │   │   │   ├── GoldenHoursChart.tsx
+│   │   │   │   │   │   ├── InteractionTrendsChart.tsx
 │   │   │   │   │   │   ├── PostDetailDialog.tsx
+│   │   │   │   │   │   ├── PostsAnalyticsDashboard.tsx
+│   │   │   │   │   │   ├── SummaryCards.tsx
+│   │   │   │   │   │   ├── TimeHeatmap.tsx
+│   │   │   │   │   │   ├── TopPostsTable.tsx
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
 │   │   │   │   │   ├── ChatArea.tsx
@@ -122,6 +130,7 @@ NutriGen_Bot/
 │   │   │   │   ├── ChatManagement.tsx
 │   │   │   │   ├── index.tsx
 │   │   │   │   ├── NutritionData.tsx
+│   │   │   │   ├── PostsManagement.tsx
 │   │   │   │   ├── SearchManagement.tsx
 │   │   │   │   ├── UserDetails.tsx
 │   │   │   │   ├── UserManagement.tsx
