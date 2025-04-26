@@ -151,6 +151,13 @@ NutriGen_Bot/
 │   │   │   │   │   ├── header.tsx
 │   │   │   │   │   ├── layout.tsx
 │   │   │   │   │   ├──ProfileRouteGuard.tsx
+│   │   │   │   ├── home/
+│   │   │   │   │   ├── CTASection.tsx
+│   │   │   │   │   ├── FeaturesSection.tsx
+│   │   │   │   │   ├── HeroSection.tsx
+│   │   │   │   │   ├── MissionSection.tsx
+│   │   │   │   │   ├── PersonalizedContentSection.tsx
+│   │   │   │   │   ├── ProcessSection.tsx
 │   │   │   │   ├── onboarding/
 │   │   │   │   │   ├── ActivityGoalsStep.tsx
 │   │   │   │   │   ├── AllergiesStep.tsx
