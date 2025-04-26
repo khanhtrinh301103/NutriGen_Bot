@@ -102,7 +102,7 @@ const RecipesPage = () => {
   const [searchSuggestions, setSearchSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   
-  const cardsPerPage = 12; // Show 12 cards per page
+  const cardsPerPage = 15; // Show 12 cards per page
   
   // Load saved search state and nutrition mode when component mounts
   useEffect(() => {
