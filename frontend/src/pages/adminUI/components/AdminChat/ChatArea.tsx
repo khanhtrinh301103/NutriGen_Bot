@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 import ChatMessage from './ChatMessage';
 import EmptyChatState from './EmptyChatState';
 import ImageUploader from './ImageUploader';
-import { getChatMessages, sendAdminMessage, uploadAdminChatImage, getChatDetails } from '../../../api/adminAPI/adminChatService';
-import { useAuth } from '../../../api/useAuth';
+import { getChatMessages, sendAdminMessage, uploadAdminChatImage, getChatDetails } from '../../../../api/adminAPI/adminChatService';
+import { useAuth } from '../../../../api/useAuth';
 
 interface ChatAreaProps {
   selectedUser: any;

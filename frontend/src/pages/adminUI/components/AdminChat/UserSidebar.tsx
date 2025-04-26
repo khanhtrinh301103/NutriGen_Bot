@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button'; // Thêm Button
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Thêm Select
 import { Checkbox } from '@/components/ui/checkbox'; // Thêm Checkbox
-import { getAllChats, archiveChat } from '../../../api/adminAPI/adminChatService';
+import { getAllChats, archiveChat } from '@/api/adminAPI/adminChatService';
 
 interface UserSidebarProps {
   onSelectUser: (user: any) => void;

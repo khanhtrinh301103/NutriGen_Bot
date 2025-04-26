@@ -87,6 +87,12 @@ NutriGen_Bot/
 │   │   ├── pages/
 │   │   │   ├── adminUI/
 │   │   │   │   ├── components
+│   │   │   │   │   ├── AdminChat
+│   │   │   │   │   │   ├── ChatArea.tsx
+│   │   │   │   │   │   ├── ChatMessage.tsx
+│   │   │   │   │   │   ├── EmptyChatState.tsx
+│   │   │   │   │   │   ├── ImageUploader.tsx
+│   │   │   │   │   │   ├── UserSidebar.tsx
 │   │   │   │   │   ├── ChatManagement
 │   │   │   │   │   │   ├── ActiveChatCard.tsx
 │   │   │   │   │   │   ├── ActiveChatsTab.tsx
@@ -107,11 +113,7 @@ NutriGen_Bot/
 │   │   │   │   │   │   ├── TopPostsTable.tsx
 │   │   │   │   │   ├── AdminDashboardCharts.tsx
 │   │   │   │   │   ├── AdminLayout.tsx
-│   │   │   │   │   ├── ChatArea.tsx
-│   │   │   │   │   ├── ChatMessage.tsx
 │   │   │   │   │   ├── DateRangePicker.tsx
-│   │   │   │   │   ├── EmptyChatState.tsx
-│   │   │   │   │   ├── ImageUploader.tsx
 │   │   │   │   │   ├── SearchAnalyticsDashboard.tsx
 │   │   │   │   │   ├── SearchHistoryTable.tsx
 │   │   │   │   │   ├── SearchStatCards.tsx
@@ -124,7 +126,6 @@ NutriGen_Bot/
 │   │   │   │   │   ├── UserHealthProfile.tsx
 │   │   │   │   │   ├── UserNutritionInfo.tsx
 │   │   │   │   │   ├── UserSavedRecipes.tsx
-│   │   │   │   │   ├── UserSidebar.tsx
 │   │   │   │   │   ├── UserTable.tsx
 │   │   │   │   ├── AssistantChat.tsx
 │   │   │   │   ├── ChatManagement.tsx

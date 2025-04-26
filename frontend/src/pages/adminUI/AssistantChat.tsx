@@ -1,8 +1,8 @@
 // frontend/src/pages/adminUI/AssistantChat.tsx
 import React, { useState, useEffect } from 'react';
 import AdminLayout from './components/AdminLayout';
-import UserSidebar from './components/UserSidebar';
-import ChatArea from './components/ChatArea';
+import UserSidebar from './components/AdminChat/UserSidebar';
+import ChatArea from './components/AdminChat/ChatArea';
 import { useAuth } from '../../api/useAuth';
 import { useRouter } from 'next/router';
 import { getChatDetails } from '../../api/adminAPI/adminChatService';
