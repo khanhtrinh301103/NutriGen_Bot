@@ -18,6 +18,9 @@ export default function Home() {
     "/homepage3.jpg",
     "/homepage4.jpg",
     "/homepage5.jpg",
+    "/homepage6.jpg",
+    "/homepage7.jpg",
+    "/homepage8.jpg",
   ];
 
   // Auto slide change effect
