@@ -12,6 +12,7 @@ import FeaturesSection from "./components/home/FeaturesSection";
 import ProcessSection from "./components/home/ProcessSection";
 import CTASection from "./components/home/CTASection";
 import PersonalizedContentSection from "./components/home/PersonalizedContentSection";
+import InstructionSlider from "./components/home/InstructionSlider";
 
 export default function Home() {
   const router = useRouter();
@@ -57,6 +58,9 @@ export default function Home() {
       
       {/* For logged-in users only: Recent saved recipes section */}
       {user && <PersonalizedContentSection userId={user.uid} />}
+      
+      {/* Instruction Slider - Only for non-logged in users */}
+      <InstructionSlider isLoggedIn={!!user} />
 
       {/* How It Works / Process Section - Adjusted for user state */}
       <ProcessSection isLoggedIn={!!user} />

@@ -155,6 +155,7 @@ NutriGen_Bot/
 │   │   │   │   │   ├── CTASection.tsx
 │   │   │   │   │   ├── FeaturesSection.tsx
 │   │   │   │   │   ├── HeroSection.tsx
+│   │   │   │   │   ├── InstructionSlider.tsx
 │   │   │   │   │   ├── MissionSection.tsx
 │   │   │   │   │   ├── PersonalizedContentSection.tsx
 │   │   │   │   │   ├── ProcessSection.tsx
