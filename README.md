@@ -8,9 +8,7 @@ firebase use --add
 cd ../frontend
 npm install
 
-
-
-
+.
 
 backend:
 cd D:\SEPM\NutriGen_Bot\backend
