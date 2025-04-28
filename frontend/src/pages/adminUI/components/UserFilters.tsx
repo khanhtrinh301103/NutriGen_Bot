@@ -54,7 +54,7 @@ const UserFilters: React.FC<UserFiltersProps> = ({
   const goalOptions = ['all', 'Weight Gain', 'Weight Loss', 'Weight Maintenance', 'Muscle Gain', 'Improve Health'];
   const activityOptions = ['all', 'Sedentary', 'Lightly Active', 'Moderately Active', 'Very Active', 'Extremely Active'];
   const dietaryOptions = ['all', 'Vegetarian', 'Vegan', 'Gluten-Free', 'Dairy-Free', 'Low-Carb', 'Keto', 'Paleo', 'Pescatarian', 'Mediterranean'];
-  const genderOptions = ['all', 'Male', 'Female', 'Other'];
+  const genderOptions = ['all', 'Male', 'Female'];
   const allergyOptions = ['all', 'Dairy', 'Egg', 'Gluten', 'Grain', 'Peanut', 'Seafood', 'Sesame', 'Shellfish', 'Soy', 'Sulfite', 'Tree Nut', 'Wheat'];
   const statusOptions = ['all', 'active', 'suspended'];
 
