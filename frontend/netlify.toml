@@ -5,6 +5,16 @@
 [build.environment]
   NODE_VERSION = "20.12.2"
   NPM_VERSION = "9.6.5"
+  NETLIFY = "true"
+  NEXT_TELEMETRY_DISABLED = "1"
+  # Bỏ qua việc xây dựng static pages
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+  
+[functions]
+  node_bundler = "esbuild"
+  
+[build.processing]
+  skip_processing = true
