@@ -7,7 +7,6 @@
   NPM_VERSION = "9.6.5"
   NETLIFY = "true"
   NEXT_TELEMETRY_DISABLED = "1"
-  # Bỏ qua việc xây dựng static pages
   NETLIFY_NEXT_PLUGIN_SKIP = "true"
 
 [[plugins]]

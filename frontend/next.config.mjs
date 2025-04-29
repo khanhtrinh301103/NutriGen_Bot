@@ -14,13 +14,20 @@ const nextConfig = {
     };
     return config;
   },
-  // Chỉ áp dụng khi deploy lên Netlify
+  // Cấu hình đặc biệt cho Netlify
   ...(process.env.NETLIFY === 'true' && {
-    staticPageGenerationTimeout: 120,
+    staticPageGenerationTimeout: 180, // Tăng timeout lên
     experimental: {
       // Tắt một số chức năng có thể gây lỗi
       esmExternals: 'loose',
-    }
+    },
+    // Tắt SSG/SSR cho một số trang
+    unstable_excludePages: [
+      '/adminUI/**/*', // Tất cả trang admin
+      '/profile',      // Trang profile
+      '/blog',         // Trang blog
+      '/auth/**/*'     // Tất cả trang auth
+    ]
   })
 };
 
