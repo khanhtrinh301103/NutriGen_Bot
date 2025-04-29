@@ -1,34 +1,13 @@
-import path from "path";
+[build]
+  command = "npm run build"
+  publish = ".next"
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  images: {
-    domains: ['firebasestorage.googleapis.com'],
-    unoptimized: true,
-  },
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      "@": path.resolve("src"),
-    };
-    return config;
-  },
-  // Cấu hình đặc biệt cho Netlify
-  ...(process.env.NETLIFY === 'true' && {
-    staticPageGenerationTimeout: 180, // Tăng timeout lên
-    experimental: {
-      // Tắt một số chức năng có thể gây lỗi
-      esmExternals: 'loose',
-    },
-    // Tắt SSG/SSR cho một số trang
-    unstable_excludePages: [
-      '/adminUI/**/*', // Tất cả trang admin
-      '/profile',      // Trang profile
-      '/blog',         // Trang blog
-      '/auth/**/*'     // Tất cả trang auth
-    ]
-  })
-};
-
-export default nextConfig;
+[build.environment]
+  NODE_VERSION = "20.12.2"
+  NPM_VERSION = "9.6.5"
+  NETLIFY = "true"
+  NEXT_TELEMETRY_DISABLED = "1"
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+  
+[build.processing]
+  skip_processing = true
