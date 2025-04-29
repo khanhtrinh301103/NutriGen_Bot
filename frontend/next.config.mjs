@@ -1,13 +1,33 @@
-[build]
-  command = "npm run build"
-  publish = ".next"
+// frontend/next.config.mjs
+import path from "path";
+import { fileURLToPath } from 'url';
 
-[build.environment]
-  NODE_VERSION = "20.12.2"
-  NPM_VERSION = "9.6.5"
-  NETLIFY = "true"
-  NEXT_TELEMETRY_DISABLED = "1"
-  NETLIFY_NEXT_PLUGIN_SKIP = "true"
-  
-[build.processing]
-  skip_processing = true
+// Hỗ trợ đường dẫn __dirname trong ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  images: {
+    domains: ['firebasestorage.googleapis.com'],
+    unoptimized: true,
+  },
+  webpack: (config) => {
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      "@": path.resolve(__dirname, "src"),
+    };
+    return config;
+  },
+  // Cấu hình đặc biệt cho Netlify
+  ...(process.env.NETLIFY === 'true' && {
+    output: 'export',
+    distDir: '.next',
+    images: {
+      unoptimized: true,
+    },
+  })
+};
+
+export default nextConfig;
