@@ -821,4 +821,11 @@ const MyPosts: React.FC<MyPostsProps> = ({ user }) => {
   );
 };
 
+
+export const getServerSideProps = async (context) => {
+  return {
+    props: {}, // Will be passed to the page component as props
+  }
+};
+
 export default MyPosts;

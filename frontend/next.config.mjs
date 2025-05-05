@@ -19,22 +19,39 @@ const nextConfig = {
     };
     return config;
   },
-  // Tắt ISR/SSG cho các trang cần động
+  // Keep your existing config
   eslint: {
-    ignoreDuringBuilds: true, // Bỏ qua lỗi ESLint trong quá trình build
+    ignoreDuringBuilds: true,
   },
   typescript: {
-    ignoreBuildErrors: true, // Bỏ qua lỗi TypeScript trong quá trình build
+    ignoreBuildErrors: true, // Keep ignoring TypeScript errors during build
   },
-  // Cấu hình cho quá trình build
   onDemandEntries: {
-    // Tăng thời gian chờ cho prerendering
-    maxInactiveAge: 60 * 60 * 1000, // 1 giờ
+    maxInactiveAge: 60 * 60 * 1000,
     pagesBufferLength: 5,
   },
   experimental: {
-    // Giúp tránh các vấn đề với prerendering
     esmExternals: 'loose',
+    // Add fallback linking for dynamic pages
+    fallbackLinking: true,
+  },
+  
+  // Add these new configurations
+  trailingSlash: true,
+  
+  // Add export path map to exclude problematic routes
+  exportPathMap: async function (defaultPathMap, { dev, dir, outDir, distDir, buildId }) {
+    // Create a filtered version of the default paths
+    const filteredPaths = {};
+    
+    // Only include non-admin, non-component paths in static generation
+    for (const [path, page] of Object.entries(defaultPathMap)) {
+      if (!path.includes('/adminUI/') && !path.includes('/components/')) {
+        filteredPaths[path] = page;
+      }
+    }
+    
+    return filteredPaths;
   }
 };
 
