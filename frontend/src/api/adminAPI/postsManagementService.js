@@ -4,7 +4,7 @@ import axios from 'axios';
 
 const FIREBASE_API_URL = process.env.NEXT_PUBLIC_FIREBASE_API_URL || "https://firestore.googleapis.com/v1";
 const PROJECT_ID = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "nutrigen-bot";
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"; // Đảm bảo URL chính xác
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://nutrigen-bot.onrender.com"; // Đảm bảo URL chính xác
 
 // Base URL for Firestore REST API
 const baseUrl = `${FIREBASE_API_URL}/projects/${PROJECT_ID}/databases/(default)/documents`;

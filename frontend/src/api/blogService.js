@@ -429,8 +429,8 @@ export const uploadPostImages = async (files) => {
       }
       
       // Gửi trực tiếp đến Express backend
-      console.log(`🔄 [Blog] Sending request directly to Express backend: http://localhost:5000/api/upload-post-image`);
-      const response = await fetch('http://localhost:5000/api/upload-post-image', {
+      console.log(`🔄 [Blog] Sending request directly to Express backend: https://nutrigen-bot.onrender.com/api/upload-post-image`);
+      const response = await fetch('https://nutrigen-bot.onrender.com/api/upload-post-image', {
         method: 'POST',
         body: formData,
       });

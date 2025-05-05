@@ -58,9 +58,9 @@ export default async function handler(req, res) {
     }
 
     // Send to Express backend
-    console.log(`🔄 [Next API] Sending request to backend: http://localhost:5000/api/upload-post-image`);
+    console.log(`🔄 [Next API] Sending request to backend: https://nutrigen-bot.onrender.com/api/upload-post-image`);
     const response = await axios.post(
-      'http://localhost:5000/api/upload-post-image',
+      'https://nutrigen-bot.onrender.com/api/upload-post-image',
       formData,
       {
         headers: {

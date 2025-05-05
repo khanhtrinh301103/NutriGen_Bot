@@ -182,7 +182,7 @@ export const uploadChatImage = async (file, chatId, userId) => {
     formData.append("uid", userId);
     formData.append("chatId", chatId);
 
-    const response = await fetch("http://localhost:5000/api/uploadChatPhoto", {
+    const response = await fetch("https://nutrigen-bot.onrender.com/api/uploadChatPhoto", {
       method: "POST",
       body: formData,
     });
