@@ -525,4 +525,11 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ isAnonymous = false, anonymousIss
   );
 };
 
+
+export const getServerSideProps = async (context) => {
+  return {
+    props: {}, // Will be passed to the page component as props
+  }
+};
+
 export default ChatPopup;

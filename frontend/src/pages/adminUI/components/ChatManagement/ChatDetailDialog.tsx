@@ -486,4 +486,11 @@ const ChatDetailDialog: React.FC<ChatDetailDialogProps> = ({
     );
   };
   
-  export default ChatDetailDialog;
+  
+export const getServerSideProps = async (context) => {
+  return {
+    props: {}, // Will be passed to the page component as props
+  }
+};
+
+export default ChatDetailDialog;

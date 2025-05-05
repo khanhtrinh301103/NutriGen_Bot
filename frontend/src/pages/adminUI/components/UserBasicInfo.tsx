@@ -47,4 +47,11 @@ const UserBasicInfo: React.FC<UserBasicInfoProps> = ({ user, formatDate }) => {
   );
 };
 
+
+export const getServerSideProps = async (context) => {
+  return {
+    props: {}, // Will be passed to the page component as props
+  }
+};
+
 export default UserBasicInfo;
