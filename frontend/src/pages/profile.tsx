@@ -164,7 +164,7 @@ const ProfilePage: React.FC = () => {
 
     try {
       console.log("Uploading photo to backend...");
-      const response = await fetch("http://localhost:5000/api/upload", {
+      const response = await fetch("https://nutrigen-bot.onrender.com/api/upload", {
         method: "POST",
         body: formData,
       });
