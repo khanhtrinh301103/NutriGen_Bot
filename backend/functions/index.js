@@ -22,12 +22,27 @@ try {
 }
 
 const app = express();
+
+const allowedOrigins = [
+  'https://nutrigenfrontendfinal1.vercel.app',
+  'http://localhost:3000', // for local dev, optional
+];
+
 app.use(cors({
-  origin: [
-    'http://nutrigenfrontendfinal1.vercel.app',
-  ],
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   credentials: true,
 }));
+
+// Handle preflight requests for all routes
+app.options('*', cors());
 app.use(express.json());
 
 app.use('/api', uploadPhotoRoute);
