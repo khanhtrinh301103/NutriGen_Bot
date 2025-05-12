@@ -22,7 +22,12 @@ try {
 }
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://nutrigenfrontendfinal1.vercel.app',
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 
 app.use('/api', uploadPhotoRoute);
