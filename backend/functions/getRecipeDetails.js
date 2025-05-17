@@ -2,7 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const router = express.Router();
 
-const SPOONACULAR_API_KEY = "9c657b351ef94436ba49efe35a78d955";
+const SPOONACULAR_API_KEY = "7a6e45249407478683346a18f937ba47";
 
 /**
  * Get detailed recipe information by ID
